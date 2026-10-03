@@ -1,0 +1,19 @@
+services:
+  mongo:
+    image: mongo:8.0.12
+    command: ['--replSet', 'rs0', '--bind_ip_all']
+    ports:
+      # Host port 27018, so it doesn't collide with another project's MongoDB on the default 27017.
+      - '27018:27017'
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      # Transactions need a replica set; the first health probe initiates it so no manual step is required.
+      test: >-
+        mongosh --quiet --eval "try { rs.status().ok } catch (e) { rs.initiate({ _id: 'rs0', members: [{ _id: 0, host: 'localhost:27017' }] }).ok }"
+      interval: 5s
+      timeout: 10s
+      retries: 10
+
+volumes:
+  mongo-data:

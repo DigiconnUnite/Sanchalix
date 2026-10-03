@@ -1,0 +1,52 @@
+{
+  "name": "vidyawan",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Vidyawan: a multi-school School Management System",
+  "author": "Shivam Thakur",
+  "contributors": [
+    "Digiconn Unite"
+  ],
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "e2e": "playwright test",
+    "seed": "tsx --conditions=react-server --env-file=.env.local scripts/seed.ts",
+    "totp": "tsx scripts/totp.ts",
+    "db:up": "docker compose up -d --wait",
+    "db:down": "docker compose down"
+  },
+  "dependencies": {
+    "@cloudscape-design/components": "^3.0.1391",
+    "@cloudscape-design/global-styles": "^1.0.71",
+    "@node-rs/argon2": "^2.2.1",
+    "mongoose": "^9.10.4",
+    "next": "16.3.8",
+    "next-intl": "^4.14.9",
+    "pino": "^10.4.0",
+    "qrcode": "^1.5.4",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "reicon-react": "^1.2.6",
+    "server-only": "^0.0.1",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
+    "@playwright/test": "^1.63.0",
+    "@types/node": "^22.20.5",
+    "@types/qrcode": "^1.5.6",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.3.8",
+    "mongodb-memory-server": "^11.3.0",
+    "tsx": "^4.23.15",
+    "typescript": "^5",
+    "vitest": "^5.0.3"
+  }
+}

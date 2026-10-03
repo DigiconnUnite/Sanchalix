@@ -1,0 +1,657 @@
+{
+  "app": {
+    "description": "School management system for admissions, attendance, exams, fees and communication."
+  },
+  "shell": {
+    "nav": {
+      "dashboard": "Dashboard",
+      "today": "Today",
+      "home": "Home",
+      "students": "Students",
+      "academics": "Academics",
+      "attendance": "Attendance",
+      "calendar": "Holidays",
+      "feeStructures": "Fee structures",
+      "invoices": "Invoices",
+      "feeCounter": "Fee counter"
+    },
+    "breadcrumbs": "Breadcrumbs",
+    "signOut": "Sign out",
+    "theme": {
+      "toDark": "Switch to dark mode",
+      "toLight": "Switch to light mode"
+    },
+    "roles": {
+      "super_admin": "Super admin",
+      "school_admin": "School admin",
+      "principal": "Principal",
+      "teacher": "Teacher",
+      "student": "Student",
+      "parent": "Parent",
+      "accountant": "Accountant",
+      "librarian": "Librarian",
+      "transport_manager": "Transport manager"
+    }
+  },
+  "auth": {
+    "signIn": {
+      "title": "Sign in to Vidyawan",
+      "email": "Email",
+      "password": "Password",
+      "submit": "Sign in",
+      "emailInvalid": "Enter an email address like name@example.com",
+      "passwordRequired": "Enter your password",
+      "invalid": "That email or password isn't right. Check both and try again.",
+      "locked": "Too many attempts. Try again in 15 minutes."
+    },
+    "totp": {
+      "cancel": "Cancel sign-in",
+      "code": "Verification code",
+      "codeRequired": "Enter the 6-digit code from your app",
+      "wrongCode": "That code isn't right. Check your app and try again.",
+      "alreadySetUp": "Two-step verification is already set up. Sign in again.",
+      "challenge": {
+        "title": "Enter your verification code",
+        "description": "Open your authenticator app and enter the 6-digit code for Vidyawan.",
+        "recoveryHint": "Lost your phone? Enter one of your recovery codes instead.",
+        "submit": "Verify code"
+      },
+      "setup": {
+        "title": "Set up two-step verification",
+        "intro": "Your role handles fees or children's records, so sign-in needs a code from your phone as well as your password.",
+        "step": "Step {number}",
+        "stepOf": "Step {number} of {total}",
+        "steps": "Steps",
+        "next": "Next",
+        "previous": "Previous",
+        "finish": "Finish and continue",
+        "scan": {
+          "title": "Scan the QR code",
+          "description": "Open an authenticator app, such as Google Authenticator or Microsoft Authenticator, and scan this code.",
+          "qrAlt": "QR code for your authenticator app",
+          "manualKey": "Can't scan? Enter this key in the app instead",
+          "copyKey": "Copy key",
+          "copied": "Key copied",
+          "copyFailed": "Couldn't copy the key"
+        },
+        "enter": {
+          "title": "Enter the code",
+          "description": "Enter the 6-digit code your app shows for Vidyawan."
+        },
+        "codes": {
+          "title": "Save your recovery codes",
+          "warning": "Save these codes somewhere safe. Each one works once if you lose your phone.",
+          "copy": "Copy codes",
+          "copied": "Codes copied",
+          "copyFailed": "Couldn't copy the codes",
+          "download": "Download codes"
+        }
+      }
+    }
+  },
+  "dashboard": {
+    "welcome": "Welcome, {name}",
+    "loading": "Loading",
+    "students": {
+      "title": "Active students",
+      "link": "{count, plural, one {# student} other {# students}}"
+    },
+    "empty": {
+      "heading": "Nothing here yet",
+      "body": "Your daily tasks appear here once your school sets them up."
+    }
+  },
+  "sis": {
+    "students": {
+      "title": "Students",
+      "loading": "Loading students",
+      "showing": "Showing {count, plural, one {# student} other {# students}}",
+      "columns": {
+        "name": "Name",
+        "admissionNo": "Admission no.",
+        "classSection": "Class",
+        "rollNo": "Roll no.",
+        "guardian": "Parent",
+        "phone": "Phone",
+        "status": "Status"
+      },
+      "status": {
+        "active": "Active",
+        "transferred": "Transferred",
+        "alumni": "Alumni",
+        "withdrawn": "Withdrawn"
+      },
+      "filter": {
+        "status": "Status"
+      },
+      "pageSize": "{count, plural, one {# student} other {# students}}",
+      "empty": {
+        "heading": "No students yet",
+        "body": "Students appear here once they are added or imported."
+      },
+      "noMatches": {
+        "heading": "No matches",
+        "body": "No students match these filters.",
+        "clear": "Clear filters"
+      },
+      "add": "Add student",
+      "gender": {
+        "female": "Female",
+        "male": "Male",
+        "other": "Other",
+        "undisclosed": "Prefer not to say"
+      },
+      "relation": {
+        "mother": "Mother",
+        "father": "Father",
+        "guardian": "Guardian",
+        "other": "Other"
+      },
+      "profile": {
+        "description": "{classSection} · Roll no. {rollNo}",
+        "added": "{name} added. Admission number {admissionNo}.",
+        "dismiss": "Dismiss message",
+        "copyAdmissionNo": "Copy admission number {admissionNo}",
+        "copied": "Admission number copied",
+        "copyFailed": "Couldn't copy the admission number",
+        "tabs": {
+          "overview": "Overview",
+          "guardians": "Parents",
+          "history": "History"
+        },
+        "dob": "Date of birth",
+        "gender": "Gender",
+        "bloodGroup": "Blood group",
+        "address": "Address",
+        "relation": "Relation",
+        "email": "Email",
+        "primary": "Primary contact",
+        "history": {
+          "when": "When",
+          "who": "Who",
+          "what": "What",
+          "emptyHeading": "No history yet",
+          "emptyBody": "Changes to this student appear here.",
+          "actions": {
+            "sis_student_create": "Added the student"
+          }
+        },
+        "notFound": {
+          "heading": "Student not found",
+          "body": "We couldn't find that student. It may have been removed or you may have followed an old link.",
+          "action": "Back to students"
+        }
+      },
+      "form": {
+        "title": "Add student",
+        "student": "Student",
+        "guardian": "Parent or guardian",
+        "address": "Address",
+        "firstName": "First name",
+        "lastName": "Last name",
+        "dob": "Date of birth",
+        "dobConstraint": "Use YYYY/MM/DD.",
+        "gender": "Gender",
+        "section": "Class and section",
+        "sectionPlaceholder": "Choose a class and section",
+        "bloodGroup": "Blood group",
+        "bloodGroupPlaceholder": "Not recorded",
+        "optional": "optional",
+        "guardianName": "Guardian name",
+        "relation": "Relation",
+        "phone": "Mobile number",
+        "phoneConstraint": "10 digits, without +91.",
+        "email": "Email",
+        "line1": "House, street and area",
+        "city": "City",
+        "state": "State",
+        "pincode": "Pincode",
+        "submit": "Add student",
+        "cancel": "Cancel",
+        "noSections": "Add classes and sections for the current academic year before adding students."
+      },
+      "errors": {
+        "firstName": "Enter the student's first name",
+        "lastName": "Last name can be up to 60 characters",
+        "dob": "Enter the student's date of birth",
+        "dobAge": "Students must be between 2 and 25 years old",
+        "gender": "Choose a gender",
+        "section": "Choose a class and section",
+        "guardianName": "Enter the guardian's name",
+        "relation": "Choose a relation",
+        "phone": "Enter a 10-digit mobile number",
+        "email": "Enter an email address like name@example.com",
+        "addressLine1": "Enter the house, street and area",
+        "city": "Enter the city",
+        "state": "Enter the state",
+        "pincode": "Enter a 6-digit pincode"
+      }
+    }
+  },
+  "states": {
+    "error": {
+      "title": "Something went wrong",
+      "header": "Couldn't load this page",
+      "body": "Something went wrong on our side. Try again in a moment.",
+      "reference": "Reference: {id}",
+      "retry": "Retry"
+    },
+    "forbidden": {
+      "title": "No access",
+      "body": "You don't have access to this page. If you think you should, ask your school admin.",
+      "action": "Go to dashboard"
+    },
+    "notFound": {
+      "title": "Page not found",
+      "body": "We couldn't find that page. It may have been removed or you may have followed an old link.",
+      "action": "Go to dashboard"
+    }
+  },
+  "errors": {
+    "validation": "Fix {count, plural, one {# field} other {# fields}} to continue.",
+    "unauthenticated": "You were signed out. Sign in again to continue.",
+    "forbidden": "You don't have access to this. If you think you should, ask your school admin.",
+    "internal": "Something went wrong on our side. Try again in a moment. Reference: {requestId}.",
+    "conflict": "Someone else changed this at the same time. Try again."
+  },
+  "academics": {
+    "classes": {
+      "title": "Classes and sections",
+      "loading": "Loading classes and sections",
+      "addClass": "Add class",
+      "addSection": "Add section",
+      "created": "{name} added.",
+      "dismiss": "Dismiss message",
+      "strength": "{strength} of {capacity}",
+      "optional": "optional",
+      "cancel": "Cancel",
+      "columns": {
+        "class": "Class",
+        "section": "Section",
+        "students": "Students",
+        "room": "Room"
+      },
+      "empty": {
+        "heading": "No classes yet",
+        "body": "Add a class, then add its sections."
+      },
+      "classForm": {
+        "title": "Add class",
+        "name": "Class name",
+        "nameHint": "For example, Class 7 or Nursery.",
+        "order": "Order",
+        "orderHint": "A number from 1 to 20. It sets where the class sits in lists and in promotions.",
+        "submit": "Add class"
+      },
+      "sectionForm": {
+        "title": "Add section",
+        "classId": "Class",
+        "classPlaceholder": "Choose a class",
+        "name": "Section",
+        "nameHint": "A short letter or number, like A or B.",
+        "capacity": "Capacity",
+        "capacityHint": "The most students the section can hold.",
+        "room": "Room",
+        "submit": "Add section",
+        "noClasses": "Add a class before adding sections."
+      },
+      "errors": {
+        "className": "Enter a class name of up to 40 characters",
+        "order": "Enter a number from 1 to 20",
+        "orderTaken": "Another class already uses order {order}. Choose a different number.",
+        "class": "Choose a class",
+        "sectionName": "Enter a section of up to 4 letters or digits, like A",
+        "sectionTaken": "{name} already exists. Choose a different section.",
+        "capacity": "Enter a capacity from 1 to 200",
+        "room": "Room can be up to 20 characters",
+        "noYear": "Set up the current academic year before adding classes."
+      }
+    }
+  },
+  "attendance": {
+    "take": {
+      "title": "Take attendance",
+      "section": "Class and section",
+      "date": "Date",
+      "dateConstraint": "Use YYYY/MM/DD.",
+      "summary": "{present} present · {absent} absent · {late} late · {half_day} half day · {leave} on leave",
+      "markAllPresent": "Mark all present",
+      "submit": "Submit attendance",
+      "update": "Update attendance",
+      "dismiss": "Dismiss message",
+      "statusFor": "Attendance for {name}",
+      "columns": {
+        "rollNo": "Roll no.",
+        "name": "Name",
+        "status": "Attendance"
+      },
+      "status": {
+        "present": "Present",
+        "absent": "Absent",
+        "late": "Late",
+        "half_day": "Half day",
+        "leave": "On leave"
+      },
+      "submitted": "Attendance for {section} submitted. {present} present, {absent} absent.",
+      "updated": "Attendance for {section} updated. {present} present, {absent} absent.",
+      "alreadySubmitted": "Attendance for {section} on this day is already submitted. You can change it until the end of today.",
+      "edited": "Edited after it was first submitted.",
+      "notSubmitted": "Attendance for {section} on this day has not been submitted.",
+      "readOnly": "You can view attendance but not change it.",
+      "state": {
+        "future": "You can't take attendance for a future date.",
+        "nonWorking": "This isn't a working day. Attendance isn't needed.",
+        "holiday": "This day is a holiday ({name}). Attendance isn’t needed.",
+        "locked": "Attendance for this day was submitted and can no longer be changed here. Ask the principal to correct it."
+      },
+      "empty": {
+        "heading": "No students in {section} yet",
+        "body": "Ask the office to add students to this section."
+      },
+      "noSections": {
+        "heading": "No section to take attendance for",
+        "body": "Attendance is taken by the class teacher. Ask the office to make you class teacher of your section."
+      },
+      "openRegister": "Open register"
+    },
+    "errors": {
+      "section": "We couldn't find that section, or you aren't its class teacher.",
+      "date": "Choose a date",
+      "note": "A note can be up to 200 characters",
+      "roster": "The student list for this section changed. Reload the page and take attendance again.",
+      "future": "You can't take attendance for a future date.",
+      "nonWorking": "This isn't a working day. Attendance isn't needed.",
+      "holiday": "This day is a holiday. Attendance isn't needed.",
+      "locked": "Attendance for this day was submitted and can no longer be changed here. Ask the principal to correct it."
+    },
+    "register": {
+      "title": "Attendance register",
+      "take": "Take attendance",
+      "section": "Class and section",
+      "month": "Month",
+      "monthConstraint": "Use YYYY/MM.",
+      "legend": "P Present · A Absent · L Late · ½ Half day · Lv On leave · H Holiday · — Not a working day",
+      "holiday": "Holiday",
+      "columns": {
+        "rollNo": "Roll no.",
+        "name": "Name",
+        "present": "Present",
+        "absent": "Absent",
+        "percent": "Attendance %"
+      },
+      "empty": {
+        "heading": "No students in {section} yet",
+        "body": "Ask the office to add students to this section."
+      }
+    }
+  },
+  "calendar": {
+    "holidays": {
+      "title": "Holidays",
+      "add": "Add holiday",
+      "cancel": "Cancel",
+      "dismiss": "Dismiss message",
+      "created": "{name} added. Attendance is blocked on that day.",
+      "createdWithAttendance": "{name} added. Attendance was already taken that day for {count, plural, one {# section} other {# sections}}; those records are kept.",
+      "deleted": "{name} deleted. Attendance can be taken on that day again.",
+      "deleteLabel": "Delete holiday {name}",
+      "deleteTitle": "Delete holiday {name}?",
+      "deleteBody": "The day becomes a working day again, and teachers can take attendance for it.",
+      "deleteConfirm": "Delete holiday",
+      "columns": {
+        "date": "Date",
+        "name": "Holiday name",
+        "actions": "Actions"
+      },
+      "empty": {
+        "heading": "No holidays yet",
+        "body": "Add the school’s holidays so attendance isn’t expected on those days."
+      },
+      "form": {
+        "title": "Add holiday",
+        "dateHint": "Use YYYY/MM/DD.",
+        "nameHint": "For example, Gandhi Jayanti."
+      },
+      "errors": {
+        "date": "Choose the date of the holiday",
+        "name": "Enter a holiday name of up to 80 characters",
+        "taken": "That day is already a holiday.",
+        "notFound": "We couldn't find that holiday. It may already have been deleted."
+      }
+    }
+  },
+  "fees": {
+    "cancel": "Cancel",
+    "dismiss": "Dismiss message",
+    "optional": "optional",
+    "heads": {
+      "title": "Fee heads",
+      "add": "Add fee head",
+      "created": "{name} added.",
+      "columns": {
+        "name": "Fee head",
+        "code": "Code",
+        "gst": "GST"
+      },
+      "gstNone": "No GST",
+      "empty": {
+        "heading": "No fee heads yet",
+        "body": "Add the kinds of fee you charge, such as Tuition or Transport."
+      },
+      "form": {
+        "title": "Add fee head",
+        "name": "Name",
+        "nameHint": "For example, Tuition or Transport.",
+        "code": "Code",
+        "codeHint": "2 to 10 letters or digits, like TUI.",
+        "gstRate": "GST rate"
+      }
+    },
+    "structures": {
+      "title": "Fee structures",
+      "add": "Add fee structure",
+      "feeHeads": "Fee heads",
+      "created": "{name} saved as a draft. The principal can now approve it.",
+      "approved": "{name} approved. {count, plural, =0 {No invoices were issued because its classes have no students.} one {# invoice issued.} other {# invoices issued.}}",
+      "approve": "Approve",
+      "approveLabel": "Approve fee structure {name}",
+      "approveTitle": "Approve {name}?",
+      "approveBody": "Invoices for every installment are issued to every active student in its classes. This can’t be undone.",
+      "approveConfirm": "Approve and issue invoices",
+      "columns": {
+        "name": "Fee structure",
+        "classes": "Classes",
+        "total": "Per student, per year",
+        "installments": "Installments",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "status": {
+        "draft": "Waiting for approval",
+        "approved": "Approved",
+        "active": "Active"
+      },
+      "empty": {
+        "heading": "No fee structures yet",
+        "body": "A fee structure sets what a class pays and when."
+      },
+      "form": {
+        "title": "Add fee structure",
+        "basics": "Basics",
+        "name": "Name",
+        "nameHint": "For example, Classes 6 to 8, 2026–27.",
+        "classes": "Classes",
+        "classesPlaceholder": "Choose classes",
+        "lines": "Fee lines",
+        "feeHead": "Fee head",
+        "feeHeadPlaceholder": "Choose a fee head",
+        "amount": "Amount per year (₹)",
+        "addLine": "Add fee line",
+        "removeLine": "Remove",
+        "installments": "Installments",
+        "label": "Label",
+        "dueDate": "Due date",
+        "percent": "Percent",
+        "addInstallment": "Add installment",
+        "removeInstallment": "Remove",
+        "percentTotal": "Installments add up to {total}%. They must equal 100%.",
+        "submit": "Save as draft",
+        "noHeads": "Add at least one fee head before creating a fee structure.",
+        "noClasses": "Add classes for the current academic year before creating a fee structure."
+      }
+    },
+    "invoices": {
+      "title": "Invoices",
+      "loading": "Loading invoices",
+      "showing": "Showing {count, plural, one {# invoice} other {# invoices}}",
+      "pageSize": "{count, plural, one {# invoice} other {# invoices}}",
+      "filter": {
+        "status": "Status",
+        "all": "All statuses"
+      },
+      "columns": {
+        "invoiceNo": "Invoice no.",
+        "student": "Student",
+        "admissionNo": "Admission no.",
+        "installment": "Installment",
+        "dueDate": "Due date",
+        "total": "Amount",
+        "balance": "Balance",
+        "status": "Status"
+      },
+      "status": {
+        "draft": "Draft",
+        "issued": "Issued",
+        "partially_paid": "Partly paid",
+        "paid": "Paid",
+        "overdue": "Overdue",
+        "void": "Void"
+      },
+      "empty": {
+        "heading": "No invoices yet",
+        "body": "Invoices are issued when the principal approves a fee structure."
+      },
+      "noMatches": {
+        "heading": "No matches",
+        "body": "No invoices match this status.",
+        "clear": "Clear filter"
+      }
+    },
+    "errors": {
+      "headName": "Enter a fee head name of up to 60 characters",
+      "headCode": "Enter a code of 2 to 10 letters or digits, like TUI",
+      "headCodeTaken": "The code {code} is already used by another fee head.",
+      "gstRate": "Choose a GST rate",
+      "structureName": "Enter a name of up to 80 characters",
+      "classes": "Choose at least one class",
+      "lines": "Add at least one fee line",
+      "lineHead": "Choose a fee head",
+      "duplicateHead": "Each fee head can appear only once",
+      "amount": "Enter an amount in rupees, like 12500 or 12500.50",
+      "installments": "Add between 1 and 12 installments",
+      "installmentLabel": "Enter a label, like Q1",
+      "dueDate": "Choose a due date",
+      "percent": "Enter a whole number from 1 to 100",
+      "percentTotal": "The installment percents must add up to 100",
+      "noYear": "Set up the current academic year before adding fee structures.",
+      "structureNotFound": "We couldn't find that fee structure.",
+      "alreadyApproved": "This fee structure is already approved.",
+      "student": "Choose a student",
+      "allocation": "One of the selected invoices can't be found. Reload the page and try again.",
+      "payAmount": "Enter an amount greater than zero",
+      "method": "Choose a payment method",
+      "reference": "A reference can be up to 40 characters",
+      "bankName": "A bank name can be up to 80 characters",
+      "note": "A note can be up to 200 characters",
+      "chequeNo": "Enter the 6-digit cheque number",
+      "overBalance": "One of these invoices was just paid or changed. Reload the page to see the current dues."
+    },
+    "counter": {
+      "title": "Fee counter",
+      "search": "Find a student",
+      "searchHint": "Type a name or an admission number.",
+      "searching": "Searching…",
+      "noResults": "No students match. Try an admission number.",
+      "searchError": "Search isn't available right now. Try again.",
+      "useText": "Search for \"{text}\"",
+      "change": "Choose another student",
+      "student": "Student",
+      "class": "Class",
+      "guardian": "Parent",
+      "phone": "Phone",
+      "totalDue": "Total due",
+      "openInvoices": "Open invoices",
+      "selectInvoice": "Select invoice {invoiceNo}",
+      "selectAll": "Select all open invoices",
+      "overdue": "Overdue",
+      "columns": {
+        "invoiceNo": "Invoice no.",
+        "installment": "Installment",
+        "dueDate": "Due date",
+        "total": "Amount",
+        "paid": "Paid",
+        "balance": "Balance"
+      },
+      "payment": "Payment",
+      "amount": "Amount (₹)",
+      "amountHint": "Selected invoices total {amount}. Enter less to take a part payment.",
+      "method": "Method",
+      "methods": {
+        "cash": "Cash",
+        "upi": "UPI",
+        "card": "Card",
+        "cheque": "Cheque",
+        "bank_transfer": "Bank transfer"
+      },
+      "chequeNo": "Cheque number",
+      "reference": "Reference",
+      "bankName": "Bank name",
+      "note": "Note",
+      "collect": "Collect {amount}",
+      "collectNothing": "Collect payment",
+      "noDues": {
+        "heading": "No dues for {name}",
+        "body": "Every invoice for this student is paid."
+      },
+      "notFound": "We couldn't find that student.",
+      "start": {
+        "heading": "Find a student to begin",
+        "body": "Search by name or admission number to see their dues."
+      },
+      "errors": {
+        "select": "Select at least one invoice",
+        "amount": "Enter an amount in rupees, like 12500 or 12500.50",
+        "tooMuch": "Amount can't be more than the {amount} due on the selected invoices."
+      }
+    },
+    "receipt": {
+      "title": "Receipt {receiptNo}",
+      "created": "Receipt {receiptNo} created for {amount}.",
+      "print": "Print receipt",
+      "printLabel": "Print receipt {receiptNo}",
+      "another": "Collect another payment",
+      "receiptNo": "Receipt no.",
+      "date": "Date",
+      "student": "Student",
+      "admissionNo": "Admission no.",
+      "class": "Class",
+      "method": "Method",
+      "reference": "Reference",
+      "bankName": "Bank",
+      "note": "Note",
+      "collectedBy": "Collected by",
+      "amount": "Amount received",
+      "allocations": "Paid towards",
+      "columns": {
+        "invoiceNo": "Invoice no.",
+        "installment": "Installment",
+        "amount": "Amount"
+      },
+      "notFound": {
+        "heading": "Receipt not found",
+        "body": "We couldn't find that receipt. You may have followed an old link.",
+        "action": "Go to the fee counter"
+      }
+    }
+  }
+}

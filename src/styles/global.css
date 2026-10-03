@@ -1,0 +1,36 @@
+.vw-icon {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+}
+
+/* Cloudscape's documented way to keep TopNavigation in view: AppLayout reads its height through headerSelector
+   and offsets its own sticky parts. 1002 is the layer Cloudscape reserves for a page header, above its drawers. */
+/* ADR-020: the toolbar already has the navigation toggle, so the duplicate inside the navigation panel is hidden.
+   The class is matched by its stable prefix because Cloudscape appends a hash that changes between versions.
+   Phones keep it: there it is the close button of the navigation overlay.
+   !important is needed because Cloudscape raises its own specificity (:not(#\9)) and sets display on the
+   collapsed rail's copy of this button. */
+@media (min-width: 689px) {
+  [class*='awsui_hide-navigation_'] {
+    display: none !important;
+  }
+}
+
+/* ADR-020: less vertical space in the breadcrumb row. Cloudscape fixes the row at 42px and offers no option.
+   AppLayout measures the row's real height, so sticky table headers still line up under it. */
+[class*='awsui_toolbar-container_'] {
+  block-size: 34px !important;
+  /* TopNavigation already draws a bottom border, so the row's own top border would double it. */
+  border-block-start: none !important;
+}
+
+[class*='awsui_universal-toolbar-breadcrumbs_'] [class*='awsui_breadcrumb-group_'] {
+  padding-block: 0 !important;
+}
+
+.vw-top-nav {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 1002;
+}
