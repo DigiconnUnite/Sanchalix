@@ -31,6 +31,12 @@ Then open http://localhost:3000 and sign in. `http://localhost:3000/api/health` 
 | `principal@greenvalley.example` | Principal | All 300 Green Valley students |
 | `teacher@greenvalley.example` | Teacher, class teacher of 6-A | The students of 6-A only |
 | `accountant@greenvalley.example` | Accountant | No student list (a 403 page) |
+| `teacher2@greenvalley.example` to `teacher11@…` | Teachers, each class teacher of one section (6-B onwards) | Their section, and the periods they teach |
+| `teacher12@greenvalley.example` | Subject teacher with no class of their own | Only the periods they teach |
+| `librarian@greenvalley.example`, `transport@greenvalley.example` | Librarian, transport manager | Announcements, calendar and their own leave |
+| `parent@greenvalley.example` | Parent of two children in 6-A | The parent home, with a child selector and a published report card |
+| `parent2@greenvalley.example` | Parent of one child in 9-A | The parent home |
+| `student@greenvalley.example` | Student of 6-A | The student home |
 | `admin@riverside.example` | School admin of the second school | Riverside's 12 students only |
 | `newaccountant@greenvalley.example` | Accountant without 2FA yet | No student list; the 2FA setup wizard when 2FA is on |
 

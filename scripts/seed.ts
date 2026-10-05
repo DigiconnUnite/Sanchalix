@@ -16,6 +16,7 @@ import { Staff } from '@/server/models/staff';
 import { Student } from '@/server/models/student';
 import { User } from '@/server/models/user';
 import { DEMO_TOTP_SECRET } from './demoSecret';
+import { seedGreenValleyDemo } from './seedDemo';
 
 const FIRST_NAMES = [
   'Aarav', 'Ananya', 'Kabir', 'Diya', 'Vivaan', 'Ishita', 'Arjun', 'Meera', 'Rohan', 'Saanvi', 'Aditya', 'Kavya',
@@ -162,7 +163,7 @@ async function seedSchool(options: {
     })),
   );
   await Counter.create({ _id: `${schoolId.toString()}:admission:2026`, seq: admission });
-  return admission;
+  return { students: admission, schoolId };
 }
 
 async function main() {
@@ -214,8 +215,13 @@ async function main() {
     staff: [{ role: 'school_admin', name: 'Anita Desai', scope: 'school' }],
   });
 
-  console.log(`Seeded ${greenValley} students in Green Valley School and ${riverside} in Riverside Public School.`);
-  console.log(`Sign in with admin@greenvalley.example, principal@…, teacher@…, accountant@… or admin@riverside.example`);
+  const demo = await seedGreenValleyDemo(greenValley.schoolId, 'greenvalley.example', passwordHash);
+
+  console.log(`Seeded ${greenValley.students} students in Green Valley School and ${riverside.students} in Riverside Public School.`);
+  console.log(`Green Valley also has ${demo.staff} staff, ${demo.attendanceDays} days of attendance, ${demo.payments} payments, a timetable,`);
+  console.log('exams with results, report cards, admissions, homework, leave, events and announcements.');
+  console.log('Sign in @greenvalley.example as admin, principal, accountant, teacher (class teacher of 6-A), teacher2 to teacher12,');
+  console.log('librarian, transport, parent (two children in 6-A), parent2 or student. Riverside: admin@riverside.example.');
   console.log(`Password: ${password}`);
   console.log('Admins, the principal and the accountant are also asked for a code: run `npm run totp`,');
   console.log(`or add the key ${DEMO_TOTP_SECRET} to an authenticator app.`);
