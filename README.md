@@ -95,6 +95,8 @@ The roadmap's M0 walking skeleton ([Docs/05-roadmap.md](Docs/05-roadmap.md)):
 - Subjects and a weekly timetable per section, with a hard stop on double-booking a teacher, and "Your classes today" for teachers
 - Homework: teachers set it for the sections they teach; the office sees all of it
 - Move a student to another section from the profile (new roll number, audited)
+- Settings: school profile, working days and the bell schedule
+- CSV export of active students, overdue dues and payments
 - Users: create sign-ins for staff with a one-time temporary password, reset passwords, disable or enable accounts
 - Portal accounts for a student and their parents from the student's profile, and a home page for them with attendance, fees due, homework, today's classes and upcoming events
 - A calendar of school events and holidays by month

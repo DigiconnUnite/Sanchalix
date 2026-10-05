@@ -270,6 +270,8 @@ Built with `Board` (staff, rearrangeable in v1) or `Grid` (student, parent). Eve
 - **Homework** (`/homework`, `/homework/new`).
 - **Leave** (`/leave`, `/leave/new`): staff see their own requests; the principal and school admin see all and decide in a dialog with an optional comment.
 - **Student profile actions:** an Actions menu with Change section and Withdraw student, next to Edit.
+- **Settings** (`/settings?tab=school|periods`): School (profile and working days) and Bell schedule (an `AttributeEditor` of periods with `TimeInput`), each with its own Save changes.
+- **Export CSV** button on the Students, Dues and Payments tables.
 - **Users** (`/users`, `/users/new`): the temporary password is shown once in a success alert with a copy button.
 - **Student profile, Portal access tab:** the student and each guardian with their account email or "No account", and Create account.
 - **Home for students and parents:** a summary (attendance, fees due, homework due), today's classes, homework, fees to pay, coming up. Parents with several children get a child selector in the header.

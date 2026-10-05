@@ -13,6 +13,7 @@ import { useTranslations } from 'next-intl';
 import type { ReactNode } from 'react';
 import { AppLink } from '@/components/AppLink';
 import { EmptyState } from '@/components/EmptyState';
+import { ExportButton } from '@/components/ExportButton';
 import { svg } from '@/components/icons';
 import { usePathname, useRouter } from '@/i18n/navigation';
 import { formatPhone } from '@/lib/phone';
@@ -100,6 +101,7 @@ export function StudentsTable({
         actions={
           canCreate && (
             <SpaceBetween direction="horizontal" size="xs">
+              <ExportButton kind="students" />
               <Button
                 href="/students/import"
                 iconSvg={svg('import')}

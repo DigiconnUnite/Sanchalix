@@ -9,6 +9,7 @@ import { useTranslations } from 'next-intl';
 import type { ReactNode } from 'react';
 import { AppLink } from '@/components/AppLink';
 import { EmptyState } from '@/components/EmptyState';
+import { ExportButton } from '@/components/ExportButton';
 import { usePathname, useRouter } from '@/i18n/navigation';
 import { formatMoney } from '@/lib/money';
 import { useIsMobile } from '@/lib/useIsMobile';
@@ -60,7 +61,11 @@ export function PaymentsTable({ pageSize, data }: { pageSize: number; data: Data
     loading: !data,
     loadingText: t('loading'),
     stickyHeader: true,
-    header: <Header variant="h1">{t('title')}</Header>,
+    header: (
+      <Header variant="h1" actions={<ExportButton kind="payments" />}>
+        {t('title')}
+      </Header>
+    ),
     pagination: (
       <Pagination
         currentPageIndex={page}

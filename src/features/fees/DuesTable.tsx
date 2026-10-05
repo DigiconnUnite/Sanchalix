@@ -13,6 +13,7 @@ import { useTranslations } from 'next-intl';
 import type { ReactNode } from 'react';
 import { AppLink } from '@/components/AppLink';
 import { EmptyState } from '@/components/EmptyState';
+import { ExportButton } from '@/components/ExportButton';
 import { usePathname, useRouter } from '@/i18n/navigation';
 import { formatMoney } from '@/lib/money';
 import { useIsMobile } from '@/lib/useIsMobile';
@@ -87,6 +88,7 @@ export function DuesTable({
           variant="h1"
           counter={data ? `(${data.count})` : ''}
           description={canCollect && t('hint')}
+          actions={<ExportButton kind="dues" />}
         >
           {t('title')}
         </Header>

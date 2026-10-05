@@ -25,7 +25,8 @@
       "leave": "Leave",
       "users": "Users",
       "calendarEvents": "Calendar",
-      "promotion": "Promotion"
+      "promotion": "Promotion",
+      "settings": "Settings"
     },
     "breadcrumbs": "Breadcrumbs",
     "signOut": "Sign out",
@@ -1646,6 +1647,98 @@
       "email": "Enter an email address like name@example.com",
       "notFound": "We couldn't find that student or guardian.",
       "exists": "This person already has a portal account."
+    }
+  },
+  "export": {
+    "button": "Export CSV",
+    "label": {
+      "students": "Export active students as a CSV file",
+      "dues": "Export overdue dues as a CSV file",
+      "payments": "Export payments as a CSV file"
+    },
+    "columns": {
+      "admissionNo": "Admission no.",
+      "name": "Student",
+      "classSection": "Class and section",
+      "rollNo": "Roll no.",
+      "guardianName": "Guardian",
+      "guardianPhone": "Guardian phone",
+      "status": "Status",
+      "invoiceNo": "Invoice no.",
+      "installment": "Installment",
+      "dueDate": "Due date",
+      "daysOverdue": "Days overdue",
+      "balance": "Balance (INR)",
+      "receiptNo": "Receipt no.",
+      "collectedAt": "Collected at",
+      "method": "Method",
+      "amount": "Amount (INR)"
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "save": "Save changes",
+    "tabs": {
+      "school": "School",
+      "periods": "Bell schedule"
+    },
+    "days": {
+      "0": "Sunday",
+      "1": "Monday",
+      "2": "Tuesday",
+      "3": "Wednesday",
+      "4": "Thursday",
+      "5": "Friday",
+      "6": "Saturday"
+    },
+    "school": {
+      "title": "School profile",
+      "saved": "School settings saved.",
+      "code": "School code",
+      "board": "Board",
+      "name": "School name",
+      "affiliationNo": "Affiliation number",
+      "line1": "Building, street and area",
+      "city": "City",
+      "state": "State",
+      "pincode": "Pincode"
+    },
+    "workingDays": {
+      "title": "Working days",
+      "label": "Days the school is open",
+      "description": "Attendance can't be taken on the other days.",
+      "placeholder": "Choose days"
+    },
+    "periods": {
+      "title": "Teaching periods",
+      "description": "The periods used on the timetable and for period attendance, in order. Leave gaps for breaks.",
+      "saved": "Bell schedule saved.",
+      "add": "Add period",
+      "remove": "Remove",
+      "removeLabel": "Remove period {number}",
+      "empty": "No periods yet. Add the first one.",
+      "number": "Period",
+      "periodNo": "Period {number}",
+      "start": "Starts",
+      "end": "Ends",
+      "startLabel": "Period {number} starts at",
+      "endLabel": "Period {number} ends at"
+    },
+    "errors": {
+      "name": "Enter the school name, up to 120 characters",
+      "affiliationNo": "The affiliation number can be up to 40 characters",
+      "line1": "Enter the building, street and area",
+      "city": "Enter the city",
+      "state": "Enter the state",
+      "pincode": "Enter a 6-digit pincode",
+      "workingDays": "Choose at least one working day",
+      "time": "Enter a time like 08:40",
+      "noPeriods": "Add at least one period",
+      "tooManyPeriods": "A day can have up to 12 periods",
+      "endBeforeStart": "A period must end after it starts",
+      "overlap": "This period starts before the one above it ends",
+      "periodInUse": "The timetable already uses period {number}. Clear it there before removing the period.",
+      "notFound": "We couldn't find the school."
     }
   }
 }

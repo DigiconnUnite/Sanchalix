@@ -124,7 +124,7 @@ import ScanBarcode from 'reicon-react/icons/ScanBarcode';
 import Search from 'reicon-react/icons/Search';
 import Send from 'reicon-react/icons/Send';
 import Setting2 from 'reicon-react/icons/Setting2';
-import Settings from 'reicon-react/icons/Settings';
+import Settings2 from 'reicon-react/icons/Settings2';
 import ShieldAlert from 'reicon-react/icons/ShieldAlert';
 import ShieldCheck from 'reicon-react/icons/ShieldCheck';
 import Sitemap from 'reicon-react/icons/Sitemap';
@@ -230,7 +230,7 @@ export const icons = {
   trendDown: TrendDown,
   aiInsights: Sparkles,
   atRisk: ShieldAlert,
-  settings: Settings,
+  settings: Settings2,
   tablePreferences: Setting2,
   users: Users,
   roles: ShieldCheck,
@@ -547,7 +547,7 @@ Key = the key in `icons.tsx`. Component = the Reicon component. Default size is 
 
 | Concept | Key | Component | Where it is used |
 |---|---|---|---|
-| Settings | `settings` | `Settings` | Side nav: Settings |
+| Settings | `settings` | `Settings2` | Side nav: Settings |
 | Users | `users` | `Users` | Settings → Users |
 | Roles and permissions | `roles` | `ShieldCheck` | Settings → Roles; the permission matrix view |
 | Audit log | `auditLog` | `History` | Settings → Audit log; the "History" tab on records |

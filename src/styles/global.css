@@ -36,6 +36,12 @@
   line-height: var(--line-height-body-s-gako33, 16px) !important;
 }
 
+/* ADR-020: the separator arrow is 12px, to match the 12px breadcrumb text. It is scaled, not resized, so the
+   spacing around it and Cloudscape's truncation measurements stay the same. */
+[class*='awsui_universal-toolbar-breadcrumbs_'] [class*='awsui_breadcrumb_'] > [class*='awsui_icon_'] svg {
+  transform: scale(0.75);
+}
+
 /* ADR-020: the navigation toggle keeps its resting look while the navigation is open. Cloudscape fills it blue
    and offers no option. The open panel itself and aria-expanded still say that the navigation is open. */
 [class*='awsui_universal-toolbar-nav_'] [class*='awsui_selected_'] {
@@ -135,7 +141,7 @@
    bar is wide and draws a solid track beside the links. */
 [class*='awsui_navigation-container_'] > [class*='awsui_navigation_'] {
   scrollbar-width: thin;
-  scrollbar-color: color-mix(in srgb, var(--color-text-body-secondary-66ygbb) 35%, transparent) transparent;
+  scrollbar-color: color-mix(in srgb, var(--color-text-body-secondary-66ygbb) 20%, transparent) transparent;
 }
 
 /* ADR-020: paper gets the document only. Cloudscape ships no print styles for its shell, so the header, the

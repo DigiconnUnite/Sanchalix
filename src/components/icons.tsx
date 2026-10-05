@@ -99,7 +99,7 @@ import ScanBarcode from 'reicon-react/icons/ScanBarcode';
 import Search from 'reicon-react/icons/Search';
 import Send from 'reicon-react/icons/Send';
 import Setting2 from 'reicon-react/icons/Setting2';
-import Settings from 'reicon-react/icons/Settings';
+import Settings2 from 'reicon-react/icons/Settings2';
 import ShieldAlert from 'reicon-react/icons/ShieldAlert';
 import ShieldCheck from 'reicon-react/icons/ShieldCheck';
 import Sitemap from 'reicon-react/icons/Sitemap';
@@ -205,7 +205,7 @@ export const icons = {
   trendDown: TrendDown,
   aiInsights: Sparkles,
   atRisk: ShieldAlert,
-  settings: Settings,
+  settings: Settings2,
   tablePreferences: Setting2,
   users: Users,
   roles: ShieldCheck,

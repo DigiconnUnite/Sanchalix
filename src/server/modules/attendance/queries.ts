@@ -11,7 +11,7 @@ import { Student } from '@/server/models/student';
 import { Subject } from '@/server/models/subject';
 import { TimetableSlot } from '@/server/models/timetableSlot';
 import { getCurrentYearId } from '@/server/modules/academics/queries';
-import { listTaughtSectionIds, PERIODS } from '@/server/modules/timetable/service';
+import { getPeriods, listTaughtSectionIds } from '@/server/modules/timetable/service';
 import type { AttendanceRegister, AttendanceSheet, MarkableStatus } from './schemas';
 
 /**
@@ -107,13 +107,16 @@ export async function getAttendanceSheet(
     .sort({ period: 1 })
     .select('period subjectId')
     .lean();
-  const subjects = await Subject.find({ schoolId, _id: { $in: slots.map((slot) => slot.subjectId) } })
-    .setOptions({ withDeleted: true })
-    .select('name')
-    .lean();
+  const [bells, subjects] = await Promise.all([
+    getPeriods(ctx),
+    Subject.find({ schoolId, _id: { $in: slots.map((slot) => slot.subjectId) } })
+      .setOptions({ withDeleted: true })
+      .select('name')
+      .lean(),
+  ]);
   const subjectOf = new Map(subjects.map((subject) => [String(subject._id), subject.name]));
   const periods = slots.flatMap((slot) => {
-    const bell = PERIODS.find((candidate) => candidate.number === slot.period);
+    const bell = bells.find((candidate) => candidate.number === slot.period);
     return bell
       ? [{ number: slot.period, time: `${bell.start}–${bell.end}`, subject: subjectOf.get(String(slot.subjectId)) ?? '' }]
       : [];

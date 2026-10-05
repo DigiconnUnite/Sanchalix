@@ -150,7 +150,7 @@ const StudentInput = z.object({
 **Built on 2026-10-05:**
 - `upsertSubject({ name, code, type })` needs `academics.class.create`; creates only; `CONFLICT` when the code is taken in the school.
 - `upsertTimetableSlot({ sectionId, day, period, subjectId, teacherId })` and `clearTimetableSlot({ sectionId, day, period })` need `academics.timetable.update`; reading needs `academics.timetable.read`. A slot is saved as `published` at once (no draft and publish step). The unique index on teacher, day and period turns a double booking into `CONFLICT`. Clearing is a hard delete, because a soft-deleted slot would keep its place in the unique index.
-- Periods are a fixed schedule in code (8 periods of 40 minutes from 08:00, Monday to Saturday); `periodDefinitions` is not built.
+- Periods come from the bell schedule in Settings (see section 13).
 - A teacher with a staff record sees "Your classes today" on the home page. Substitutions are not built, and a teacher's `assigned` scope for the student list is still the class-teacher section only.
 
 | Name | Type | Permission | Input | Output |
@@ -324,6 +324,10 @@ Server rules: each allocation ≤ the invoice balance; everything runs in one tr
 Report keys: `attendance.daily`, `attendance.monthly`, `attendance.lowAttendance`, `fees.collection`, `fees.dues`, `fees.concessions`, `fees.headwise`, `admissions.funnel`, `exams.results`, `exams.subjectAnalysis`, `staff.attendance`, `staff.leave`, `library.overdue`, `transport.routeStrength`.
 
 ## 13. Settings, audit and import/export
+
+**Settings and export, built on 2026-10-05:**
+- `updateSchoolSettings({ name, affiliationNo?, address, workingDays })` and `updatePeriods([{ start, end }])` need `settings.school.update` (school admin). The school is always the one in the session. Periods are 1 to 12, in order, each ending after it starts and not overlapping the one before; removing a period the timetable still uses gives `BUSINESS_RULE`. They are stored in `periodDefinitions` (one document per school, breaks are simply gaps); until a school saves its own, 8 periods of 40 minutes from 08:00 apply.
+- `GET /api/v1/export/{students|dues|payments}` returns a UTF-8 CSV (with BOM) of active students, overdue dues or payments. It needs the list's read permission, is refused for `assigned` scope, is capped at 10,000 rows, neutralises cells that a spreadsheet would run as formulas, and is audited as `data.export`. XLSX, filters and background export jobs are not built.
 
 **Users, built on 2026-10-05** (`users.user.read` for school admin and principal; `users.user.create` and `users.user.update` for school admin):
 - `createUser({ name, email, role, staffId? })` replaces `inviteUser` until email is connected: it creates an active account for a staff role (never `super_admin`, `student` or `parent`) with a random 14-character temporary password, returned once and stored only as an argon2id hash. `CONFLICT` when the email exists or the staff record already has an account. A teacher gets scope `assigned`; other roles get `school`.

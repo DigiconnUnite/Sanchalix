@@ -2,6 +2,7 @@ import 'server-only';
 import { AppError } from '@/lib/appError';
 import { todayIn, weekdayOf } from '@/lib/dates';
 import type { RequestContext } from '@/server/auth/context';
+import { PeriodDefinition } from '@/server/models/periodDefinition';
 import { School } from '@/server/models/school';
 import { Section } from '@/server/models/section';
 import { Staff } from '@/server/models/staff';
@@ -12,14 +13,22 @@ import type { ClearSlot, Period, SlotInput, SubjectInput, SubjectRow, TeacherPer
 
 const isDuplicateKey = (error: unknown) => error instanceof Error && 'code' in error && error.code === 11000;
 
-// ponytail: one fixed bell schedule for every school (8 periods of 40 minutes, lunch after the 4th).
-// Read it from periodDefinitions once the school settings screen exists.
+// The bell schedule a school starts with: 8 periods of 40 minutes, lunch after the 4th. Settings replaces it.
 const STARTS = ['08:00', '08:40', '09:20', '10:00', '11:00', '11:40', '12:20', '13:00'];
-export const PERIODS: Period[] = STARTS.map((start, index) => {
+const DEFAULT_PERIODS: Period[] = STARTS.map((start, index) => {
   const minutes = Number(start.slice(0, 2)) * 60 + Number(start.slice(3)) + 40;
   const end = `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`;
   return { number: index + 1, start, end };
 });
+
+/** The school's teaching periods in order, from Settings, or the default schedule until it is set. */
+export async function getPeriods(ctx: RequestContext): Promise<Period[]> {
+  const definition = await PeriodDefinition.findOne({ schoolId: ctx.schoolId }).select('periods').lean();
+  const periods = definition?.periods.filter((period) => !period.isBreak) ?? [];
+  return periods.length
+    ? periods.map(({ number, start, end }) => ({ number, start, end })).sort((a, b) => a.number - b.number)
+    : DEFAULT_PERIODS;
+}
 
 export async function listSubjects(ctx: RequestContext): Promise<SubjectRow[]> {
   const subjects = await Subject.find({ schoolId: ctx.schoolId }).sort({ name: 1 }).select('name code type').lean();
@@ -51,7 +60,8 @@ export async function getTimetable(ctx: RequestContext, sectionId: string): Prom
   const slots = /^[0-9a-f]{24}$/.test(sectionId)
     ? await TimetableSlot.find({ schoolId, sectionId }).select('day period subjectId teacherId').lean()
     : [];
-  const [subjects, teachers] = await Promise.all([
+  const [periods, subjects, teachers] = await Promise.all([
+    getPeriods(ctx),
     Subject.find({ schoolId, _id: { $in: slots.map((slot) => slot.subjectId) } })
       .setOptions({ withDeleted: true })
       .select('name')
@@ -63,7 +73,7 @@ export async function getTimetable(ctx: RequestContext, sectionId: string): Prom
   ]);
   const nameOf = new Map([...subjects, ...teachers].map((doc) => [String(doc._id), doc.name]));
   return {
-    periods: PERIODS,
+    periods,
     cells: Object.fromEntries(
       slots.map((slot) => [
         `${slot.day}-${slot.period}`,
@@ -142,7 +152,8 @@ export async function getTeacherDay(ctx: RequestContext): Promise<TeacherPeriod[
     .sort({ period: 1 })
     .select('period sectionId subjectId')
     .lean();
-  const [sections, subjects] = await Promise.all([
+  const [periods, sections, subjects] = await Promise.all([
+    getPeriods(ctx),
     Section.find({ schoolId, _id: { $in: slots.map((slot) => slot.sectionId) } })
       .select('displayName')
       .lean(),
@@ -153,7 +164,7 @@ export async function getTeacherDay(ctx: RequestContext): Promise<TeacherPeriod[
   const sectionOf = new Map(sections.map((section) => [String(section._id), section.displayName]));
   const subjectOf = new Map(subjects.map((subject) => [String(subject._id), subject.name]));
   return slots.flatMap((slot) => {
-    const period = PERIODS.find((candidate) => candidate.number === slot.period);
+    const period = periods.find((candidate) => candidate.number === slot.period);
     return period
       ? [
           {

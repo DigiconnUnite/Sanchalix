@@ -28,7 +28,8 @@ type ModuleKey =
   | 'announcements'
   | 'calendarEvents'
   | 'promotion'
-  | 'users';
+  | 'users'
+  | 'settings';
 type Group = 'people' | 'academics' | 'fees' | 'communication' | 'admin';
 
 const MODULES: (Omit<NavItem, 'text' | 'group'> & { key: ModuleKey; group: Group; permission: Permission })[] = [
@@ -63,6 +64,7 @@ const MODULES: (Omit<NavItem, 'text' | 'group'> & { key: ModuleKey; group: Group
   { key: 'calendarEvents', group: 'communication', href: '/calendar/events', icon: 'calendar', permission: 'calendar.event.read' },
   { key: 'promotion', group: 'admin', href: '/promotion', icon: 'promote', permission: 'sis.enrollment.update' },
   { key: 'users', group: 'admin', href: '/users', icon: 'users', permission: 'users.user.read' },
+  { key: 'settings', group: 'admin', href: '/settings', icon: 'settings', permission: 'settings.school.update' },
 ];
 
 export default async function AppGroupLayout({ children }: { children: ReactNode }) {
