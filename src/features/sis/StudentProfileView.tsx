@@ -24,10 +24,12 @@ import { useState } from 'react';
 import { AppLink } from '@/components/AppLink';
 import { EmptyState } from '@/components/EmptyState';
 import { svg } from '@/components/icons';
+import { Results } from '@/features/exams/Results';
 import { PortalAccounts } from '@/features/portal/Portal';
 import { usePathname, useRouter } from '@/i18n/navigation';
 import { formatMoney } from '@/lib/money';
 import { formatPhone } from '@/lib/phone';
+import type { StudentResult } from '@/server/modules/exams/service';
 import type { PortalAccountRow } from '@/server/modules/portal/service';
 import { transferStudent, withdrawStudent } from '@/server/modules/sis/actions';
 import type { HistoryEntry, StudentAttendance, StudentFees, StudentProfile } from '@/server/modules/sis/schemas';
@@ -63,9 +65,11 @@ export function StudentProfileView({
   canEdit,
   sections,
   accounts,
+  results,
 }: {
   sections: { id: string; name: string }[];
   accounts: PortalAccountRow[] | null;
+  results: StudentResult[] | null;
   student: StudentProfile;
   attendance: StudentAttendance | null;
   fees: StudentFees | null;
@@ -420,6 +424,9 @@ export function StudentProfileView({
                     ),
                   },
                 ]
+              : []),
+            ...(results
+              ? [{ id: 'results', label: t('profile.tabs.results'), content: <Results results={results} /> }]
               : []),
             ...(accounts
               ? [

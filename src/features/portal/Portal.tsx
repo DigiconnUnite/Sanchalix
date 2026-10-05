@@ -17,6 +17,7 @@ import Table from '@cloudscape-design/components/table';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { EmptyState } from '@/components/EmptyState';
+import { Results } from '@/features/exams/Results';
 import { TemporaryPassword } from '@/features/users/Users';
 import { usePathname, useRouter } from '@/i18n/navigation';
 import { formatMoney } from '@/lib/money';
@@ -149,6 +150,8 @@ export function PortalHome({ home, title, welcome }: { home: Home; title: string
             { id: 'balance', header: tInvoice('columns.balance'), cell: (invoice) => formatMoney(invoice.balanceMinor) },
           ]}
         />
+
+        {home.results.length > 0 && <Results results={home.results} />}
 
         <Container header={<Header variant="h2">{t('upcoming.title')}</Header>}>
           {home.upcoming.length === 0 ? (

@@ -13,6 +13,7 @@ import { Student } from '@/server/models/student';
 import { Subject } from '@/server/models/subject';
 import { User } from '@/server/models/user';
 import { listUpcoming } from '@/server/modules/calendar/events';
+import { getStudentResults, type StudentResult } from '@/server/modules/exams/service';
 import { getStudentAttendance, getStudentFees } from '@/server/modules/sis/queries';
 import { getTimetable } from '@/server/modules/timetable/service';
 import { createAccount } from '@/server/modules/users/service';
@@ -97,6 +98,8 @@ export type PortalHome = {
   attendance: Awaited<ReturnType<typeof getStudentAttendance>>;
   fees: Awaited<ReturnType<typeof getStudentFees>>;
   upcoming: Awaited<ReturnType<typeof listUpcoming>>;
+  /** Published results only: marks still being entered or checked are not shown to families. */
+  results: StudentResult[];
 };
 
 /** A student's own record, or a parent's children. Never anyone else: the ids come from the signed-in account. */
@@ -137,7 +140,8 @@ export async function getPortalHome(ctx: RequestContext, requestedId?: string): 
   const sectionId = sectionIdOf.get(String(student.currentEnrollmentId)) ?? '';
   const school = await School.findById(schoolId).select('timezone').lean();
   const today = todayIn(school?.timezone ?? 'Asia/Kolkata');
-  const [timetable, homework, attendance, fees, upcoming] = await Promise.all([
+  const [results, timetable, homework, attendance, fees, upcoming] = await Promise.all([
+    getStudentResults(ctx, id, true),
     getTimetable(ctx, sectionId),
     Types.ObjectId.isValid(sectionId)
       ? Homework.find({ schoolId, sectionIds: sectionId, status: 'published', dueOn: { $gte: today } })
@@ -176,5 +180,6 @@ export async function getPortalHome(ctx: RequestContext, requestedId?: string): 
     attendance,
     fees,
     upcoming,
+    results,
   };
 }

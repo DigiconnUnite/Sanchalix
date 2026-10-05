@@ -198,6 +198,13 @@ Server rules: `entries` must cover exactly the active enrollments of the section
 
 ## 6. Examinations
 
+**Built on 2026-10-05 (first slice):**
+- `upsertExam({ name, type, classIds })` and `upsertExamSchedule({ examId, classId, subjectId, date, maxMarks, passMarks })` need `exams.exam.update` (school admin, principal) and create only. A paper is unique per exam, class and subject (`CONFLICT`). A paper has one total; `components` (theory, practical, internal), start and end times and terms are not built.
+- `saveMarks({ examScheduleId, sectionId, entries: { studentId, marks | null, isAbsent }[] })` replaces the spec's per-cell `saveMark` and `submitMarks`: the whole section is saved at once. It needs `exams.mark.update` (teacher, principal). A teacher may save only for a section where the timetable has them teaching that subject. Marks are whole or half numbers from 0 to the paper's maximum; an absent student has none; a blank entry removes the mark. Grades use one fixed 9-point scale (A1 from 91%, pass at 33%); `gradingSchemes` is not built. The audit entry records counts, not marks.
+- `lockMarks({ examScheduleId, locked, reason? })` needs `exams.mark.approve` (principal); unlocking needs a reason. A locked paper refuses `saveMarks`.
+- `publishExamResults(examId)` needs `exams.exam.publish` (principal) and every paper locked. After it, papers cannot be unlocked or added. Students and parents see only published results, on their home page; staff see marks as entered on the student profile's Results tab.
+- Not built: report cards and PDFs, remarks, rank, moderation, the exam timetable notification, grading-scheme editor.
+
 | Name | Type | Permission | Input | Output |
 |---|---|---|---|---|
 | `upsertGradingScheme` | Action | `exams.gradingScheme.update` | `{ name, bands[], passPercent }` | `{ id }` · `VALIDATION` if bands overlap or have gaps |

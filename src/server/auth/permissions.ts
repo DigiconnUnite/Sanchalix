@@ -46,6 +46,11 @@ export type Permission =
   | 'hr.staff.read'
   | 'hr.staff.create'
   | 'hr.staff.update'
+  | 'exams.exam.read'
+  | 'exams.exam.update'
+  | 'exams.exam.publish'
+  | 'exams.mark.update'
+  | 'exams.mark.approve'
   | 'hr.attendance.read'
   | 'hr.attendance.update'
   | 'hr.leave.read'
@@ -68,6 +73,8 @@ const ROLE_PERMISSIONS: Record<RoleKey, readonly Permission[]> = {
   super_admin: [],
   school_admin: [
     ...EVERYONE,
+    'exams.exam.read',
+    'exams.exam.update',
     'hr.staff.read',
     'hr.staff.create',
     'hr.staff.update',
@@ -104,6 +111,11 @@ const ROLE_PERMISSIONS: Record<RoleKey, readonly Permission[]> = {
   ],
   principal: [
     ...EVERYONE,
+    'exams.exam.read',
+    'exams.exam.update',
+    'exams.exam.publish',
+    'exams.mark.update',
+    'exams.mark.approve',
     'users.user.read',
     'calendar.event.update',
     'hr.staff.read',
@@ -127,6 +139,8 @@ const ROLE_PERMISSIONS: Record<RoleKey, readonly Permission[]> = {
   ],
   teacher: [
     ...EVERYONE,
+    'exams.exam.read',
+    'exams.mark.update',
     ...OWN_LEAVE,
     'sis.student.read',
     'attendance.record.read',

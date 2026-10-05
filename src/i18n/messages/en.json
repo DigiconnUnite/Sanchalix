@@ -27,7 +27,8 @@
       "calendarEvents": "Calendar",
       "promotion": "Promotion",
       "settings": "Settings",
-      "staffAttendance": "Staff attendance"
+      "staffAttendance": "Staff attendance",
+      "exams": "Exams"
     },
     "breadcrumbs": "Breadcrumbs",
     "signOut": "Sign out",
@@ -261,7 +262,8 @@
           "history": "History",
           "attendance": "Attendance",
           "fees": "Fees",
-          "portal": "Portal access"
+          "portal": "Portal access",
+          "results": "Results"
         },
         "dob": "Date of birth",
         "gender": "Gender",
@@ -1781,6 +1783,136 @@
       "overlap": "This period starts before the one above it ends",
       "periodInUse": "The timetable already uses period {number}. Clear it there before removing the period.",
       "notFound": "We couldn't find the school."
+    }
+  },
+  "exams": {
+    "title": "Exams",
+    "description": "Exams of the current academic year. Open one to set its papers and enter marks.",
+    "add": "Add exam",
+    "create": "Create exam",
+    "cancel": "Cancel",
+    "dismiss": "Dismiss message",
+    "nameHint": "For example, Unit test 1 or Half-yearly.",
+    "classesPlaceholder": "Choose classes",
+    "noClasses": "Add classes for the current academic year first.",
+    "examDescription": "{type} · {classes}",
+    "publish": "Publish results",
+    "publishTitle": "Publish results of {name}?",
+    "publishBody": "Students and parents will see these marks. Published papers stay locked and can't be changed here.",
+    "publishedDone": "Results of {name} are published.",
+    "publishedNote": "Results are published. Students and parents can see them.",
+    "lockFirst": "Lock every paper before publishing results.",
+    "lock": "Lock",
+    "unlock": "Unlock",
+    "lockLabel": "Lock marks for {subject}, {className}",
+    "unlockLabel": "Unlock marks for {subject}, {className}",
+    "locked": "Marks for {subject} are locked.",
+    "unlocked": "Marks for {subject} are open again.",
+    "unlockTitle": "Unlock marks for {subject}?",
+    "unlockReason": "Reason",
+    "unlockHint": "Teachers will be able to change these marks again. The reason is kept in the audit log.",
+    "columns": {
+      "name": "Exam",
+      "type": "Type",
+      "classes": "Classes",
+      "papers": "Papers",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "type": {
+      "unit_test": "Unit test",
+      "term": "Term exam",
+      "annual": "Annual exam",
+      "practical": "Practical",
+      "other": "Other"
+    },
+    "status": {
+      "open": "In progress",
+      "published": "Results published"
+    },
+    "empty": {
+      "heading": "No exams yet",
+      "body": "Add an exam, then set a paper for each class and subject."
+    },
+    "paper": {
+      "add": "Add paper",
+      "classId": "Class",
+      "classIdPlaceholder": "Choose a class",
+      "subjectId": "Subject",
+      "subjectIdPlaceholder": "Choose a subject",
+      "date": "Date",
+      "dateHint": "Use YYYY/MM/DD.",
+      "maxMarks": "Maximum marks",
+      "passMarks": "Pass marks",
+      "marks": "Marks",
+      "maxPass": "Out of {max}, pass at {pass}",
+      "entered": "Marks entered",
+      "open": "Open for marks",
+      "locked": "Locked",
+      "noSubjects": "Add subjects before setting papers.",
+      "empty": {
+        "heading": "No papers yet",
+        "body": "A paper is one subject for one class, with a date and maximum marks."
+      }
+    },
+    "marks": {
+      "title": "Marks: {subject}",
+      "description": "{exam} · {className} · {date} · out of {max}, pass at {pass}",
+      "back": "Back to exam",
+      "save": "Save marks",
+      "saved": "{saved, plural, one {# mark} other {# marks}} saved for {section}.",
+      "section": "Section",
+      "rollNo": "Roll no.",
+      "student": "Student",
+      "outOf": "Marks (out of {max})",
+      "absent": "Absent",
+      "grade": "Grade",
+      "marksFor": "Marks for {name}",
+      "absentFor": "{name} was absent",
+      "published": "Results are published, so these marks can't be changed.",
+      "locked": "This paper is locked. Ask the principal to unlock it to change marks.",
+      "readOnly": "You can see these marks but not change them.",
+      "noSection": "You don't teach this subject in any section of this class, so there are no marks for you to enter.",
+      "empty": {
+        "heading": "No students",
+        "body": "This section has no active students."
+      }
+    },
+    "results": {
+      "subject": "Subject",
+      "marks": "Marks",
+      "outOf": "{marks} / {max}",
+      "absent": "Absent",
+      "grade": "Grade",
+      "result": "Result",
+      "pass": "Pass",
+      "fail": "Below pass marks",
+      "total": "Total {total} of {max} · {percent}%",
+      "empty": {
+        "heading": "No results yet",
+        "body": "Marks appear here once they are entered for an exam."
+      }
+    },
+    "errors": {
+      "name": "Enter a name of up to 80 characters",
+      "type": "Choose a type",
+      "classes": "Choose at least one class of the current academic year",
+      "class": "Choose one of this exam's classes",
+      "subject": "Choose a subject",
+      "date": "Choose the date of the paper",
+      "maxMarks": "Enter maximum marks between 1 and 1,000",
+      "passMarks": "Pass marks must be between 0 and the maximum marks",
+      "section": "Choose a section you teach this subject in",
+      "roster": "The list doesn't match the section's students. Reload the page and try again.",
+      "marks": "Marks must be whole or half numbers between 0 and {max}, and empty for an absent student.",
+      "reason": "Enter the reason for unlocking",
+      "notFound": "We couldn't find that exam or paper.",
+      "paperExists": "This class already has a paper for that subject in this exam.",
+      "locked": "This paper is locked, so marks can't be changed.",
+      "lockState": "This paper is already in that state. Reload the page.",
+      "published": "Results are already published, so this can't be changed.",
+      "noPapers": "Add at least one paper before publishing results.",
+      "notLocked": "{count, plural, one {# paper is} other {# papers are}} not locked yet. Lock every paper first."
     }
   }
 }

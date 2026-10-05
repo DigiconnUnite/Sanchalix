@@ -20,6 +20,7 @@ type ModuleKey =
   | 'timetable'
   | 'attendance'
   | 'homework'
+  | 'exams'
   | 'calendar'
   | 'feeCounter'
   | 'feeStructures'
@@ -55,6 +56,7 @@ const MODULES: (Omit<NavItem, 'text' | 'group'> & { key: ModuleKey; group: Group
     permission: 'academics.timetable.read',
   },
   { key: 'attendance', group: 'academics', href: '/attendance/take', icon: 'attendance', permission: 'attendance.record.read' },
+  { key: 'exams', group: 'academics', href: '/exams', icon: 'exams', permission: 'exams.exam.read' },
   { key: 'homework', group: 'academics', href: '/homework', icon: 'homework', permission: 'homework.assignment.read' },
   { key: 'calendar', group: 'academics', href: '/calendar/holidays', icon: 'holiday', permission: 'calendar.holiday.read' },
   { key: 'feeCounter', group: 'fees', href: '/fees/counter', icon: 'collectPayment', permission: 'fees.payment.create' },
