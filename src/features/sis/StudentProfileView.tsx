@@ -22,6 +22,7 @@ import Textarea from '@cloudscape-design/components/textarea';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { AppLink } from '@/components/AppLink';
+import { useCrumb } from '@/components/Crumb';
 import { EmptyState } from '@/components/EmptyState';
 import { svg } from '@/components/icons';
 import { Results } from '@/features/exams/Results';
@@ -79,6 +80,7 @@ export function StudentProfileView({
   canEdit: boolean;
 }) {
   const t = useTranslations('sis.students');
+  useCrumb(student.name);
   const tMark = useTranslations('attendance.take.status');
   const tInvoice = useTranslations('fees.invoices');
   const tPayment = useTranslations('fees.payments.columns');

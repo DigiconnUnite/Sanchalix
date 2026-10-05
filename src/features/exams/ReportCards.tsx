@@ -17,6 +17,7 @@ import Textarea from '@cloudscape-design/components/textarea';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { AppLink } from '@/components/AppLink';
+import { useCrumb } from '@/components/Crumb';
 import { EmptyState } from '@/components/EmptyState';
 import { svg } from '@/components/icons';
 import { usePathname, useRouter } from '@/i18n/navigation';
@@ -259,6 +260,7 @@ export function ReportCardsTable({
 
 export function ReportCardView({ card }: { card: ReportCardDetail }) {
   const t = useTranslations('exams.reportCards');
+  useCrumb(card.studentName);
   usePrintInLightMode();
 
   return (

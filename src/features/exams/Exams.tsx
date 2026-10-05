@@ -18,6 +18,7 @@ import Textarea from '@cloudscape-design/components/textarea';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { AppLink } from '@/components/AppLink';
+import { useCrumb } from '@/components/Crumb';
 import { EmptyState } from '@/components/EmptyState';
 import { usePathname, useRouter } from '@/i18n/navigation';
 import { lockMarks, publishExamResults, saveMarks, upsertExam, upsertExamSchedule } from '@/server/modules/exams/actions';
@@ -187,6 +188,7 @@ export function ExamView({
   canPublish: boolean;
 }) {
   const t = useTranslations('exams');
+  useCrumb(exam.name);
   const router = useRouter();
   const [adding, setAdding] = useState(false);
   const [paper, setPaper] = useState(PAPER);
@@ -412,6 +414,7 @@ export function ExamView({
 
 export function MarksSheet({ sheet }: { sheet: Sheet }) {
   const t = useTranslations('exams');
+  useCrumb(sheet.exam.name);
   const router = useRouter();
   const pathname = usePathname();
   const [marks, setMarks] = useState(

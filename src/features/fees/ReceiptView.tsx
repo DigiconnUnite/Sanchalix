@@ -9,6 +9,7 @@ import KeyValuePairs from '@cloudscape-design/components/key-value-pairs';
 import SpaceBetween from '@cloudscape-design/components/space-between';
 import Table from '@cloudscape-design/components/table';
 import { useTranslations } from 'next-intl';
+import { useCrumb } from '@/components/Crumb';
 import { svg } from '@/components/icons';
 import { useRouter } from '@/i18n/navigation';
 import { formatMoney } from '@/lib/money';
@@ -21,6 +22,7 @@ const dateTime = new Intl.DateTimeFormat('en-IN', { dateStyle: 'medium', timeSty
 
 export function ReceiptView({ receipt, created }: { receipt: Receipt; created: boolean }) {
   const t = useTranslations('fees.receipt');
+  useCrumb(receipt.receiptNo);
   const tMethod = useTranslations('fees.counter.methods');
   const router = useRouter();
   const amount = formatMoney(receipt.amountMinor);

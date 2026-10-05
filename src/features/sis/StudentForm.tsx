@@ -12,6 +12,7 @@ import Header from '@cloudscape-design/components/header';
 import Input, { type InputProps } from '@cloudscape-design/components/input';
 import Select from '@cloudscape-design/components/select';
 import SpaceBetween from '@cloudscape-design/components/space-between';
+import { useCrumb } from '@/components/Crumb';
 import { useTranslations } from 'next-intl';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { useRouter } from '@/i18n/navigation';
@@ -49,6 +50,7 @@ export function StudentForm({
   student?: StudentProfile;
 }) {
   const t = useTranslations('sis.students');
+  useCrumb(student?.name);
   const router = useRouter();
   const [values, setValues] = useState(() =>
     student

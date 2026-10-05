@@ -19,6 +19,7 @@ import Tiles from '@cloudscape-design/components/tiles';
 import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 import { AppLink } from '@/components/AppLink';
+import { useCrumb } from '@/components/Crumb';
 import { EmptyState } from '@/components/EmptyState';
 import { svg } from '@/components/icons';
 import { usePathname, useRouter } from '@/i18n/navigation';
@@ -120,6 +121,7 @@ export function AnnouncementsTable({
 
 export function AnnouncementView({ announcement }: { announcement: AnnouncementDetail }) {
   const t = useTranslations('comms.announcements');
+  useCrumb(announcement.title);
   const router = useRouter();
   const audienceLabel = useAudienceLabel();
   return (

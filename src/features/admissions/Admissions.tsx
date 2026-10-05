@@ -22,6 +22,7 @@ import Textarea from '@cloudscape-design/components/textarea';
 import { useTranslations } from 'next-intl';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { AppLink } from '@/components/AppLink';
+import { useCrumb } from '@/components/Crumb';
 import { EmptyState } from '@/components/EmptyState';
 import { usePathname, useRouter } from '@/i18n/navigation';
 import { formatPhone } from '@/lib/phone';
@@ -320,6 +321,7 @@ const ADDRESS = { line1: '', city: '', state: '', pincode: '' };
 
 export function AdmissionView({ admission, canEdit }: { admission: AdmissionDetail; canEdit: boolean }) {
   const t = useTranslations('admissions');
+  useCrumb(admission.name);
   const tStudent = useTranslations('sis.students');
   const router = useRouter();
   const [target, setTarget] = useState<AdmissionStatus | null>(null);

@@ -20,6 +20,7 @@ import Table from '@cloudscape-design/components/table';
 import { useTranslations } from 'next-intl';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { AppLink } from '@/components/AppLink';
+import { useCrumb } from '@/components/Crumb';
 import { EmptyState } from '@/components/EmptyState';
 import { usePathname, useRouter } from '@/i18n/navigation';
 import { formatPhone } from '@/lib/phone';
@@ -202,6 +203,7 @@ type Field = keyof typeof EMPTY;
 
 export function StaffForm({ member }: { member?: StaffMember }) {
   const t = useTranslations('hr');
+  useCrumb(member?.name);
   const router = useRouter();
   const [values, setValues] = useState(member ?? EMPTY);
   const [error, setError] = useState<{ message: string; fieldErrors?: Record<string, string> } | null>(null);

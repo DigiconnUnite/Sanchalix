@@ -8,11 +8,15 @@ import TopNavigation from '@cloudscape-design/components/top-navigation';
 import { applyMode, Mode } from '@cloudscape-design/global-styles';
 import { useTranslations } from 'next-intl';
 import { type ReactNode, useState } from 'react';
+import { CrumbContext } from '@/components/Crumb';
 import { type IconKey, svg } from '@/components/icons';
 import { usePathname, useRouter } from '@/i18n/navigation';
 import { useIsDark } from '@/lib/useIsDark';
 import { useIsMobile } from '@/lib/useIsMobile';
 import type { VisualMode } from '@/lib/visualMode';
+
+// Paths that are part of a URL but have no page of their own, so they get no crumb.
+const NO_PAGE = [/^\/academics\/sections$/, /^\/staff\/[0-9a-f]{24}$/, /^\/fees$/, /^\/academics$/, /^\/attendance$/, /^\/calendar$/, /^\/communication$/];
 
 export type NavItem = { text: string; href: string; icon: IconKey; group?: string };
 
@@ -56,6 +60,21 @@ export function AppShell({
   const [navigationChoice, setNavigationChoice] = useState<boolean | null>(null);
   const navigationOpen = navigationChoice ?? !isMobile;
   const collapsed = !isMobile && !navigationOpen;
+  // Breadcrumbs follow the URL: home, the module, then one crumb per deeper segment. A record's id shows the name
+  // its page gave through useCrumb.
+  const [recordLabel, setRecordLabel] = useState('');
+  const base = !active || active.href === '/' ? '' : under(active.href) ? active.href : `/${active.href.split('/')[1] ?? ''}`;
+  const deeper = pathname.slice(base.length).split('/').filter(Boolean);
+  const crumbs = [
+    ...nav.filter((item) => item.href === '/' || item === active).map(({ text, href }) => ({ text, href })),
+    ...deeper.flatMap((segment, index) => {
+      const href = `${base}/${deeper.slice(0, index + 1).join('/')}`;
+      if (NO_PAGE.some((pattern) => pattern.test(href))) return [];
+      const isRecord = /^[0-9a-f]{24}$/.test(segment);
+      const key = `crumbs.${segment}`;
+      return [{ text: isRecord ? recordLabel || t('crumbs.details') : t.has(key) ? t(key) : segment, href }];
+    }),
+  ];
   const link = ({ text, href, icon }: NavItem) => ({
     type: 'link' as const,
     text,
@@ -65,7 +84,7 @@ export function AppShell({
   const groups = [...new Set(nav.flatMap((item) => item.group ?? []))];
 
   return (
-    <>
+    <CrumbContext value={setRecordLabel}>
       <div id="top-nav" className="vw-top-nav">
         <TopNavigation
           identity={{
@@ -127,7 +146,7 @@ export function AppShell({
         breadcrumbs={
           <BreadcrumbGroup
             ariaLabel={t('breadcrumbs')}
-            items={nav.filter((item) => item.href === '/' || item === active)}
+            items={crumbs}
             onFollow={(event) => {
               event.preventDefault();
               router.push(event.detail.href);
@@ -155,6 +174,6 @@ export function AppShell({
         }
         content={children}
       />
-    </>
+    </CrumbContext>
   );
 }
