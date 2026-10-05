@@ -144,6 +144,21 @@
   scrollbar-color: color-mix(in srgb, var(--color-text-body-secondary-66ygbb) 20%, transparent) transparent;
 }
 
+/* ADR-020: the school logo in the header is a circle. Cloudscape renders it as a plain image with no shape option.
+   The fallback icon (an SVG image) sits on a tinted disc so it reads as a logo, not a stray glyph. */
+.vw-top-nav [class*='awsui_logo_'] {
+  box-sizing: border-box;
+  aspect-ratio: 1;
+  block-size: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.vw-top-nav [class*='awsui_logo_'][src^='data:image/svg'] {
+  padding: 6px;
+  background: color-mix(in srgb, currentColor 18%, transparent);
+}
+
 /* ADR-020: paper gets the document only. Cloudscape ships no print styles for its shell, so the header, the
    navigation and the breadcrumb row are removed here, along with anything marked vw-no-print. */
 @media print {

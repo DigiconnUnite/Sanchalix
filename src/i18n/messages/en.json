@@ -92,7 +92,8 @@
       "leave": "Leave",
       "admissions": "Admissions",
       "2fa": "Two-step verification"
-    }
+    },
+    "logoAlt": "{school} logo"
   },
   "auth": {
     "signIn": {
@@ -1786,7 +1787,9 @@
       "line1": "Building, street and area",
       "city": "City",
       "state": "State",
-      "pincode": "Pincode"
+      "pincode": "Pincode",
+      "logoUrl": "Logo address",
+      "logoUrlHint": "The https address of a square image. It appears as a circle in the header. Leave empty to show the school icon."
     },
     "workingDays": {
       "title": "Working days",
@@ -1823,7 +1826,8 @@
       "endBeforeStart": "A period must end after it starts",
       "overlap": "This period starts before the one above it ends",
       "periodInUse": "The timetable already uses period {number}. Clear it there before removing the period.",
-      "notFound": "We couldn't find the school."
+      "notFound": "We couldn't find the school.",
+      "logoUrl": "Enter an https address of up to 300 characters, or leave it empty"
     }
   },
   "exams": {

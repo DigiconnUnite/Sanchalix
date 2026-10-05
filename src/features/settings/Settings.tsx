@@ -84,6 +84,7 @@ export function Settings({ settings, tab }: { settings: SchoolSettings; tab: str
   const [school, setSchool] = useState({
     name: settings.name,
     affiliationNo: settings.affiliationNo,
+    logoUrl: settings.logoUrl,
     ...settings.address,
   });
   const [workingDays, setWorkingDays] = useState(settings.workingDays);
@@ -129,6 +130,7 @@ export function Settings({ settings, tab }: { settings: SchoolSettings; tab: str
                   updateSchoolSettings({
                     name: school.name,
                     affiliationNo: school.affiliationNo,
+                    logoUrl: school.logoUrl,
                     address: { line1: school.line1, city: school.city, state: school.state, pincode: school.pincode },
                     workingDays,
                   })
@@ -153,6 +155,20 @@ export function Settings({ settings, tab }: { settings: SchoolSettings; tab: str
                           {field('state', errors, 'address.state')}
                           {field('pincode', errors, 'address.pincode')}
                         </ColumnLayout>
+                        <FormField
+                          label={t('school.logoUrl')}
+                          description={t('school.logoUrlHint')}
+                          errorText={errors.logoUrl}
+                        >
+                          <Input
+                            type="url"
+                            inputMode="url"
+                            placeholder="https://"
+                            value={school.logoUrl}
+                            autoComplete={false}
+                            onChange={({ detail }) => setSchool({ ...school, logoUrl: detail.value })}
+                          />
+                        </FormField>
                       </SpaceBetween>
                     </Container>
                     <Container header={<Header variant="h2">{t('workingDays.title')}</Header>}>

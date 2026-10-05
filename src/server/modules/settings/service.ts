@@ -13,6 +13,8 @@ const text = (key: string, max: number) => z.string().trim().min(1, `${E}.${key}
 export const SchoolInput = z.object({
   name: text('name', 120),
   affiliationNo: z.string().trim().max(40, `${E}.affiliationNo`).default(''),
+  // https only: the address is loaded by every signed-in browser of the school.
+  logoUrl: z.union([z.literal(''), z.url({ protocol: /^https$/, error: `${E}.logoUrl` }).max(300, `${E}.logoUrl`)]).default(''),
   address: z.object({
     line1: text('line1', 120),
     city: text('city', 60),
@@ -47,7 +49,7 @@ export type SchoolSettings = SchoolInput & { code: string; board: string; period
 
 export async function getSettings(ctx: RequestContext): Promise<SchoolSettings | null> {
   const [school, periods] = await Promise.all([
-    School.findById(ctx.schoolId).select('name code board affiliationNo address settings.workingDays').lean(),
+    School.findById(ctx.schoolId).select('name code board affiliationNo logoUrl address settings.workingDays').lean(),
     getPeriods(ctx),
   ]);
   if (!school) return null;
@@ -56,6 +58,7 @@ export async function getSettings(ctx: RequestContext): Promise<SchoolSettings |
     code: school.code,
     board: school.board,
     affiliationNo: school.affiliationNo ?? '',
+    logoUrl: school.logoUrl ?? '',
     address: {
       line1: school.address.line1,
       city: school.address.city,
@@ -74,6 +77,7 @@ export async function updateSchool(ctx: RequestContext, input: SchoolInput) {
     {
       name: input.name,
       affiliationNo: input.affiliationNo || null,
+      logoUrl: input.logoUrl || null,
       'address.line1': input.address.line1,
       'address.city': input.address.city,
       'address.state': input.address.state,

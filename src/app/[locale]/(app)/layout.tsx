@@ -6,7 +6,7 @@ import { MODE_COOKIE, parseVisualMode } from '@/lib/visualMode';
 import { setVisualMode, signOut } from '@/server/auth/actions';
 import { can, type Permission } from '@/server/auth/permissions';
 import { countUnread } from '@/server/modules/comms/service';
-import { getSchoolName } from '@/server/platform/queries';
+import { getSchoolBrand } from '@/server/platform/queries';
 import { homeLabel, pageContext } from './pageContext';
 
 type ModuleKey =
@@ -87,7 +87,7 @@ const MODULES: (Omit<NavItem, 'text' | 'group'> & { key: ModuleKey; group: Group
 
 export default async function AppGroupLayout({ children }: { children: ReactNode }) {
   const ctx = await pageContext();
-  const t = await getTranslations('shell');
+  const [t, school] = await Promise.all([getTranslations('shell'), getSchoolBrand(ctx.schoolId)]);
   const nav: NavItem[] = [
     { text: t(`nav.${homeLabel(ctx.role)}`), href: '/', icon: 'dashboard' },
     ...MODULES.filter((item) => can(ctx.role, item.permission)).map(({ key, group, href, icon }) => ({
@@ -101,7 +101,8 @@ export default async function AppGroupLayout({ children }: { children: ReactNode
   return (
     <AppShell
       nav={nav}
-      schoolName={await getSchoolName(ctx.schoolId)}
+      schoolName={school.name}
+      schoolLogo={school.logoUrl}
       userName={ctx.name}
       roleLabel={t(`roles.${ctx.role}`)}
       signOut={signOut}

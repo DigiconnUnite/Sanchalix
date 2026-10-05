@@ -7,7 +7,7 @@ import SideNavigation from '@cloudscape-design/components/side-navigation';
 import TopNavigation from '@cloudscape-design/components/top-navigation';
 import { applyMode, Mode } from '@cloudscape-design/global-styles';
 import { useTranslations } from 'next-intl';
-import { type ReactNode, useState } from 'react';
+import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { CrumbContext } from '@/components/Crumb';
 import { type IconKey, svg } from '@/components/icons';
 import { usePathname, useRouter } from '@/i18n/navigation';
@@ -23,6 +23,7 @@ export type NavItem = { text: string; href: string; icon: IconKey; group?: strin
 export function AppShell({
   nav,
   schoolName,
+  schoolLogo,
   userName,
   roleLabel,
   signOut,
@@ -36,6 +37,7 @@ export function AppShell({
   setVisualMode: (mode: VisualMode) => Promise<unknown>;
   nav: NavItem[];
   schoolName: string;
+  schoolLogo: string | null;
   userName: string;
   roleLabel: string;
   signOut: () => Promise<unknown>;
@@ -60,6 +62,22 @@ export function AppShell({
   const [navigationChoice, setNavigationChoice] = useState<boolean | null>(null);
   const navigationOpen = navigationChoice ?? !isMobile;
   const collapsed = !isMobile && !navigationOpen;
+  // Without a logo the header shows the school icon. TopNavigation's logo is an <img>, so the icon from the icon map
+  // is read back as markup and handed over as an image, in the header's own text colour.
+  const iconRef = useRef<HTMLSpanElement>(null);
+  const [iconLogo, setIconLogo] = useState<string | null>(null);
+  useEffect(() => {
+    const glyph = iconRef.current?.querySelector('svg');
+    const title = document.querySelector('#top-nav a');
+    if (!glyph || !title) return;
+    // XMLSerializer adds the SVG namespace, which a standalone image needs and inline markup may leave out.
+    const markup = new XMLSerializer()
+      .serializeToString(glyph)
+      .replaceAll('currentColor', getComputedStyle(title).color);
+    setIconLogo(`data:image/svg+xml,${encodeURIComponent(markup)}`);
+  }, []);
+  const logo = schoolLogo ?? iconLogo;
+
   // Breadcrumbs follow the URL: home, the module, then one crumb per deeper segment. A record's id shows the name
   // its page gave through useCrumb.
   const [recordLabel, setRecordLabel] = useState('');
@@ -85,11 +103,15 @@ export function AppShell({
 
   return (
     <CrumbContext value={setRecordLabel}>
+      <span ref={iconRef} hidden>
+        {svg('school')}
+      </span>
       <div id="top-nav" className="vw-top-nav">
         <TopNavigation
           identity={{
             href: '/',
             title: schoolName,
+            ...(logo && { logo: { src: logo, alt: t('logoAlt', { school: schoolName }) } }),
             onFollow: (event) => {
               event.preventDefault();
               router.push('/');
