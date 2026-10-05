@@ -26,7 +26,8 @@
       "users": "Users",
       "calendarEvents": "Calendar",
       "promotion": "Promotion",
-      "settings": "Settings"
+      "settings": "Settings",
+      "staffAttendance": "Staff attendance"
     },
     "breadcrumbs": "Breadcrumbs",
     "signOut": "Sign out",
@@ -305,7 +306,12 @@
           "absent": "Days absent",
           "date": "Date",
           "emptyHeading": "No attendance yet",
-          "emptyBody": "Days appear here once attendance is taken for this student's class."
+          "emptyBody": "Days appear here once attendance is taken for this student's class.",
+          "bySubject": "By subject (period attendance)",
+          "subject": "Subject",
+          "periods": "Periods attended",
+          "attended": "{attended} of {total}",
+          "daily": "Day by day"
         },
         "fees": {
           "due": "Balance due",
@@ -648,7 +654,10 @@
       "empty": {
         "heading": "No students in {section} yet",
         "body": "Ask the office to add students to this section."
-      }
+      },
+      "period": "Period",
+      "wholeDay": "Whole day",
+      "periodNo": "Period {number}"
     }
   },
   "calendar": {
@@ -1263,6 +1272,39 @@
         "cannotCancel": "Only your own request that is still waiting for approval can be cancelled."
       },
       "halfDay": "Half day"
+    },
+    "attendance": {
+      "title": "Staff attendance",
+      "description": "Who was at work on this day. Staff on approved leave start as on leave.",
+      "date": "Date",
+      "dateHint": "Use YYYY/MM/DD.",
+      "save": "Save attendance",
+      "update": "Save changes",
+      "dismiss": "Dismiss message",
+      "saved": "Saved: {present} present, {absent} absent, {leave} on leave.",
+      "notSaved": "Not saved yet for this day. Check the marks and save.",
+      "summary": "{present} present · {absent} absent · {halfDay} half day · {leave} on leave",
+      "approvedLeave": "Approved leave",
+      "statusFor": "Attendance for {name}",
+      "columns": {
+        "employeeNo": "Employee no.",
+        "name": "Name",
+        "status": "Attendance"
+      },
+      "status": {
+        "present": "Present",
+        "absent": "Absent",
+        "half_day": "Half day",
+        "leave": "On leave"
+      },
+      "empty": {
+        "heading": "No staff yet",
+        "body": "Add staff members to take their attendance."
+      },
+      "errors": {
+        "date": "Choose a date",
+        "roster": "The list doesn't match the staff of this school. Reload the page and try again."
+      }
     }
   },
   "homework": {

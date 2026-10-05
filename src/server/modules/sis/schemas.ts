@@ -123,6 +123,8 @@ export type StudentAttendance = {
   absent: number;
   percent: number | null;
   days: { date: string; status: string }[];
+  /** Period attendance in the same 60 days, per subject. Empty when the school takes only whole-day attendance. */
+  bySubject: { subject: string; attended: number; total: number; percent: number }[];
 };
 
 export type StudentFees = {

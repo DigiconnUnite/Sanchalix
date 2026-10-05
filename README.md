@@ -102,6 +102,8 @@ The roadmap's M0 walking skeleton ([Docs/05-roadmap.md](Docs/05-roadmap.md)):
 - A calendar of school events and holidays by month
 - Year end: plan the next academic year (classes and sections are copied), promote, detain, graduate or release students section by section, then close the year
 - Period-wise attendance: the teacher of a timetable period marks that period for the section
+- Staff attendance by day, with approved leave filled in
+- Period attendance in the monthly register and per subject on the student profile
 - Staff leave: apply, cancel, and approve or reject with a comment (no balances yet)
 - A receipt that prints without the app around it
 - Grouped navigation, and a profile page with density and password change

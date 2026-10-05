@@ -164,17 +164,20 @@ export async function getRegister(
   ctx: RequestContext,
   sectionId: string,
   requestedMonth: string | undefined,
+  requestedPeriod?: number,
 ): Promise<AttendanceRegister | null> {
   const { schoolId } = ctx;
   const section = await findAttendanceSection(ctx, sectionId);
   if (!section) return null;
+  const periods = (await TimetableSlot.distinct('period', { schoolId, sectionId: section._id })).sort((a, b) => a - b);
+  const period = periods.find((number) => number === requestedPeriod) ?? null;
 
   const { today, workingDays } = await getSchoolCalendar(ctx);
   const month = requestedMonth && /^\d{4}-(0[1-9]|1[0-2])$/.test(requestedMonth) ? requestedMonth : today.slice(0, 7);
   const inMonth = { $gte: `${month}-01`, $lte: `${month}-31` };
 
   const [records, holidays, enrollments] = await Promise.all([
-    AttendanceRecord.find({ schoolId, sectionId: section._id, mode: 'daily', date: inMonth })
+    AttendanceRecord.find({ schoolId, sectionId: section._id, mode: period ? 'period' : 'daily', period, date: inMonth })
       .select('date entries.studentId entries.status')
       .lean(),
     Holiday.find({ schoolId, date: inMonth }).select('date').lean(),
@@ -198,6 +201,8 @@ export async function getRegister(
   return {
     section: { id: String(section._id), name: section.displayName },
     month,
+    period,
+    periods,
     days,
     students: enrollments
       .sort((a, b) => a.rollNo - b.rollNo)

@@ -3,7 +3,11 @@ import { afterAll, beforeAll, expect, it } from 'vitest';
 import type { RequestContext } from '@/server/auth/context';
 import { connectDb } from '@/server/db/connect';
 import { LeaveRequest } from '@/server/models/leaveRequest';
+import { todayIn, weekdayOf } from '@/lib/dates';
+import { Staff } from '@/server/models/staff';
+import { StaffAttendance } from '@/server/models/staffAttendance';
 import { applyLeave, cancelLeave, decideLeave, LeaveInput, listLeave } from './leave';
+import { getStaffSheet, saveStaffAttendance } from './staffAttendance';
 
 const schoolId = new Types.ObjectId();
 const person = (role: RequestContext['role'], school = schoolId, staff = true): RequestContext => ({
@@ -23,7 +27,7 @@ const request = (from: string, to = from) =>
 
 beforeAll(async () => {
   await connectDb();
-  await LeaveRequest.init();
+  await Promise.all([LeaveRequest.init(), StaffAttendance.init(), Staff.init()]);
 });
 
 afterAll(() => mongoose.disconnect());
@@ -74,4 +78,54 @@ it('lets only the requester cancel a pending request', async () => {
   await expect(cancelLeave(teacher, theirs?.id ?? '')).rejects.toMatchObject({ code: 'BUSINESS_RULE' });
   await cancelLeave(colleague, theirs?.id ?? '');
   expect((await listLeave(principal, { status: 'cancelled' })).rows).toHaveLength(1);
+});
+
+it('starts staff on approved leave as on leave, and saves one mark per person per day', async () => {
+  const idOf = (person: RequestContext) => person.staffId ?? new Types.ObjectId();
+  const member = (staffId: Types.ObjectId, name: string, employeeNo: string) =>
+    Staff.create({
+      _id: staffId,
+      schoolId,
+      branchId: new Types.ObjectId(),
+      employeeNo,
+      name,
+      phone: `+9198${employeeNo.slice(-4)}0000`,
+      designation: 'TGT',
+      type: 'teaching',
+      joinedOn: '2024-04-01',
+    });
+  await member(idOf(teacher), 'Anita Desai', 'EMP-1001');
+  await member(idOf(colleague), 'Rohit Kulkarni', 'EMP-1002');
+  // The last working day up to today: schools are closed on Sunday by default.
+  const today = todayIn('Asia/Kolkata');
+  const date = weekdayOf(today) === 0 ? todayIn('Asia/Kolkata', new Date(Date.now() - 86_400_000)) : today;
+  await LeaveRequest.create({
+    schoolId,
+    requesterType: 'staff',
+    requesterId: idOf(colleague),
+    leaveTypeCode: 'SL',
+    from: date,
+    to: date,
+    reason: 'Fever',
+    status: 'approved',
+  });
+
+  const sheet = await getStaffSheet(principal, date);
+  expect(sheet).toMatchObject({ state: 'open', saved: false });
+  expect(sheet.staff).toMatchObject([
+    { name: 'Anita Desai', status: 'present', onApprovedLeave: false },
+    { name: 'Rohit Kulkarni', status: 'leave', onApprovedLeave: true },
+  ]);
+  expect((await getStaffSheet(otherPrincipal, date)).staff).toEqual([]);
+
+  const entries = sheet.staff.map(({ id }, index) => ({ staffId: id, status: index === 0 ? ('absent' as const) : ('leave' as const) }));
+  await expect(saveStaffAttendance(otherPrincipal, { date, entries })).rejects.toMatchObject({ code: 'VALIDATION' });
+  await expect(saveStaffAttendance(principal, { date: '2999-01-01', entries })).rejects.toMatchObject({
+    code: 'BUSINESS_RULE',
+  });
+  expect(await saveStaffAttendance(principal, { date, entries })).toMatchObject({ present: 0, absent: 1, leave: 1 });
+  await saveStaffAttendance(principal, { date, entries: [{ staffId: entries[0]?.staffId ?? '', status: 'present' }] });
+
+  expect(await StaffAttendance.countDocuments({ schoolId, date })).toBe(2);
+  expect((await getStaffSheet(principal, date)).staff.map(({ status }) => status)).toEqual(['present', 'leave']);
 });

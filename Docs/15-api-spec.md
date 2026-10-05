@@ -129,6 +129,8 @@ const StudentInput = z.object({
 
 ## 3. Staff and HR
 
+**Staff attendance, built on 2026-10-05:** `submitStaffAttendance({ date, entries: { staffId, status }[] })` needs `hr.attendance.update` (school admin); reading needs `hr.attendance.read` (school admin, principal). One record per staff member per day, upserted, so saving again changes the marks. Refused on a future date, a holiday or a non-working day, and for anyone outside the school's active staff. On an unsaved day, staff with approved leave covering it start as `leave` (or `half_day`). `/staff/attendance?date=`. Not built: self check-in, QR, check-in and check-out times, a monthly staff register.
+
 **Leave, built on 2026-10-05:** `applyLeave({ leaveTypeCode, from, to, halfDay?, reason })` needs `hr.leave.create` and a staff record; overlapping pending or approved requests give `BUSINESS_RULE`. Leave types are the fixed codes `CL`, `SL`, `EL`, `LOP`; `leaveTypes`, quotas and balances are not built, so no request is refused for balance. `decideLeave({ id, decision, comment? })` needs `hr.leave.approve` (principal and school admin), works once on a pending request and never on the approver's own. `cancelLeave(id)` withdraws the requester's own pending request. `/leave` lists own requests for staff and all staff requests for approvers (`hr.leave.read`), filtered by status in the URL. Not built: attachments, substitutions, a notification to the requester, student leave.
 
 **Built on 2026-10-05:** `updateStaff({ id, name, designation, department?, type, phone, email?, joinedOn, status })` needs `hr.staff.update` and is audited. It is last-write-wins (no version check). The screen is `/staff/[id]/edit`, opened from the name in the staff table.
@@ -166,7 +168,7 @@ const StudentInput = z.object({
 
 ## 5. Attendance
 
-**Period mode, built on 2026-10-05:** `submitAttendance` accepts `mode: 'period'` with `period`. The period must be on the section's published timetable for that weekday (`BUSINESS_RULE` otherwise) and the record stores the slot's `subjectId`. In `assigned` scope only the teacher of that slot may submit it; daily mode stays with the class teacher. `/attendance/take?section=&date=&period=` shows a Period selector when the section has periods that day; a teacher sees the sections they teach as well as their own class. The register, the dashboard tile and the student profile still count daily records only.
+**Period mode, built on 2026-10-05:** `submitAttendance` accepts `mode: 'period'` with `period`. The period must be on the section's published timetable for that weekday (`BUSINESS_RULE` otherwise) and the record stores the slot's `subjectId`. In `assigned` scope only the teacher of that slot may submit it; daily mode stays with the class teacher. `/attendance/take?section=&date=&period=` shows a Period selector when the section has periods that day; a teacher sees the sections they teach as well as their own class. The register takes `?period=` to show one period's marks for the month, and the student profile lists period attendance per subject for the last 60 days. The dashboard tile and the attendance percentage still count daily records only.
 
 | Name | Type | Permission | Input | Output |
 |---|---|---|---|---|

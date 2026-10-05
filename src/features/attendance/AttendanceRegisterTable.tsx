@@ -40,7 +40,12 @@ export function AttendanceRegisterTable({
   const router = useRouter();
   const pathname = usePathname();
   const isMobile = useIsMobile();
-  const open = (section: string, month: string) => router.replace(`${pathname}?section=${section}&month=${month}`);
+  const open = (section: string, month: string, period: number | null = register.period) =>
+    router.replace(`${pathname}?section=${section}&month=${month}${period ? `&period=${period}` : ''}`);
+  const periodOptions = [
+    { value: '', label: t('wholeDay') },
+    ...register.periods.map((number) => ({ value: String(number), label: t('periodNo', { number }) })),
+  ];
   const percent = (student: Student) => (student.percent === null ? NONE : `${student.percent}%`);
   const takeHref = `/attendance/take?section=${register.section.id}`;
 
@@ -72,9 +77,20 @@ export function AttendanceRegisterTable({
             <Select
               selectedOption={{ value: register.section.id, label: register.section.name }}
               options={sections.map(({ id, name }) => ({ value: id, label: name }))}
-              onChange={({ detail }) => open(detail.selectedOption.value ?? register.section.id, register.month)}
+              onChange={({ detail }) => open(detail.selectedOption.value ?? register.section.id, register.month, null)}
             />
           </FormField>
+          {register.periods.length > 0 && (
+            <FormField label={t('period')}>
+              <Select
+                selectedOption={periodOptions.find((option) => option.value === String(register.period ?? '')) ?? null}
+                options={periodOptions}
+                onChange={({ detail }) =>
+                  open(register.section.id, register.month, Number(detail.selectedOption.value) || null)
+                }
+              />
+            </FormField>
+          )}
           <FormField label={t('month')} constraintText={t('monthConstraint')}>
             <DatePicker
               granularity="month"

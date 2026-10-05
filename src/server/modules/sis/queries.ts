@@ -12,6 +12,7 @@ import { User } from '@/server/models/user';
 import { AttendanceRecord } from '@/server/models/attendanceRecord';
 import { Invoice } from '@/server/models/invoice';
 import { Payment } from '@/server/models/payment';
+import { Subject } from '@/server/models/subject';
 import type {
   HistoryEntry,
   ListStudents,
@@ -163,14 +164,30 @@ export async function listStudentHistory(ctx: RequestContext, studentId: string)
 /** The student's marks for the last 60 days, newest first. Call only after getStudent has confirmed access. */
 export async function getStudentAttendance(ctx: RequestContext, studentId: string): Promise<StudentAttendance> {
   const since = new Date(Date.now() - 60 * 86_400_000).toISOString().slice(0, 10);
-  const records = await AttendanceRecord.find({
+  const all = await AttendanceRecord.find({
     schoolId: ctx.schoolId,
     'entries.studentId': studentId,
-    mode: 'daily',
     date: { $gte: since },
   })
     .sort({ date: -1 })
-    .select('date entries.studentId entries.status')
+    .select('date mode subjectId entries.studentId entries.status')
+    .lean();
+  const records = all.filter((record) => record.mode === 'daily');
+  const statusIn = (record: (typeof all)[number]) =>
+    record.entries.find((candidate) => String(candidate.studentId) === studentId)?.status;
+
+  const perSubject = new Map<string, { attended: number; total: number }>();
+  for (const record of all) {
+    const status = statusIn(record);
+    if (record.mode !== 'period' || !record.subjectId || !status) continue;
+    const tally = perSubject.get(String(record.subjectId)) ?? { attended: 0, total: 0 };
+    tally.total += 1;
+    if (status === 'present' || status === 'late') tally.attended += 1;
+    perSubject.set(String(record.subjectId), tally);
+  }
+  const subjects = await Subject.find({ schoolId: ctx.schoolId, _id: { $in: [...perSubject.keys()] } })
+    .setOptions({ withDeleted: true })
+    .select('name')
     .lean();
   const days = records.flatMap((record) => {
     const entry = record.entries.find((candidate) => String(candidate.studentId) === studentId);
@@ -183,6 +200,12 @@ export async function getStudentAttendance(ctx: RequestContext, studentId: strin
     absent: count('absent'),
     percent: days.length ? Math.round((attended / days.length) * 1000) / 10 : null,
     days,
+    bySubject: subjects
+      .map((subject) => {
+        const tally = perSubject.get(String(subject._id)) ?? { attended: 0, total: 0 };
+        return { subject: subject.name, ...tally, percent: Math.round((tally.attended / tally.total) * 1000) / 10 };
+      })
+      .sort((a, b) => a.subject.localeCompare(b.subject)),
   };
 }
 

@@ -46,6 +46,8 @@ export type Permission =
   | 'hr.staff.read'
   | 'hr.staff.create'
   | 'hr.staff.update'
+  | 'hr.attendance.read'
+  | 'hr.attendance.update'
   | 'hr.leave.read'
   | 'hr.leave.create'
   | 'hr.leave.approve'
@@ -69,6 +71,8 @@ const ROLE_PERMISSIONS: Record<RoleKey, readonly Permission[]> = {
     'hr.staff.read',
     'hr.staff.create',
     'hr.staff.update',
+    'hr.attendance.read',
+    'hr.attendance.update',
     'hr.leave.read',
     'hr.leave.approve',
     'settings.school.update',
@@ -103,6 +107,7 @@ const ROLE_PERMISSIONS: Record<RoleKey, readonly Permission[]> = {
     'users.user.read',
     'calendar.event.update',
     'hr.staff.read',
+    'hr.attendance.read',
     'hr.leave.read',
     'hr.leave.approve',
     'comms.announcement.create',

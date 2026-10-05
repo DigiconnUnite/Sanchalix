@@ -13,7 +13,18 @@ import {
   LeaveInput,
 } from './leave';
 import { StaffInput, StaffUpdate } from './schemas';
+import { SaveStaffAttendance, saveStaffAttendance } from './staffAttendance';
 import { createStaff as create, updateStaff as update } from './service';
+
+export async function submitStaffAttendance(input: unknown) {
+  return withAction('hr.attendance.update', async () => {
+    const ctx = await requirePermission('hr.attendance.update');
+    const data = SaveStaffAttendance.parse(input);
+    const summary = await saveStaffAttendance(ctx, data);
+    await audit(ctx, 'hr.attendance.update', { type: 'school', id: ctx.schoolId }, { after: summary });
+    return summary;
+  });
+}
 
 export async function applyLeave(input: unknown) {
   return withAction('hr.leave.create', async () => {

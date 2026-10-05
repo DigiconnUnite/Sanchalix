@@ -51,6 +51,10 @@ export type AttendanceSheet = {
 export type AttendanceRegister = {
   section: { id: string; name: string };
   month: string;
+  /** The period shown, or null for whole-day attendance. */
+  period: number | null;
+  /** Periods this section has on its timetable, on any day. */
+  periods: number[];
   days: { date: string; day: number; kind: 'working' | 'holiday' | 'nonWorking'; taken: boolean }[];
   students: {
     id: string;

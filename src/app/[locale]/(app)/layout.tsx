@@ -14,6 +14,7 @@ type ModuleKey =
   | 'admissions'
   | 'staff'
   | 'leave'
+  | 'staffAttendance'
   | 'academics'
   | 'subjects'
   | 'timetable'
@@ -36,6 +37,13 @@ const MODULES: (Omit<NavItem, 'text' | 'group'> & { key: ModuleKey; group: Group
   { key: 'students', group: 'people', href: '/students', icon: 'students', permission: 'sis.student.read' },
   { key: 'admissions', group: 'people', href: '/admissions', icon: 'admissions', permission: 'sis.admission.read' },
   { key: 'staff', group: 'people', href: '/staff', icon: 'staff', permission: 'hr.staff.read' },
+  {
+    key: 'staffAttendance',
+    group: 'people',
+    href: '/staff/attendance',
+    icon: 'attendance',
+    permission: 'hr.attendance.read',
+  },
   { key: 'leave', group: 'people', href: '/leave', icon: 'leave', permission: 'hr.leave.read' },
   { key: 'academics', group: 'academics', href: '/academics/classes', icon: 'classes', permission: 'academics.class.read' },
   { key: 'subjects', group: 'academics', href: '/academics/subjects', icon: 'subjects', permission: 'academics.class.read' },

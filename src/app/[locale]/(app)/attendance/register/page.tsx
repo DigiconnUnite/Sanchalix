@@ -18,7 +18,7 @@ export default async function AttendanceRegisterPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const ctx = await pageContext('attendance.record.read');
-  const [t, tTake, sections, { section, month }] = await Promise.all([
+  const [t, tTake, sections, { section, month, period }] = await Promise.all([
     getTranslations('attendance.register'),
     getTranslations('attendance.take'),
     listAttendanceSections(ctx),
@@ -34,7 +34,12 @@ export default async function AttendanceRegisterPage({
     );
   }
 
-  const register = await getRegister(ctx, sectionId, typeof month === 'string' ? month : undefined);
+  const register = await getRegister(
+    ctx,
+    sectionId,
+    typeof month === 'string' ? month : undefined,
+    Number(period) || undefined,
+  );
   if (!register) notFound();
   return <AttendanceRegisterTable sections={sections} register={register} />;
 }

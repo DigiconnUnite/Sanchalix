@@ -273,10 +273,28 @@ export function StudentProfileView({
                             ]}
                           />
                         </Container>
+                        {attendance.bySubject.length > 0 && (
+                          <Table
+                            variant="container"
+                            trackBy="subject"
+                            items={attendance.bySubject}
+                            header={<Header variant="h2">{t('profile.attendance.bySubject')}</Header>}
+                            columnDefinitions={[
+                              { id: 'subject', header: t('profile.attendance.subject'), cell: (row) => row.subject, isRowHeader: true },
+                              {
+                                id: 'attended',
+                                header: t('profile.attendance.periods'),
+                                cell: (row) => t('profile.attendance.attended', { attended: row.attended, total: row.total }),
+                              },
+                              { id: 'percent', header: t('profile.attendance.percent'), cell: (row) => `${row.percent}%` },
+                            ]}
+                          />
+                        )}
                         <Table
                           variant="container"
                           trackBy="date"
                           items={attendance.days}
+                          header={<Header variant="h2">{t('profile.attendance.daily')}</Header>}
                           empty={
                             <EmptyState
                               icon="attendance"
