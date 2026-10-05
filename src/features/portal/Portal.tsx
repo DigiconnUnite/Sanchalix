@@ -151,6 +151,24 @@ export function PortalHome({ home, title, welcome }: { home: Home; title: string
           ]}
         />
 
+        {home.reportCardId && (
+          <Alert
+            type="info"
+            action={
+              <Button
+                href={`/report-cards/${home.reportCardId}`}
+                onFollow={(event) => {
+                  event.preventDefault();
+                  router.push(`/report-cards/${home.reportCardId}`);
+                }}
+              >
+                {t('reportCard.open')}
+              </Button>
+            }
+          >
+            {t('reportCard.ready', { name: selected.name })}
+          </Alert>
+        )}
         {home.results.length > 0 && <Results results={home.results} />}
 
         <Container header={<Header variant="h2">{t('upcoming.title')}</Header>}>

@@ -102,6 +102,7 @@ The roadmap's M0 walking skeleton ([Docs/05-roadmap.md](Docs/05-roadmap.md)):
 - A calendar of school events and holidays by month
 - Year end: plan the next academic year (classes and sections are copied), promote, detain, graduate or release students section by section, then close the year
 - Period-wise attendance: the teacher of a timetable period marks that period for the section
+- Report cards: generated per section from published results, with class teacher and principal remarks, published to students and parents, and printable
 - Exams: papers per class and subject, marks entry by the subject teacher, locking by the principal, and published results for students and parents
 - Staff attendance by day, with approved leave filled in
 - Period attendance in the monthly register and per subject on the student profile

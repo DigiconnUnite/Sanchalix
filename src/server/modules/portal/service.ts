@@ -13,10 +13,12 @@ import { Student } from '@/server/models/student';
 import { Subject } from '@/server/models/subject';
 import { User } from '@/server/models/user';
 import { listUpcoming } from '@/server/modules/calendar/events';
+import { latestPublishedCardId } from '@/server/modules/exams/reportCards';
 import { getStudentResults, type StudentResult } from '@/server/modules/exams/service';
 import { getStudentAttendance, getStudentFees } from '@/server/modules/sis/queries';
 import { getTimetable } from '@/server/modules/timetable/service';
 import { createAccount } from '@/server/modules/users/service';
+import { ownStudentIds } from './own';
 
 const E = 'portal.errors';
 const Id = z.string().regex(/^[0-9a-f]{24}$/, `${E}.notFound`);
@@ -100,15 +102,8 @@ export type PortalHome = {
   upcoming: Awaited<ReturnType<typeof listUpcoming>>;
   /** Published results only: marks still being entered or checked are not shown to families. */
   results: StudentResult[];
+  reportCardId: string | null;
 };
-
-/** A student's own record, or a parent's children. Never anyone else: the ids come from the signed-in account. */
-async function ownStudentIds(ctx: RequestContext) {
-  if (ctx.role === 'student') return ctx.studentId ? [ctx.studentId] : [];
-  if (ctx.role !== 'parent' || !ctx.guardianId) return [];
-  const guardian = await Guardian.findOne({ schoolId: ctx.schoolId, _id: ctx.guardianId }).select('studentIds').lean();
-  return guardian?.studentIds ?? [];
-}
 
 export async function getPortalHome(ctx: RequestContext, requestedId?: string): Promise<PortalHome | null> {
   const { schoolId } = ctx;
@@ -140,7 +135,8 @@ export async function getPortalHome(ctx: RequestContext, requestedId?: string): 
   const sectionId = sectionIdOf.get(String(student.currentEnrollmentId)) ?? '';
   const school = await School.findById(schoolId).select('timezone').lean();
   const today = todayIn(school?.timezone ?? 'Asia/Kolkata');
-  const [results, timetable, homework, attendance, fees, upcoming] = await Promise.all([
+  const [reportCardId, results, timetable, homework, attendance, fees, upcoming] = await Promise.all([
+    latestPublishedCardId(ctx, id),
     getStudentResults(ctx, id, true),
     getTimetable(ctx, sectionId),
     Types.ObjectId.isValid(sectionId)
@@ -181,5 +177,6 @@ export async function getPortalHome(ctx: RequestContext, requestedId?: string): 
     fees,
     upcoming,
     results,
+    reportCardId,
   };
 }

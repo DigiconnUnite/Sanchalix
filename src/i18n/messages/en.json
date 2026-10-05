@@ -28,7 +28,8 @@
       "promotion": "Promotion",
       "settings": "Settings",
       "staffAttendance": "Staff attendance",
-      "exams": "Exams"
+      "exams": "Exams",
+      "reportCards": "Report cards"
     },
     "breadcrumbs": "Breadcrumbs",
     "signOut": "Sign out",
@@ -1691,6 +1692,10 @@
       "email": "Enter an email address like name@example.com",
       "notFound": "We couldn't find that student or guardian.",
       "exists": "This person already has a portal account."
+    },
+    "reportCard": {
+      "ready": "The report card for {name} is ready.",
+      "open": "Open report card"
     }
   },
   "export": {
@@ -1913,6 +1918,72 @@
       "published": "Results are already published, so this can't be changed.",
       "noPapers": "Add at least one paper before publishing results.",
       "notLocked": "{count, plural, one {# paper is} other {# papers are}} not locked yet. Lock every paper first."
+    },
+    "reportCards": {
+      "title": "Report cards",
+      "description": "One card per student for this academic year, built from published exam results.",
+      "section": "Section",
+      "sectionPlaceholder": "Choose a section",
+      "noSections": "No sections to show",
+      "generate": "Generate cards",
+      "generated": "{section}: {generated} generated, {withoutResults} without published results, {alreadyPublished} already published and left unchanged.",
+      "publish": "{count, plural, =0 {Publish cards} one {Publish # card} other {Publish # cards}}",
+      "published": "{published, plural, one {# report card} other {# report cards}} published for {section}.",
+      "publishTitle": "Publish report cards for {section}?",
+      "publishBody": "Students and parents will be able to open these cards. A published card is no longer changed by Generate, and its remarks can't be edited.",
+      "remarks": "Remarks",
+      "remarksLabel": "Edit remarks for {name}",
+      "remarksTitle": "Remarks for {name}",
+      "remarksSaved": "Remarks for {name} saved.",
+      "saveRemarks": "Save remarks",
+      "classTeacherRemark": "Class teacher's remark",
+      "principalRemark": "Principal's remark",
+      "remarkHint": "Up to 300 characters.",
+      "cancel": "Cancel",
+      "dismiss": "Dismiss message",
+      "print": "Print",
+      "cardTitle": "Report card: {name}",
+      "draftNote": "This is a draft. The student and parents can't see it until it is published.",
+      "columns": {
+        "rollNo": "Roll no.",
+        "name": "Student",
+        "percent": "Overall",
+        "status": "Card",
+        "remark": "Class teacher's remark",
+        "actions": "Actions"
+      },
+      "status": {
+        "none": "Not generated",
+        "draft": "Draft",
+        "published": "Published",
+        "withdrawn": "Withdrawn"
+      },
+      "choose": {
+        "heading": "Choose a section",
+        "body": "Pick a section above to see or generate its report cards."
+      },
+      "empty": {
+        "heading": "No students",
+        "body": "This section has no active students."
+      },
+      "view": {
+        "student": "Student",
+        "admissionNo": "Admission no.",
+        "classSection": "Class and roll no.",
+        "classRoll": "{classSection}, roll no. {rollNo}",
+        "overall": "Overall",
+        "overallValue": "{total} of {max} · {percent}%",
+        "attendance": "Attendance, last 60 days",
+        "remarks": "Remarks"
+      },
+      "errors": {
+        "notFound": "We couldn't find that report card.",
+        "section": "Choose a section you work with",
+        "remark": "A remark can be up to 300 characters",
+        "published": "This card is published, so its remarks can't be changed.",
+        "noResults": "No student in this section has published exam results yet. Publish an exam's results first.",
+        "nothingToPublish": "There are no draft cards to publish. Generate them first."
+      }
     }
   }
 }

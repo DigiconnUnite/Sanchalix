@@ -6,9 +6,18 @@ import { AcademicYear } from '@/server/models/academicYear';
 import { Class } from '@/server/models/class';
 import { Enrollment } from '@/server/models/enrollment';
 import { Exam, ExamSchedule, Mark } from '@/server/models/exam';
+import { ReportCard } from '@/server/models/reportCard';
 import { Section } from '@/server/models/section';
+import { Student } from '@/server/models/student';
 import { Subject } from '@/server/models/subject';
 import { TimetableSlot } from '@/server/models/timetableSlot';
+import {
+  generateReportCards,
+  getReportCard,
+  listReportCards,
+  publishReportCards,
+  saveRemarks,
+} from './reportCards';
 import {
   addSchedule,
   createExam,
@@ -156,4 +165,63 @@ it('freezes marks once locked, and shows families only published results', async
   ).rejects.toMatchObject({ code: 'BUSINESS_RULE' });
   expect(await getStudentResults(admin, String(first), true)).toHaveLength(1);
   expect(await getStudentResults(otherSchool, String(first), false)).toEqual([]);
+});
+
+it('builds draft cards from published results, lets the class teacher remark, and freezes them on publish', async () => {
+  await ReportCard.init();
+  // Raw inserts: only the fields a report card reads, not a full admission.
+  await Student.collection.insertMany(
+    students.map((_id, index) => ({
+      _id,
+      schoolId,
+      firstName: ['Asha', 'Bela', 'Chitra'][index],
+      lastName: 'Rao',
+      admissionNo: `T-${index + 1}`,
+      status: 'active',
+      deletedAt: null,
+    })),
+  );
+  await Section.updateOne({ schoolId, _id: sectionA }, { classTeacherId: mathsTeacher.staffId });
+  const parentOf = (studentId: Types.ObjectId): RequestContext => ({ ...person('student'), scope: 'self', studentId });
+
+  await expect(generateReportCards(otherSchool, sectionA)).rejects.toMatchObject({ code: 'NOT_FOUND' });
+  await expect(generateReportCards(admin, sectionB)).rejects.toMatchObject({ code: 'BUSINESS_RULE' });
+  expect(await generateReportCards(admin, sectionA)).toMatchObject({ generated: 3, withoutResults: 0, alreadyPublished: 0 });
+  expect(await generateReportCards(admin, sectionA)).toMatchObject({ generated: 3 });
+  expect(await ReportCard.countDocuments({ schoolId })).toBe(3);
+
+  const list = await listReportCards(mathsTeacher, sectionA);
+  expect(list).toMatchObject({ isClassTeacher: true, sections: [{ name: '8-A' }] });
+  expect(list.rows).toMatchObject([
+    { name: 'Asha Rao', percent: 92.5, status: 'draft' },
+    { name: 'Bela Rao', percent: 30, status: 'draft' },
+    { name: 'Chitra Rao', percent: 0, status: 'draft' },
+  ]);
+  expect((await listReportCards(otherTeacher, sectionA)).section).toBeNull();
+  const id = list.rows[0]?.cardId ?? '';
+
+  await expect(saveRemarks(otherTeacher, { id, classTeacherRemark: 'x' })).rejects.toMatchObject({ code: 'FORBIDDEN' });
+  await expect(saveRemarks(mathsTeacher, { id, principalRemark: 'x' })).rejects.toMatchObject({ code: 'FORBIDDEN' });
+  await saveRemarks(mathsTeacher, { id, classTeacherRemark: 'Consistent and careful.' });
+  await saveRemarks(principal, { id, principalRemark: 'Well done.' });
+
+  const [first = new Types.ObjectId(), second = new Types.ObjectId()] = students;
+  expect(await getReportCard(parentOf(first), id)).toBeNull();
+  expect(await getReportCard(otherTeacher, id)).toBeNull();
+  expect(await getReportCard(otherSchool, id)).toBeNull();
+  await expect(publishReportCards(otherSchool, sectionA)).rejects.toMatchObject({ code: 'NOT_FOUND' });
+  expect(await publishReportCards(principal, sectionA)).toMatchObject({ published: 3 });
+  await expect(publishReportCards(principal, sectionA)).rejects.toMatchObject({ code: 'BUSINESS_RULE' });
+
+  expect(await getReportCard(parentOf(first), id)).toMatchObject({
+    studentName: 'Asha Rao',
+    classSection: '8-A',
+    percent: 92.5,
+    status: 'published',
+    classTeacherRemark: 'Consistent and careful.',
+    principalRemark: 'Well done.',
+  });
+  expect(await getReportCard(parentOf(second), id)).toBeNull();
+  await expect(saveRemarks(principal, { id, principalRemark: 'Changed' })).rejects.toMatchObject({ code: 'BUSINESS_RULE' });
+  expect(await generateReportCards(admin, sectionA)).toMatchObject({ generated: 0, alreadyPublished: 3 });
 });

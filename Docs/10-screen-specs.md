@@ -270,6 +270,7 @@ Built with `Board` (staff, rearrangeable in v1) or `Grid` (student, parent). Eve
 - **Homework** (`/homework`, `/homework/new`).
 - **Leave** (`/leave`, `/leave/new`): staff see their own requests; the principal and school admin see all and decide in a dialog with an optional comment.
 - **Student profile actions:** an Actions menu with Change section and Withdraw student, next to Edit.
+- **Report cards** (`/report-cards?section=`, `/report-cards/[id]`): a section's students with card status and remarks; Generate cards (school admin), Remarks per row, Publish (principal); the card page prints without the app shell.
 - **Exams** (`/exams`, `/exams/[id]`, `/exams/[id]/marks?paper=&section=`): the exam list, an exam's papers with Lock, Unlock and Publish results, and a marks sheet with a number field and an Absent checkbox per student and one Save marks button.
 - **Staff attendance** (`/staff/attendance?date=`): one row per staff member with a segmented control; approved leave is pre-filled and badged.
 - **Settings** (`/settings?tab=school|periods`): School (profile and working days) and Bell schedule (an `AttributeEditor` of periods with `TimeInput`), each with its own Save changes.

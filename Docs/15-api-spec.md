@@ -203,7 +203,13 @@ Server rules: `entries` must cover exactly the active enrollments of the section
 - `saveMarks({ examScheduleId, sectionId, entries: { studentId, marks | null, isAbsent }[] })` replaces the spec's per-cell `saveMark` and `submitMarks`: the whole section is saved at once. It needs `exams.mark.update` (teacher, principal). A teacher may save only for a section where the timetable has them teaching that subject. Marks are whole or half numbers from 0 to the paper's maximum; an absent student has none; a blank entry removes the mark. Grades use one fixed 9-point scale (A1 from 91%, pass at 33%); `gradingSchemes` is not built. The audit entry records counts, not marks.
 - `lockMarks({ examScheduleId, locked, reason? })` needs `exams.mark.approve` (principal); unlocking needs a reason. A locked paper refuses `saveMarks`.
 - `publishExamResults(examId)` needs `exams.exam.publish` (principal) and every paper locked. After it, papers cannot be unlocked or added. Students and parents see only published results, on their home page; staff see marks as entered on the student profile's Results tab.
-- Not built: report cards and PDFs, remarks, rank, moderation, the exam timetable notification, grading-scheme editor.
+- **Report cards:** one card per student per academic year (`termId` is always null until terms exist), covering every exam of that year whose results are published.
+  - `generateReportCards(sectionId)` needs `exams.reportCard.create` (school admin). It runs in the request, builds or refreshes the draft of every student in the section, copies marks, grades, totals and the last 60 days' attendance % into `snapshot`, and never touches a published card. Returns `{ section, generated, withoutResults, alreadyPublished }`; `BUSINESS_RULE` when nobody has published results.
+  - `saveReportCardRemarks({ id, classTeacherRemark?, principalRemark? })` needs `exams.reportCard.update`. A teacher may set only the class teacher's remark and only for the section they are class teacher of; the principal may set both. Refused once published.
+  - `publishReportCards(sectionId)` needs `exams.reportCard.publish` (principal) and publishes the section's drafts.
+  - `/report-cards/[id]` is the card itself, printable. Staff with `exams.reportCard.read` open cards of sections they work with (a teacher: their class-teacher section), drafts included; a student or parent opens only their own, once published.
+  - `reportCards` has an extra `sectionId` field and a `{ schoolId, sectionId }` index.
+- Not built: stored PDFs (`pdfKey`) and bulk PDF, withdrawing a card, rank, moderation, the exam timetable notification, the grading-scheme editor.
 
 | Name | Type | Permission | Input | Output |
 |---|---|---|---|---|

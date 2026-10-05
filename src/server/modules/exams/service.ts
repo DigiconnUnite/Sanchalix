@@ -391,7 +391,12 @@ export type StudentResult = {
 };
 
 /** A student's marks, exam by exam. Families pass `publishedOnly`; staff see marks as they are entered. */
-export async function getStudentResults(ctx: RequestContext, studentId: string, publishedOnly: boolean) {
+export async function getStudentResults(
+  ctx: RequestContext,
+  studentId: string,
+  publishedOnly: boolean,
+  academicYearId?: Types.ObjectId,
+) {
   const { schoolId } = ctx;
   const marks = await Mark.find({ schoolId, studentId }).select('examScheduleId total isAbsent grade').lean();
   const schedules = await ExamSchedule.find({ schoolId, _id: { $in: marks.map((mark) => mark.examScheduleId) } })
@@ -402,6 +407,7 @@ export async function getStudentResults(ctx: RequestContext, studentId: string, 
       schoolId,
       _id: { $in: schedules.map((schedule) => schedule.examId) },
       ...(publishedOnly && { status: 'results_published' as const }),
+      ...(academicYearId && { academicYearId }),
     })
       .sort({ createdAt: -1 })
       .select('name')

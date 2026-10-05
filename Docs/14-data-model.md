@@ -321,8 +321,8 @@ Validation: each component is between 0 and its max, and `isAbsent` implies no m
 Indexes: `{ schoolId: 1, examScheduleId: 1, studentId: 1 } unique`, `{ schoolId: 1, studentId: 1 }`.
 
 ### reportCards
-`schoolId`, `studentId`, `academicYearId`, `termId?`, `examIds`, `snapshot` (the frozen subjects, marks, grades, attendance % and remarks at publish time), `classTeacherRemark`, `principalRemark`, `pdfKey`, `status: 'draft' | 'published' | 'withdrawn'`, `publishedAt`.
-Indexes: `{ schoolId: 1, studentId: 1, academicYearId: 1, termId: 1 } unique`.
+`schoolId`, `studentId`, `academicYearId`, `termId?`, `sectionId` (the section the card was generated for), `examIds`, `snapshot` (the frozen subjects, marks, grades, attendance % and remarks at publish time), `classTeacherRemark`, `principalRemark`, `pdfKey`, `status: 'draft' | 'published' | 'withdrawn'`, `publishedAt`.
+Indexes: `{ schoolId: 1, studentId: 1, academicYearId: 1, termId: 1 } unique`, `{ schoolId: 1, sectionId: 1 }`.
 
 ## Homework
 

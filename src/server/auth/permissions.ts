@@ -51,6 +51,10 @@ export type Permission =
   | 'exams.exam.publish'
   | 'exams.mark.update'
   | 'exams.mark.approve'
+  | 'exams.reportCard.read'
+  | 'exams.reportCard.create'
+  | 'exams.reportCard.update'
+  | 'exams.reportCard.publish'
   | 'hr.attendance.read'
   | 'hr.attendance.update'
   | 'hr.leave.read'
@@ -73,6 +77,8 @@ const ROLE_PERMISSIONS: Record<RoleKey, readonly Permission[]> = {
   super_admin: [],
   school_admin: [
     ...EVERYONE,
+    'exams.reportCard.read',
+    'exams.reportCard.create',
     'exams.exam.read',
     'exams.exam.update',
     'hr.staff.read',
@@ -111,6 +117,9 @@ const ROLE_PERMISSIONS: Record<RoleKey, readonly Permission[]> = {
   ],
   principal: [
     ...EVERYONE,
+    'exams.reportCard.read',
+    'exams.reportCard.update',
+    'exams.reportCard.publish',
     'exams.exam.read',
     'exams.exam.update',
     'exams.exam.publish',
@@ -139,6 +148,8 @@ const ROLE_PERMISSIONS: Record<RoleKey, readonly Permission[]> = {
   ],
   teacher: [
     ...EVERYONE,
+    'exams.reportCard.read',
+    'exams.reportCard.update',
     'exams.exam.read',
     'exams.mark.update',
     ...OWN_LEAVE,

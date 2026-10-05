@@ -6,6 +6,13 @@ import { withAction } from '@/server/action';
 import { audit } from '@/server/audit';
 import { requirePermission } from '@/server/auth/context';
 import {
+  generateReportCards as generate,
+  publishReportCards as publish,
+  RemarksInput,
+  saveRemarks,
+  SectionId,
+} from './reportCards';
+import {
   addSchedule,
   createExam,
   ExamId,
@@ -17,6 +24,33 @@ import {
   ScheduleInput,
   setLock,
 } from './service';
+
+export async function generateReportCards(input: unknown) {
+  return withAction('exams.reportCard.create', async () => {
+    const ctx = await requirePermission('exams.reportCard.create');
+    const { sectionId, ...result } = await generate(ctx, SectionId.parse(input));
+    await audit(ctx, 'exams.reportCard.generate', { type: 'section', id: sectionId }, { after: result });
+    return result;
+  });
+}
+
+export async function saveReportCardRemarks(input: unknown) {
+  return withAction('exams.reportCard.update', async () => {
+    const ctx = await requirePermission('exams.reportCard.update');
+    const card = await saveRemarks(ctx, RemarksInput.parse(input));
+    await audit(ctx, 'exams.reportCard.update', { type: 'reportCard', id: card.id });
+    return { saved: true };
+  });
+}
+
+export async function publishReportCards(input: unknown) {
+  return withAction('exams.reportCard.publish', async () => {
+    const ctx = await requirePermission('exams.reportCard.publish');
+    const { sectionId, ...result } = await publish(ctx, SectionId.parse(input));
+    await audit(ctx, 'exams.reportCard.publish', { type: 'section', id: sectionId }, { after: result });
+    return result;
+  });
+}
 
 export async function upsertExam(input: unknown) {
   return withAction('exams.exam.update', async () => {

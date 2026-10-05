@@ -8,12 +8,11 @@ import Header from '@cloudscape-design/components/header';
 import KeyValuePairs from '@cloudscape-design/components/key-value-pairs';
 import SpaceBetween from '@cloudscape-design/components/space-between';
 import Table from '@cloudscape-design/components/table';
-import { applyMode, Mode } from '@cloudscape-design/global-styles';
 import { useTranslations } from 'next-intl';
-import { useEffect } from 'react';
 import { svg } from '@/components/icons';
 import { useRouter } from '@/i18n/navigation';
 import { formatMoney } from '@/lib/money';
+import { usePrintInLightMode } from '@/lib/usePrintInLightMode';
 import type { CounterMethod, Receipt } from '@/server/modules/fees/schemas';
 
 const COUNTER = '/fees/counter';
@@ -26,22 +25,7 @@ export function ReceiptView({ receipt, created }: { receipt: Receipt; created: b
   const router = useRouter();
   const amount = formatMoney(receipt.amountMinor);
 
-  // Dark mode would print light text on white paper, so the page is light for as long as the print dialog is open.
-  useEffect(() => {
-    const dark = 'awsui-dark-mode';
-    let wasDark = false;
-    const before = () => {
-      wasDark = document.body.classList.contains(dark);
-      applyMode(Mode.Light);
-    };
-    const after = () => wasDark && applyMode(Mode.Dark);
-    window.addEventListener('beforeprint', before);
-    window.addEventListener('afterprint', after);
-    return () => {
-      window.removeEventListener('beforeprint', before);
-      window.removeEventListener('afterprint', after);
-    };
-  }, []);
+  usePrintInLightMode();
 
   return (
     <ContentLayout
