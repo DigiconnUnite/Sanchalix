@@ -4,7 +4,6 @@ import { seal } from '@/server/auth/secretBox';
 import { hashPassword } from '@/server/auth/service';
 import { connectDb } from '@/server/db/connect';
 import { AcademicYear } from '@/server/models/academicYear';
-import { AuditLog } from '@/server/models/auditLog';
 import { Branch } from '@/server/models/branch';
 import { Class } from '@/server/models/class';
 import { Counter } from '@/server/models/counter';
@@ -13,7 +12,7 @@ import { Guardian } from '@/server/models/guardian';
 import { Organization } from '@/server/models/organization';
 import { School } from '@/server/models/school';
 import { Section } from '@/server/models/section';
-import { Session } from '@/server/models/session';
+import { Staff } from '@/server/models/staff';
 import { Student } from '@/server/models/student';
 import { User } from '@/server/models/user';
 import { DEMO_TOTP_SECRET } from './demoSecret';
@@ -134,6 +133,22 @@ async function seedSchool(options: {
     }
   }
 
+  const teacher = options.staff.find((member) => member.role === 'teacher');
+  if (teacher) {
+    await Staff.create({
+      _id: classTeacherId,
+      schoolId,
+      branchId: branch._id,
+      employeeNo: 'EMP-0001',
+      name: teacher.name,
+      phone: `${options.phonePrefix}99999`,
+      designation: 'TGT Mathematics',
+      type: 'teaching',
+      joinedOn: '2022-04-01',
+    });
+    await Counter.create({ _id: `${schoolId.toString()}:employee`, seq: 1 });
+  }
+
   await User.insertMany(
     options.staff.map(({ role, name, scope, email, withoutTotp }) => ({
       name,
@@ -154,11 +169,11 @@ async function main() {
   if (process.env.NODE_ENV === 'production') throw new Error('The seed script must never run against production');
   await connectDb();
 
-  const models = [AuditLog, Counter, Organization, School, Branch, AcademicYear, Class, Section, Guardian, Student, Enrollment, User, Session];
-  for (const model of models) {
-    await model.collection.deleteMany({});
-    await model.syncIndexes();
-  }
+  // Every collection goes, including ones this script doesn't fill (attendance, invoices, receipts), so nothing is
+  // left pointing at schools that no longer exist.
+  await mongoose.connection.dropDatabase();
+  const models = [Counter, Organization, School, Branch, AcademicYear, Class, Section, Guardian, Student, Enrollment, Staff, User];
+  for (const model of models) await model.syncIndexes();
 
   const password = process.env.SEED_PASSWORD ?? 'Vidyawan#Demo2026';
   const passwordHash = await hashPassword(password);

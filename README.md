@@ -23,7 +23,7 @@ npm run dev
 
 Then open http://localhost:3000 and sign in. `http://localhost:3000/api/health` returns `{"status":"ok"}` when the app can reach MongoDB.
 
-`npm run seed` wipes the local database and fills it with two synthetic schools. Every seeded user has the password `Vidyawan#Demo2026` (set `SEED_PASSWORD` to change it):
+`npm run seed` drops the whole local database and fills it with two synthetic schools. Every seeded user has the password `Vidyawan#Demo2026` (set `SEED_PASSWORD` to change it):
 
 | Email | Role | Sees |
 |---|---|---|
@@ -84,10 +84,29 @@ The roadmap's M0 walking skeleton ([Docs/05-roadmap.md](Docs/05-roadmap.md)):
 - Holidays: add and delete school holidays, which block attendance on those days
 - Fees setup and billing: fee heads, fee structures with installments, principal approval that issues the invoices, and the invoice list
 - The fee counter: find a student, select open invoices, take a full or part payment by cash, UPI, card, cheque or bank transfer, and get an immutable receipt with a gap-free number
+- Payments and receipts list (newest first) and the dues report with ageing bands and the total overdue
+- Announcements to the whole school or chosen roles, with a reach preview, and in-app notifications with an unread badge in the header
+- Staff directory with automatic employee numbers, and choosing a section's class teacher from the classes table
+- Role dashboards: attendance today, active students, today's fee collection, overdue dues, drafts waiting for approval and the latest announcements, each linking to its list
+- Correcting records: edit a student (with a guard against overwriting someone else's change), withdraw a student, edit a staff member and their status, delete a draft fee structure
+- Student profile tabs for attendance (last 60 days) and fees (invoices, receipts, balance due)
+- Admissions pipeline from enquiry to admitted; admitting creates the student, guardian and enrollment in one transaction
+- Bulk import of students from a CSV file, checked first and written all-or-nothing (up to 500 rows)
+- Subjects and a weekly timetable per section, with a hard stop on double-booking a teacher, and "Your classes today" for teachers
+- Homework: teachers set it for the sections they teach; the office sees all of it
+- Move a student to another section from the profile (new roll number, audited)
+- Users: create sign-ins for staff with a one-time temporary password, reset passwords, disable or enable accounts
+- Portal accounts for a student and their parents from the student's profile, and a home page for them with attendance, fees due, homework, today's classes and upcoming events
+- A calendar of school events and holidays by month
+- Year end: plan the next academic year (classes and sections are copied), promote, detain, graduate or release students section by section, then close the year
+- Period-wise attendance: the teacher of a timetable period marks that period for the section
+- Staff leave: apply, cancel, and approve or reject with a comment (no balances yet)
+- A receipt that prints without the app around it
+- Grouped navigation, and a profile page with density and password change
 
 The app is English-only for now; Hindi is deferred ([ADR-018](Docs/23-decision-log.md#adr-018-english-only-until-the-core-modules-are-built)).
 
-Not built yet, in roadmap order: OTP and Google sign-in (waiting for provider credentials), the role switcher, editing a student, admissions, import, promotion and transfer, absence alerts, the full calendar with events, the payments list, dues and reminders, then online payment.
+Not built yet, in roadmap order: OTP and Google sign-in (waiting for provider credentials), the role switcher, homework submissions, admission documents, absence alerts, the full calendar with events, dues reminders and online payment (both wait for provider credentials), then announcements and dashboards.
 
 ## Documentation
 

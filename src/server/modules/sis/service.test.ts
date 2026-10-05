@@ -9,8 +9,8 @@ import { School } from '@/server/models/school';
 import { Section } from '@/server/models/section';
 import { Student } from '@/server/models/student';
 import { getStudent } from './queries';
-import { StudentInput } from './schemas';
-import { createStudent } from './service';
+import { StudentInput, StudentUpdate } from './schemas';
+import { createStudent, transferStudent, updateStudent, withdrawStudent } from './service';
 
 const ADDRESS = { line1: '12 School Road', city: 'Bhopal', state: 'Madhya Pradesh', pincode: '462001' };
 let ctx: RequestContext;
@@ -124,4 +124,52 @@ it('hides a student from another school', async () => {
   const student = await Student.findOne({ schoolId: ctx.schoolId, firstName: 'Aarav' }).lean();
   expect(await getStudent(otherSchool, String(student?._id))).toBeNull();
   expect(await getStudent(ctx, 'not-an-id')).toBeNull();
+});
+
+it('saves an edit once, refuses a stale second save and never reaches another school', async () => {
+  const profile = await getStudent(ctx, String((await Student.findOne({ schoolId: ctx.schoolId, firstName: 'Diya' }).lean())?._id));
+  const edit = StudentUpdate.parse({
+    id: profile?.id,
+    version: profile?.editable.version,
+    firstName: 'Divya',
+    lastName: 'Sharma',
+    dob: '2014-05-15',
+    gender: 'female',
+    address: ADDRESS,
+  });
+  await expect(updateStudent(otherSchool, edit)).rejects.toMatchObject({ code: 'NOT_FOUND' });
+  expect(await updateStudent(ctx, edit)).toMatchObject({ name: 'Divya Sharma', before: { firstName: 'Diya' } });
+  await expect(updateStudent(ctx, { ...edit, firstName: 'Overwrite' })).rejects.toMatchObject({ code: 'CONFLICT' });
+  expect(await getStudent(ctx, edit.id)).toMatchObject({ name: 'Divya Sharma', gender: 'female' });
+});
+
+it('withdraws an active student once and closes the enrollment', async () => {
+  const student = await Student.findOne({ schoolId: ctx.schoolId, firstName: 'Divya' }).lean();
+  const id = String(student?._id);
+  await expect(withdrawStudent(otherSchool, id, 'Moved city')).rejects.toMatchObject({ code: 'BUSINESS_RULE' });
+  await withdrawStudent(ctx, id, 'Moved city');
+  expect(await getStudent(ctx, id)).toMatchObject({ status: 'withdrawn' });
+  const enrollment = await Enrollment.findOne({ schoolId: ctx.schoolId, studentId: id }).lean();
+  expect(enrollment?.status).toBe('transferred');
+  await expect(withdrawStudent(ctx, id, 'Again')).rejects.toMatchObject({ code: 'BUSINESS_RULE' });
+});
+
+it('moves a student to another section of the same year with its next roll number', async () => {
+  const current = await Section.findOne({ schoolId: ctx.schoolId, _id: sectionId }).orFail().lean();
+  const target = await Section.create({
+    schoolId: ctx.schoolId,
+    branchId: current.branchId,
+    academicYearId: current.academicYearId,
+    classId: current.classId,
+    name: 'C',
+    displayName: '7-C',
+  });
+  const student = await Student.findOne({ schoolId: ctx.schoolId, firstName: 'Aarav' }).lean();
+  const id = String(student?._id);
+
+  await expect(transferStudent(ctx, id, otherSectionId)).rejects.toMatchObject({ code: 'NOT_FOUND' });
+  await expect(transferStudent(ctx, id, sectionId)).rejects.toMatchObject({ code: 'BUSINESS_RULE' });
+  await expect(transferStudent(otherSchool, id, String(target._id))).rejects.toMatchObject({ code: 'BUSINESS_RULE' });
+  expect(await transferStudent(ctx, id, String(target._id))).toMatchObject({ section: '7-C', rollNo: 1 });
+  expect(await getStudent(ctx, id)).toMatchObject({ classSection: '7-C', rollNo: 1 });
 });

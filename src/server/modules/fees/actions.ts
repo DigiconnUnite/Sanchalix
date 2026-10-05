@@ -7,7 +7,18 @@ import { audit } from '@/server/audit';
 import { requirePermission } from '@/server/auth/context';
 import { collectPayment as collect } from './paymentService';
 import { CollectPayment, FeeHeadInput, FeeStructureId, FeeStructureInput } from './schemas';
-import { approveFeeStructure as approve, createFeeHead, createFeeStructure } from './service';
+import { approveFeeStructure as approve, createFeeHead, createFeeStructure, deleteDraftFeeStructure } from './service';
+
+export async function deleteFeeStructure(input: unknown) {
+  return withAction('fees.structure.delete', async () => {
+    const ctx = await requirePermission('fees.structure.update');
+    const structure = await deleteDraftFeeStructure(ctx, FeeStructureId.parse(input));
+    await audit(ctx, 'fees.structure.delete', { type: 'feeStructure', id: structure.id }, {
+      before: { name: structure.name, status: 'draft' },
+    });
+    return { name: structure.name };
+  });
+}
 
 export async function upsertFeeHead(input: unknown) {
   return withAction('fees.structure.update', async () => {

@@ -28,7 +28,7 @@ Shared by every screen unless the spec overrides them.
 ### S01 · App shell
 - **Purpose:** consistent navigation and context on every authenticated page.
 - **Components:** `TopNavigation` (identity, utilities), `AppLayout` (`navigation` = `SideNavigation`, `breadcrumbs` = `BreadcrumbGroup`, `notifications` = `Flashbar`, `drawers` = Help + Notifications), `ContentLayout`.
-- **Icons:** `notifications`, `switchRole`, `profile`, `school`, `academicYear`, `help`, `darkMode` / `lightMode` (the mode toggle); side nav items per role ([07-information-architecture.md](07-information-architecture.md#navigation-per-role)), the active one Filled.
+- **Icons:** `notifications`, `switchRole`, `profile`, `school`, `academicYear`, `help`, `themeToggle` (the mode toggle); side nav items per role ([07-information-architecture.md](07-information-architecture.md#navigation-per-role)), the active one Filled.
 - **Behaviour:** the nav state (collapsed or open) persists per user. The notifications badge updates via SSE every 30 s. `/` focuses search.
 - **Microcopy:** profile menu: "My profile", "Appearance", "Density", "Language", "Keyboard shortcuts", "Contact support", "Sign out".
 
@@ -259,6 +259,23 @@ Built with `Board` (staff, rearrangeable in v1) or `Grid` (student, parent). Eve
 - A `Table` of at-risk students (name, section, level `StatusIndicator` warning/error with text "Medium"/"High", top factor text, trend); row → the `splitPanel` "Why?" with the factor breakdown `KeyValuePairs` + mini-charts; actions: "Acknowledge", "Assign follow-up". A header `Alert type="info"`: "Scores are guidance to help you notice students early. They are never shown to students or parents."
 
 ---
+
+## Built on 2026-10-05
+
+- **Navigation** is grouped: People (Students, Admissions, Staff), Academics (Classes, Subjects, Timetable, Attendance, Homework, Holidays), Fees and Communication. The user menu has Profile and Sign out.
+- **Student profile:** Edit and Withdraw student in the header (school admin); tabs Overview, Parents, Attendance, Fees, History. `/students/[id]/edit` reuses the Add student form without the section and guardian parts.
+- **Import students** (`/students/import`): download the template, choose a CSV, Check file, then Import. Row errors are listed with row, column and problem.
+- **Admissions** (`/admissions`, `/admissions/new`, `/admissions/[id]`): a list filtered by stage in the URL, a detail page whose primary button is the next stage, and a dialog that asks for the section and address when admitting.
+- **Subjects** (`/academics/subjects`) and **Timetable** (`/academics/timetable?section=`): a periods-by-days grid per section; the office sets or clears a period in a dialog.
+- **Homework** (`/homework`, `/homework/new`).
+- **Leave** (`/leave`, `/leave/new`): staff see their own requests; the principal and school admin see all and decide in a dialog with an optional comment.
+- **Student profile actions:** an Actions menu with Change section and Withdraw student, next to Edit.
+- **Users** (`/users`, `/users/new`): the temporary password is shown once in a success alert with a copy button.
+- **Student profile, Portal access tab:** the student and each guardian with their account email or "No account", and Create account.
+- **Home for students and parents:** a summary (attendance, fees due, homework due), today's classes, homework, fees to pay, coming up. Parents with several children get a child selector in the header.
+- **Calendar** (`/calendar/events?month=`): a month list of events and holidays with Previous and Next; Add event in a dialog.
+- **Promotion** (`/promotion`): first a form to plan the next year; then a section picker and a table with a decision per student; Close year in the header, enabled when nobody is left in the current year.
+- **Profile** (`/profile`): account details, density, change password.
 
 ## Form validation rules (shared)
 

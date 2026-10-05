@@ -6,9 +6,11 @@ import { withAction } from '@/server/action';
 import { audit } from '@/server/audit';
 import { User } from '@/server/models/user';
 import { getContext, getPendingSession } from './context';
-import { SetVisualMode, SignIn, TotpCode } from './schemas';
-import { verifyCredentials } from './service';
-import { createSession, destroySession, setModeCookie } from './session';
+import { DENSITY_COOKIE } from '@/lib/visualMode';
+import { Session } from '@/server/models/session';
+import { ChangePassword, SetDensity, SetVisualMode, SignIn, TotpCode } from './schemas';
+import { hashPassword, verifyCredentials, verifyPassword } from './service';
+import { createSession, destroySession, readSession, setModeCookie } from './session';
 import { confirmTotpSetup, verifyTotpChallenge } from './twoFactor';
 
 const USER = 'user';
@@ -65,6 +67,35 @@ export async function completeTotpSetup() {
 
 export async function signOut() {
   return withAction('auth.signOut', destroySession);
+}
+
+export async function setDensity(input: unknown) {
+  return withAction('auth.setDensity', async () => {
+    const ctx = await getContext();
+    if (!ctx) throw new AppError('UNAUTHENTICATED', 'errors.unauthenticated');
+    const density = SetDensity.parse(input);
+    await User.updateOne({ _id: ctx.userId }, { density });
+    await setModeCookie(density, DENSITY_COOKIE);
+  });
+}
+
+export async function changePassword(input: unknown) {
+  return withAction('auth.changePassword', async () => {
+    const ctx = await getContext();
+    if (!ctx) throw new AppError('UNAUTHENTICATED', 'errors.unauthenticated');
+    const { current, next } = ChangePassword.parse(input);
+    const [user, session] = await Promise.all([
+      User.findById(ctx.userId).select('+passwordHash').lean(),
+      readSession(),
+    ]);
+    if (!user?.passwordHash || !(await verifyPassword(user.passwordHash, current))) {
+      throw new AppError('VALIDATION', 'auth.password.wrongCurrent');
+    }
+    await User.updateOne({ _id: ctx.userId }, { passwordHash: await hashPassword(next) });
+    // Whoever else holds a session for this account is signed out. This device stays signed in.
+    await Session.deleteMany({ userId: ctx.userId, _id: { $ne: session?._id } });
+    await audit(ctx, 'auth.password.change', { type: 'user', id: ctx.userId });
+  });
 }
 
 export async function setVisualMode(input: unknown) {

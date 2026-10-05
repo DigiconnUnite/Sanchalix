@@ -35,6 +35,7 @@ import ClipboardText from 'reicon-react/icons/ClipboardText';
 import ColorSwatch from 'reicon-react/icons/ColorSwatch';
 import Copy from 'reicon-react/icons/Copy';
 import CreditCard from 'reicon-react/icons/CreditCard';
+import DarkLight from 'reicon-react/icons/DarkLight';
 import Database from 'reicon-react/icons/Database';
 import Devices from 'reicon-react/icons/Devices';
 import Diploma from 'reicon-react/icons/Diploma';
@@ -97,6 +98,7 @@ import Scale from 'reicon-react/icons/Scale';
 import ScanBarcode from 'reicon-react/icons/ScanBarcode';
 import Search from 'reicon-react/icons/Search';
 import Send from 'reicon-react/icons/Send';
+import Setting2 from 'reicon-react/icons/Setting2';
 import Settings from 'reicon-react/icons/Settings';
 import ShieldAlert from 'reicon-react/icons/ShieldAlert';
 import ShieldCheck from 'reicon-react/icons/ShieldCheck';
@@ -105,7 +107,7 @@ import Sms from 'reicon-react/icons/Sms';
 import Sparkles from 'reicon-react/icons/Sparkles';
 import Speaker from 'reicon-react/icons/Speaker';
 import Star from 'reicon-react/icons/Star';
-import Sun from 'reicon-react/icons/Sun';
+import Sun2 from 'reicon-react/icons/Sun2';
 import Task from 'reicon-react/icons/Task';
 import Trash from 'reicon-react/icons/Trash';
 import TrendDown from 'reicon-react/icons/TrendDown';
@@ -204,6 +206,7 @@ export const icons = {
   aiInsights: Sparkles,
   atRisk: ShieldAlert,
   settings: Settings,
+  tablePreferences: Setting2,
   users: Users,
   roles: ShieldCheck,
   switchRole: UserTag,
@@ -218,8 +221,9 @@ export const icons = {
   password: Key,
   sessions: Devices,
   language: Language,
+  themeToggle: DarkLight,
   darkMode: Moon,
-  lightMode: Sun,
+  lightMode: Sun2,
   density: Layout,
   branding: ColorSwatch,
   profile: UserCircle,

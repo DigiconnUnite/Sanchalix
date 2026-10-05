@@ -236,6 +236,29 @@ Architecture and design decisions for Vidyawan, in a lightweight ADR format. A d
 
 **Consequences.**
 - ✅ One toggle on desktop, in the toolbar, both for the open panel and the icon rail.
-- The same exception covers a **compact breadcrumb row**, also requested by the owner: the toolbar row is 34px instead of Cloudscape's fixed 42px, with the breadcrumb's own vertical padding removed. Text and icon sizes are Cloudscape's defaults. `AppLayoutToolbar` measures the row at runtime, so sticky table headers follow the new height.
+- The same exception covers a **compact breadcrumb row**, also requested by the owner: the toolbar row is 34px instead of Cloudscape's fixed 42px, with the breadcrumb's own vertical padding removed. Breadcrumb text is 12px (Cloudscape's `body-s` size and line height) instead of 14px; icon sizes are Cloudscape's defaults. `AppLayoutToolbar` measures the row at runtime, so sticky table headers follow the new height.
+- The same exception covers the **toolbar toggle's selected state**, also requested by the owner: the toggle keeps its resting colours while the navigation is open, instead of Cloudscape's blue fill. Hover and pressed feedback are unchanged. The open panel and `aria-expanded` still convey the state.
+- The same exception covers **navigation icons in the collapsed rail**, also requested by the owner: they stay 20px, the same as in the open panel. Cloudscape's rail centres a 16px icon, so the link's inset is recalculated for 20px. The rail is also one evenly spaced column: Cloudscape's 24px gap above each group is removed, along with the hidden group title's empty box. Each group's list keeps its `aria-label`, so screen readers still hear the group name.
+- The same exception covers **icon and label alignment in the navigation**: a 20px icon sits in a 24px box that Cloudscape top-aligns with the 20px text line, which leaves the icon 2px low. A negative block margin on the icon box puts it on the label's centre line.
+- The same exception covers **navigation group titles**, also requested by the owner: People, Academics, Fees and Communication are 12px secondary labels instead of Cloudscape's 18px headings, so they don't outweigh the links under them. A 1px divider in Cloudscape's divider colour runs from each title to the panel's edge on the same line; it is decorative (a pseudo-element), and the collapsed rail, which hides the titles, has none.
+- The same exception covers the **navigation scrollbar**, also requested by the owner: the panel scrolls with a thin scrollbar (`scrollbar-width: thin`) on a transparent track, instead of the operating system's wide default. The thumb is Cloudscape's secondary text colour at 35% opacity, so it stays faint beside the links in light and dark mode.
+- The same exception covers **printing**: Cloudscape ships no print styles for its shell, so an `@media print` rule hides the header, the navigation and the breadcrumb row (and anything marked `vw-no-print`). The receipt page switches to light mode while the print dialog is open.
 - ⚠️ This depends on a Cloudscape internal class name. After every Cloudscape upgrade, check that the in-panel toggle is still hidden and that the toolbar toggle still opens and collapses the navigation.
 - ⚠️ Cloudscape moves keyboard focus to the in-panel button when the navigation opens; with it hidden, focus stays on the toolbar toggle. Keyboard users can still reach everything.
+
+---
+
+## ADR-021: Orange as the default accent colour
+
+**Context.** Cloudscape's accent is blue. The owner wants Vidyawan to read as orange by default, before any school sets its own brand colour.
+
+**Decision.** Replace Cloudscape's `primary` reference palette (steps 50 to 1000) with an orange scale, using `generateThemeStylesheet` from `@cloudscape-design/components/theming` in `src/app/providers.tsx`. The stylesheet is generated once and rendered as a `<style>` during server rendering. No Cloudscape class is restyled and nothing is added to `global.css`.
+
+**Consequences.**
+- ✅ One palette changes every accent at once (buttons, links, focus rings, selection, tabs, navigation, form controls), in light and dark mode, with no per-component overrides.
+- ✅ No blue flash on load, because the stylesheet is in the server-rendered HTML.
+- The fill is a burnt orange (`#c2410c`), not a bright one: a bright orange such as `#f97316` gives only 2.8:1 under white button text. Steps 600 and 400 must stay at or above 4.5:1 ([11-accessibility.md](11-accessibility.md#contrast)).
+- Status colours are not themed. The `info` palette stays blue, so info never looks like warning.
+- ⚠️ Orange sits between Cloudscape's warning amber and error red. Status is always shown with `StatusIndicator` (icon + text), so it never depends on hue alone.
+- ⚠️ When the CSP in [16-auth-and-security.md](16-auth-and-security.md) gains a `style-src` directive, this inline `<style>` needs the request nonce.
+- School branding ([08-design-system.md](08-design-system.md#5-theming-school-branding)) will later override this default per school.

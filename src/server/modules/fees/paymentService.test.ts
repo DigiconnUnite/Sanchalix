@@ -9,7 +9,8 @@ import { Invoice } from '@/server/models/invoice';
 import { Payment } from '@/server/models/payment';
 import { Student } from '@/server/models/student';
 import { collectPayment } from './paymentService';
-import { getCounterStudent, getReceipt, searchStudents } from './queries';
+import { todayIn } from '@/lib/dates';
+import { getCounterStudent, getReceipt, listDues, listPayments, searchStudents } from './queries';
 import { CollectPayment } from './schemas';
 
 let ctx: RequestContext;
@@ -197,6 +198,48 @@ it('shows the counter only open invoices, oldest first, and finds students by na
   expect(await searchStudents(ctx, 'a')).toEqual([]);
   expect(await searchStudents(ctx, '.*')).toEqual([]);
   expect(await searchStudents(other, 'Aarav')).toEqual([]);
+});
+
+it('lists receipts newest first and pages in both directions', async () => {
+  const total = await Payment.countDocuments({ schoolId: ctx.schoolId });
+  const first = await listPayments(ctx, { pageSize: 10 });
+  expect(first.rows).toHaveLength(10);
+  expect(Number(first.rows[0]?.receiptNo.slice(-6))).toBe(total);
+  expect(first.prevCursor).toBeNull();
+
+  const second = await listPayments(ctx, { pageSize: 10, cursor: first.nextCursor ?? '' });
+  expect(Number(second.rows[0]?.receiptNo.slice(-6))).toBe(total - 10);
+  expect(second.rows.at(-1)?.receiptNo).toBe('RCPT/2026-27/000001');
+  expect(second.nextCursor).toBeNull();
+
+  const back = await listPayments(ctx, { pageSize: 10, cursor: second.prevCursor ?? '' });
+  expect(back.rows.map((row) => row.receiptNo)).toEqual(first.rows.map((row) => row.receiptNo));
+  expect((await listPayments(other, { pageSize: 10 })).rows).toEqual([]);
+});
+
+it('reports only unpaid invoices past their due date, by ageing band, with the total', async () => {
+  const today = todayIn('Asia/Kolkata');
+  const ago = (days: number) => new Date(Date.parse(`${today}T00:00:00Z`) - days * 86_400_000).toISOString().slice(0, 10);
+  const debtor = await addStudent(ctx.schoolId, 'Kabir', 'VWN-2026-00003');
+  await Invoice.updateMany({ schoolId: ctx.schoolId }, { status: 'paid', balanceMinor: 0 });
+  await addInvoice(debtor, ago(5), 100_000);
+  await addInvoice(debtor, ago(40), 250_000);
+  await addInvoice(debtor, today, 999_000);
+  const paidLate = await addInvoice(debtor, ago(70), 50_000);
+  await collectPayment(ctx, pay([{ invoiceId: paidLate, amountMinor: 50_000 }], { studentId: debtor }));
+
+  const all = await listDues(ctx, { ageing: 'all', pageSize: 25 });
+  expect(all.rows.map((row) => [row.daysOverdue, row.balanceMinor])).toEqual([
+    [40, 250_000],
+    [5, 100_000],
+  ]);
+  expect(all).toMatchObject({ outstandingMinor: 350_000, count: 2 });
+  expect(all.rows[0]).toMatchObject({ studentName: 'Kabir Sharma', studentId: debtor });
+
+  expect((await listDues(ctx, { ageing: '1-15', pageSize: 25 })).rows.map((row) => row.daysOverdue)).toEqual([5]);
+  expect((await listDues(ctx, { ageing: '31-60', pageSize: 25 })).outstandingMinor).toBe(250_000);
+  expect((await listDues(ctx, { ageing: '60+', pageSize: 25 })).rows).toEqual([]);
+  expect((await listDues(other, { ageing: 'all', pageSize: 25 })).count).toBe(0);
 });
 
 it('cannot change a receipt’s amount or number after it is written', async () => {

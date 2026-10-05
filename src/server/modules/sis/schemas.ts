@@ -58,6 +58,22 @@ export const StudentInput = z.object({
 });
 export type StudentInput = z.infer<typeof StudentInput>;
 
+export const StudentUpdate = StudentInput.pick({
+  firstName: true,
+  lastName: true,
+  dob: true,
+  gender: true,
+  bloodGroup: true,
+  address: true,
+}).extend({ id: Id, version: z.iso.datetime() });
+export type StudentUpdate = z.infer<typeof StudentUpdate>;
+
+export const ImportStudents = z.object({ csv: z.string().max(1_000_000), dryRun: z.boolean() });
+
+export const TransferStudent = z.object({ id: Id, sectionId: Id });
+
+export const WithdrawStudent = z.object({ id: Id, reason: required('sis.students.errors.reason', 200) });
+
 export type StudentRow = {
   id: string;
   name: string;
@@ -80,6 +96,16 @@ export type StudentProfile = {
   classSection: string | null;
   rollNo: number | null;
   address: string | null;
+  /** The raw values the edit form starts from, and the version that guards against overwriting someone else's change. */
+  editable: {
+    firstName: string;
+    lastName: string;
+    line1: string;
+    city: string;
+    state: string;
+    pincode: string;
+    version: string;
+  };
   guardians: {
     id: string;
     name: string;
@@ -91,3 +117,24 @@ export type StudentProfile = {
 };
 
 export type HistoryEntry = { id: string; at: string; actor: string; action: string };
+
+export type StudentAttendance = {
+  present: number;
+  absent: number;
+  percent: number | null;
+  days: { date: string; status: string }[];
+};
+
+export type StudentFees = {
+  dueMinor: number;
+  invoices: {
+    id: string;
+    invoiceNo: string;
+    installment: string;
+    dueDate: string;
+    totalMinor: number;
+    balanceMinor: number;
+    status: string;
+  }[];
+  payments: { id: string; receiptNo: string; collectedAt: string; method: string; amountMinor: number }[];
+};

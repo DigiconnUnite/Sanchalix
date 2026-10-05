@@ -57,6 +57,8 @@ type Page<T> = { data: T[]; nextCursor: string | null };
 
 ## 1. Auth and session
 
+**Built on 2026-10-05:** `changePassword({ current, next, confirm })` checks the current password, requires at least 10 characters, stores an argon2id hash, deletes every other session of the user and is audited as `auth.password.change`. The breached-password check is not built. `setDensity('comfortable' | 'compact')` saves `User.density` and the `vw.density` cookie. Both need only a signed-in user. The screen is `/profile`.
+
 | Name | Type | Permission | Input | Output | Errors |
 |---|---|---|---|---|---|
 | `signInWithPassword` | Action | public | `FormData { email, password }` | The session cookie. The sign-in page then re-renders and redirects to its `?next=` (same-site paths only) or the dashboard | `VALIDATION`, `UNAUTHENTICATED` (the same message for a wrong password, an unknown email and a disabled user), `RATE_LIMITED` (locked) |
@@ -74,6 +76,14 @@ type Page<T> = { data: T[]; nextCursor: string | null };
 | `updateRoles` | Action | `users.user.update` | `{ userId, roles: RoleAssignment[] }` | `{}` | `BUSINESS_RULE` (can't remove the last school_admin) |
 
 ## 2. Students and admissions
+
+**Built on 2026-10-05:**
+- `updateStudent({ id, version, firstName, lastName, dob, gender, bloodGroup?, address })` needs `sis.student.update`. `version` is the record's `updatedAt` when the form opened; a newer save gives `CONFLICT`. Section, roll number and guardians are not editable yet.
+- `withdrawStudent({ id, reason })` needs `sis.student.update`, works only on an `active` student, sets `status: 'withdrawn'`, `leftOn` and `leavingReason`, and closes the enrollment as `transferred`, in one transaction.
+- The student profile has **Attendance** (last 60 days; needs `attendance.record.read`) and **Fees** (invoices, receipts and balance due; needs `fees.invoice.read`) tabs.
+- `transferStudent({ id, sectionId })` needs `sis.student.update`: moves an active student to another section of the same academic year and gives the section's next roll number, in one transaction. Attendance already taken stays with the old section.
+- Admissions (`sis.admission.read` to view, `sis.admission.update` to change): `createAdmission(...)` issues `APP-{YYYY}-{00000}` from `counters` (unique, not gap-free) at stage `enquiry`; `moveAdmission({ id, to, note? })` follows the state machine in the data model and gives `BUSINESS_RULE` for a skipped or repeated move; `acceptAdmission({ id, sectionId, address })` works only from `offered`, needs a section of the class sought, and creates the student, guardian and enrollment and closes the application in one transaction. Documents, the assessment score and the online form are not built.
+- `importStudents({ csv, dryRun })` needs `sis.student.import`. The header row must match the template. Every row is validated with the Add student rules; any error means nothing is written and the errors come back as `{ row, field, message }` (the first 100). A clean file is written in one transaction. It runs in the request and is capped at 500 rows; `importJobs`, the worker and the error file are not built.
 
 | Name | Type | Permission | Input | Output |
 |---|---|---|---|---|
@@ -119,9 +129,14 @@ const StudentInput = z.object({
 
 ## 3. Staff and HR
 
+**Leave, built on 2026-10-05:** `applyLeave({ leaveTypeCode, from, to, halfDay?, reason })` needs `hr.leave.create` and a staff record; overlapping pending or approved requests give `BUSINESS_RULE`. Leave types are the fixed codes `CL`, `SL`, `EL`, `LOP`; `leaveTypes`, quotas and balances are not built, so no request is refused for balance. `decideLeave({ id, decision, comment? })` needs `hr.leave.approve` (principal and school admin), works once on a pending request and never on the approver's own. `cancelLeave(id)` withdraws the requester's own pending request. `/leave` lists own requests for staff and all staff requests for approvers (`hr.leave.read`), filtered by status in the URL. Not built: attachments, substitutions, a notification to the requester, student leave.
+
+**Built on 2026-10-05:** `updateStaff({ id, name, designation, department?, type, phone, email?, joinedOn, status })` needs `hr.staff.update` and is audited. It is last-write-wins (no version check). The screen is `/staff/[id]/edit`, opened from the name in the staff table.
+
 | Name | Type | Permission | Input | Output |
 |---|---|---|---|---|
 | `createStaff` / `updateStaff` | Action | `hr.staff.create/update` | `StaffInput` | `{ id, employeeNo }` |
+| | | | **Built so far:** `createStaff({ name, designation, department?, type, phone, email?, joinedOn })` returns `{ name, employeeNo }`; the employee number (`EMP-0001`) comes from `counters` and is unique per school but not gap-free. `/staff` lists staff by name with cursor pagination. `assignClassTeacher({ sectionId, staffId \| null })` needs `academics.class.create`, accepts only active teaching staff of the same school and is audited; it decides who may take that section's daily attendance. Not built: `updateStaff`, staff profiles, user accounts for staff, staff attendance, leave, payroll | |
 | `checkIn` | Action | `hr.attendance.create` (self) | `{ method: 'manual' \| 'qr', qrToken? }` | `{ checkIn }` · `BUSINESS_RULE` if already checked in |
 | `applyLeave` | Action | `hr.leave.create` (self) | `{ leaveTypeCode, from, to, halfDay?, reason, attachmentKey? }` | `{ id, status: 'pending' }` · `BUSINESS_RULE` for insufficient balance |
 | `decideLeave` | Action | `hr.leave.approve` | `{ id, decision: 'approved' \| 'rejected', comment?, substitutions?: { timetableSlotId, date, substituteTeacherId }[] }` | `{}` |
@@ -131,6 +146,12 @@ const StudentInput = z.object({
 | `GET /api/v1/payslips/{id}/pdf` | Route | self or `hr.payroll.read` | — | `302` → a presigned S3 URL (60 s) |
 
 ## 4. Academics
+
+**Built on 2026-10-05:**
+- `upsertSubject({ name, code, type })` needs `academics.class.create`; creates only; `CONFLICT` when the code is taken in the school.
+- `upsertTimetableSlot({ sectionId, day, period, subjectId, teacherId })` and `clearTimetableSlot({ sectionId, day, period })` need `academics.timetable.update`; reading needs `academics.timetable.read`. A slot is saved as `published` at once (no draft and publish step). The unique index on teacher, day and period turns a double booking into `CONFLICT`. Clearing is a hard delete, because a soft-deleted slot would keep its place in the unique index.
+- Periods are a fixed schedule in code (8 periods of 40 minutes from 08:00, Monday to Saturday); `periodDefinitions` is not built.
+- A teacher with a staff record sees "Your classes today" on the home page. Substitutions are not built, and a teacher's `assigned` scope for the student list is still the class-teacher section only.
 
 | Name | Type | Permission | Input | Output |
 |---|---|---|---|---|
@@ -144,6 +165,8 @@ const StudentInput = z.object({
 | `saveLessonPlan` / `reviewLessonPlan` | Action | `academics.lessonPlan.update` / `.approve` | per schema | `{ id }` |
 
 ## 5. Attendance
+
+**Period mode, built on 2026-10-05:** `submitAttendance` accepts `mode: 'period'` with `period`. The period must be on the section's published timetable for that weekday (`BUSINESS_RULE` otherwise) and the record stores the slot's `subjectId`. In `assigned` scope only the teacher of that slot may submit it; daily mode stays with the class teacher. `/attendance/take?section=&date=&period=` shows a Period selector when the section has periods that day; a teacher sees the sections they teach as well as their own class. The register, the dashboard tile and the student profile still count daily records only.
 
 | Name | Type | Permission | Input | Output |
 |---|---|---|---|---|
@@ -188,6 +211,8 @@ Server rules: `entries` must cover exactly the active enrollments of the section
 
 ## 7. Homework
 
+**Built on 2026-10-05:** `createHomework({ title, instructions?, subjectId, sectionIds, dueOn })` needs `homework.assignment.create` and a staff record; the sections must be ones the teacher is class teacher of or teaches on the timetable (`FORBIDDEN` otherwise); it is published at once. `deleteHomework(id)` soft-deletes the teacher's own homework only. `/homework` lists newest due date first with cursor pagination: a teacher sees their own, the office and principal see all (`homework.assignment.read`). Attachments, grading, submissions and the student and parent views are not built.
+
 | Name | Type | Permission | Input | Output |
 |---|---|---|---|---|
 | `upsertHomework` | Action | `homework.homework.create/update` (assigned sections) | `{ id?, sectionIds, subjectId, title, instructions, attachmentKeys, dueOn, graded, maxMarks?, allowLate, publish: boolean }` | `{ id }` |
@@ -197,6 +222,8 @@ Server rules: `entries` must cover exactly the active enrollments of the section
 | `POST /api/v1/files/presign` | Route | any authenticated user, with a per-module check | `{ module, fileName, mime, size }` | `{ key, url, fields }` (a presigned POST, 5 min, size and type locked) |
 
 ## 8. Fees and finance
+
+**Built on 2026-10-05:** `deleteFeeStructure(id)` needs `fees.structure.update` and soft-deletes a structure that is still `draft` (`BUSINESS_RULE` otherwise). Editing a draft is not built: delete it and add it again. The receipt page prints without the header, navigation, breadcrumb row and buttons, always in light mode.
 
 | Name | Type | Permission | Input | Output |
 |---|---|---|---|---|
@@ -232,7 +259,7 @@ const CollectPayment = z.object({
 
 Server rules: each allocation ≤ the invoice balance; everything runs in one transaction (payment + invoice updates + counter increment + audit); the receipt number comes from `counters`.
 
-**Built so far (the counter):** `collectPayment` returns `{ paymentId, receiptNo }` (no PDF yet; the receipt is the page `/fees/payments/{id}`, printed with the browser). The balance check is part of each invoice update, so two cashiers can't both collect the same dues (`BUSINESS_RULE`); an invoice of another student or school is `NOT_FOUND`. A request repeating an `idempotencyKey` returns the first receipt, including when the two arrive at the same moment. The audit entry is written just after the transaction commits, not inside it. `GET /api/v1/students/search?q=` needs `fees.payment.create` and returns up to 10 active students: an exact admission number, otherwise first or last names starting with the text (`guardianName` instead of `photoUrl`, since photos aren't built). Not built: the payments list, receipt PDF and email, advance payments, refunds, online payment and reconciliation.
+**Built so far (the counter):** `collectPayment` returns `{ paymentId, receiptNo }` (no PDF yet; the receipt is the page `/fees/payments/{id}`, printed with the browser). The balance check is part of each invoice update, so two cashiers can't both collect the same dues (`BUSINESS_RULE`); an invoice of another student or school is `NOT_FOUND`. A request repeating an `idempotencyKey` returns the first receipt, including when the two arrive at the same moment. The audit entry is written just after the transaction commits, not inside it. `GET /api/v1/students/search?q=` needs `fees.payment.create` and returns up to 10 active students: an exact admission number, otherwise first or last names starting with the text (`guardianName` instead of `photoUrl`, since photos aren't built). `/fees/payments` lists receipts newest first (by receipt number, which is issued in order) with cursor pagination. `/fees/dues` lists unpaid invoices past their due date, oldest first, with ageing bands (1–15, 16–30, 31–60, over 60 days), the total overdue and a link to the counter for each student; overdue is computed from the due date because the nightly job that sets `status: overdue` is not built. Not built: `sendDuesReminders`, receipt PDF and email, advance payments, refunds, online payment and reconciliation.
 
 ## 9. Communication
 
@@ -241,6 +268,7 @@ Server rules: each allocation ≤ the invoice balance; everything runs in one tr
 | `previewAudience` | Action | `comms.announcement.create` | `{ audience, channels }` | `{ recipients: { parents, students, staff }, smsParts, smsCredits }` |
 | `upsertAnnouncement` | Action | `comms.announcement.create/update` (teachers limited to assigned sections) | `{ id?, kind, title, body, audience, channels, requiresAck, publishAt?, expiresAt?, attachmentKeys }` | `{ id }` |
 | `publishAnnouncement` | Action | `comms.announcement.publish` | `{ id }` | `{ scheduledFor \| publishedAt, recipients }` |
+| | | | **Built so far:** `previewAudience(audience)` returns `{ recipients }` and `publishAnnouncement({ title, body, audience })` publishes at once and returns `{ id, title, recipients }`; both need `comms.announcement.create` (school_admin, principal). `audience` is `{ type: 'school' }` or `{ type: 'role', roles }`; class and section audiences wait for parent and student accounts. In-app only. With no worker yet, the notifications are written in the request, one per recipient except the author, de-duplicated by `dedupeKey`. `markNotificationsRead('all' \| ids)` is for the signed-in user's own notifications. The unread count is rendered with the page (no SSE yet), so it refreshes on a full page load. Not built: drafts, scheduling, expiry, acknowledgement, attachments, Markdown rendering, email/SMS/push | |
 | `acknowledgeNotice` | Action | recipient | `{ announcementId }` | `{}` |
 | `startThread` | Action | `comms.message.create` (allowed pairs only, per the matrix) | `{ participantIds, studentId?, subject, body }` | `{ threadId }` · `FORBIDDEN` if the pair isn't allowed |
 | `sendMessage` | Action | participant | `{ threadId, body, attachmentKeys?, idempotencyKey }` | `{ messageId, notifyAt }` |
@@ -272,6 +300,8 @@ Server rules: each allocation ≤ the invoice balance; everything runs in one tr
 
 ## 11. Calendar
 
+**Events, built on 2026-10-05:** `upsertEvent({ title, type, start, end })` creates an all-day, whole-school event (dates are `YYYY-MM-DD`; type cannot be `holiday`) and `deleteEvent(id)` soft-deletes it; both need `calendar.event.update` (school admin, principal). Everyone can read (`calendar.event.read`). `/calendar/events?month=YYYY-MM` lists the month's events and holidays together. Not built: timed events, audiences, editing, the `GET /api/v1/calendar` route.
+
 | Name | Type | Permission | Input | Output |
 |---|---|---|---|---|
 | `upsertEvent` / `deleteEvent` | Action | `calendar.event.*` | `{ title, type, start, end, allDay, audience }` | `{ id }` |
@@ -283,6 +313,8 @@ Server rules: each allocation ≤ the invoice balance; everything runs in one tr
 
 ## 12. Reports and dashboards
 
+**Student and parent home, built on 2026-10-05:** for roles `student` and `parent` (`portal.self.read`) the home page shows the student's attendance for the last 60 days, fees due with open installments, homework due today or later, today's classes, and upcoming events. A parent with several children picks one with `?student=`; an id that is not theirs falls back to their first child. The ids always come from the signed-in account, never from the request alone. Not built: online payment, homework submission, messaging, the student's full timetable and attendance history pages.
+
 | Name | Type | Permission | Input | Output |
 |---|---|---|---|---|
 | `GET /api/v1/dashboard/{widgetKey}` | Route | per widget | filters | Widget data (used for client refresh; the first render is RSC) |
@@ -292,6 +324,17 @@ Server rules: each allocation ≤ the invoice balance; everything runs in one tr
 Report keys: `attendance.daily`, `attendance.monthly`, `attendance.lowAttendance`, `fees.collection`, `fees.dues`, `fees.concessions`, `fees.headwise`, `admissions.funnel`, `exams.results`, `exams.subjectAnalysis`, `staff.attendance`, `staff.leave`, `library.overdue`, `transport.routeStrength`.
 
 ## 13. Settings, audit and import/export
+
+**Users, built on 2026-10-05** (`users.user.read` for school admin and principal; `users.user.create` and `users.user.update` for school admin):
+- `createUser({ name, email, role, staffId? })` replaces `inviteUser` until email is connected: it creates an active account for a staff role (never `super_admin`, `student` or `parent`) with a random 14-character temporary password, returned once and stored only as an argon2id hash. `CONFLICT` when the email exists or the staff record already has an account. A teacher gets scope `assigned`; other roles get `school`.
+- `resetUserPassword(id)` issues a new temporary password and deletes the user's sessions. `setUserStatus({ id, status: 'active' | 'disabled' })` disables or re-enables sign-in; disabling deletes sessions. Neither works on your own account or on a user of another school.
+- `createPortalAccount({ studentId, guardianId?, email })` (needs `users.user.create`) creates the student's own account (role `student`, scope `self`) or a guardian's (role `parent`, scope `ward`), linked by `User.studentId` / `User.guardianId`. One account per person.
+- Not built: invitations by email or SMS, forcing a password change at first sign-in, several roles per user, the role switcher.
+
+**Academic year and promotion, built on 2026-10-05** (all need `sis.enrollment.update`, school admin):
+- `createAcademicYear({ label, startDate, endDate })` plans the next year (one at a time, starting after the current year ends) and copies the current year's classes and sections into it, without students or class teachers. Terms are not built.
+- `promoteStudents({ sectionId, decisions: { studentId, action, toSectionId? }[] })` works one section at a time in one transaction. `promote` needs a next-year section of the class above, `detain` one of the same class; both create the new enrollment with the section's next roll number and mark the old one `promoted` or `detained`. `graduate` marks the enrollment `completed` and the student `alumni`; `leave` marks them `transferred` and `withdrawn`. Only students still actively enrolled in that section are touched, so a repeat changes nothing. Returns `{ section, promoted, detained, graduated, left }`.
+- `closeAcademicYear()` makes the planned year current and the current one closed. `BUSINESS_RULE` while any student is still enrolled in the current year. No other blockers are checked yet (open invoices, unsubmitted attendance).
 
 | Name | Type | Permission | Input | Output |
 |---|---|---|---|---|

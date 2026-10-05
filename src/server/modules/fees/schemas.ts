@@ -138,3 +138,47 @@ export type InvoiceRow = {
   balanceMinor: number;
   status: InvoiceStatus;
 };
+
+export const ListPayments = z.object({
+  cursor: z.string().optional().catch(undefined),
+  pageSize: z.coerce
+    .number()
+    .refine((size) => [10, 25, 50, 100].includes(size))
+    .catch(25),
+});
+export type ListPayments = z.infer<typeof ListPayments>;
+
+export type PaymentRow = {
+  id: string;
+  receiptNo: string;
+  collectedAt: string;
+  studentName: string;
+  admissionNo: string;
+  method: string;
+  amountMinor: number;
+};
+
+export const AGEING = ['all', '1-15', '16-30', '31-60', '60+'] as const;
+export type Ageing = (typeof AGEING)[number];
+
+export const ListDues = z.object({
+  ageing: z.enum(AGEING).catch('all'),
+  cursor: z.string().optional().catch(undefined),
+  pageSize: z.coerce
+    .number()
+    .refine((size) => [10, 25, 50, 100].includes(size))
+    .catch(25),
+});
+export type ListDues = z.infer<typeof ListDues>;
+
+export type DueRow = {
+  id: string;
+  invoiceNo: string;
+  studentId: string;
+  studentName: string;
+  admissionNo: string;
+  installment: string;
+  dueDate: string;
+  daysOverdue: number;
+  balanceMinor: number;
+};

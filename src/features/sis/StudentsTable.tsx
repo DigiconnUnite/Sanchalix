@@ -6,12 +6,14 @@ import CollectionPreferences from '@cloudscape-design/components/collection-pref
 import Header from '@cloudscape-design/components/header';
 import Pagination from '@cloudscape-design/components/pagination';
 import Select from '@cloudscape-design/components/select';
+import SpaceBetween from '@cloudscape-design/components/space-between';
 import StatusIndicator from '@cloudscape-design/components/status-indicator';
 import Table from '@cloudscape-design/components/table';
 import { useTranslations } from 'next-intl';
 import type { ReactNode } from 'react';
 import { AppLink } from '@/components/AppLink';
 import { EmptyState } from '@/components/EmptyState';
+import { svg } from '@/components/icons';
 import { usePathname, useRouter } from '@/i18n/navigation';
 import { formatPhone } from '@/lib/phone';
 import { useIsMobile } from '@/lib/useIsMobile';
@@ -97,16 +99,28 @@ export function StudentsTable({
         counter={counter}
         actions={
           canCreate && (
-            <Button
-              variant="primary"
-              href="/students/new"
-              onFollow={(event) => {
-                event.preventDefault();
-                router.push('/students/new');
-              }}
-            >
-              {t('add')}
-            </Button>
+            <SpaceBetween direction="horizontal" size="xs">
+              <Button
+                href="/students/import"
+                iconSvg={svg('import')}
+                onFollow={(event) => {
+                  event.preventDefault();
+                  router.push('/students/import');
+                }}
+              >
+                {t('import')}
+              </Button>
+              <Button
+                variant="primary"
+                href="/students/new"
+                onFollow={(event) => {
+                  event.preventDefault();
+                  router.push('/students/new');
+                }}
+              >
+                {t('add')}
+              </Button>
+            </SpaceBetween>
           )
         }
       >

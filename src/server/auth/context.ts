@@ -14,13 +14,15 @@ export type RequestContext = {
   schoolId: Types.ObjectId;
   branchId?: Types.ObjectId;
   staffId?: Types.ObjectId;
+  studentId?: Types.ObjectId;
+  guardianId?: Types.ObjectId;
 };
 
 export const getContext = cache(async (): Promise<RequestContext | null> => {
   const session = await readSession();
   if (!session?.activeSchoolId || session.totpPending) return null;
 
-  const user = await User.findById(session.userId).select('name roles staffId status').lean();
+  const user = await User.findById(session.userId).select('name roles staffId studentId guardianId status').lean();
   if (user?.status !== 'active') return null;
 
   const schoolId = session.activeSchoolId;
@@ -35,6 +37,8 @@ export const getContext = cache(async (): Promise<RequestContext | null> => {
     schoolId,
     ...(assignment.branchId && { branchId: assignment.branchId }),
     ...(user.staffId && { staffId: user.staffId }),
+    ...(user.studentId && { studentId: user.studentId }),
+    ...(user.guardianId && { guardianId: user.guardianId }),
   };
 });
 

@@ -50,7 +50,6 @@ async function addStudent(schoolId: Types.ObjectId, lastName: string, sectionId:
 
 beforeAll(async () => {
   await connectDb();
-  await Promise.all([Student, Guardian, Enrollment, Section].map((model) => model.collection.deleteMany({})));
 
   const section = (schoolId: Types.ObjectId, displayName: string, classTeacherId?: Types.ObjectId) =>
     Section.create({

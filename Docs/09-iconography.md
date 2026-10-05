@@ -60,6 +60,7 @@ import ClipboardText from 'reicon-react/icons/ClipboardText';
 import ColorSwatch from 'reicon-react/icons/ColorSwatch';
 import Copy from 'reicon-react/icons/Copy';
 import CreditCard from 'reicon-react/icons/CreditCard';
+import DarkLight from 'reicon-react/icons/DarkLight';
 import Database from 'reicon-react/icons/Database';
 import Devices from 'reicon-react/icons/Devices';
 import Diploma from 'reicon-react/icons/Diploma';
@@ -122,6 +123,7 @@ import Scale from 'reicon-react/icons/Scale';
 import ScanBarcode from 'reicon-react/icons/ScanBarcode';
 import Search from 'reicon-react/icons/Search';
 import Send from 'reicon-react/icons/Send';
+import Setting2 from 'reicon-react/icons/Setting2';
 import Settings from 'reicon-react/icons/Settings';
 import ShieldAlert from 'reicon-react/icons/ShieldAlert';
 import ShieldCheck from 'reicon-react/icons/ShieldCheck';
@@ -130,7 +132,7 @@ import Sms from 'reicon-react/icons/Sms';
 import Sparkles from 'reicon-react/icons/Sparkles';
 import Speaker from 'reicon-react/icons/Speaker';
 import Star from 'reicon-react/icons/Star';
-import Sun from 'reicon-react/icons/Sun';
+import Sun2 from 'reicon-react/icons/Sun2';
 import Task from 'reicon-react/icons/Task';
 import Trash from 'reicon-react/icons/Trash';
 import TrendDown from 'reicon-react/icons/TrendDown';
@@ -229,6 +231,7 @@ export const icons = {
   aiInsights: Sparkles,
   atRisk: ShieldAlert,
   settings: Settings,
+  tablePreferences: Setting2,
   users: Users,
   roles: ShieldCheck,
   switchRole: UserTag,
@@ -243,8 +246,9 @@ export const icons = {
   password: Key,
   sessions: Devices,
   language: Language,
+  themeToggle: DarkLight,
   darkMode: Moon,
-  lightMode: Sun,
+  lightMode: Sun2,
   density: Layout,
   branding: ColorSwatch,
   profile: UserCircle,
@@ -361,7 +365,7 @@ Some Cloudscape components draw their own glyphs (StatusIndicator, Alert, Flashb
   icons={{
     search: svg('search'),
     notification: svg('notifications'),
-    settings: svg('settings'),
+    settings: svg('tablePreferences'),
     'user-profile': svg('profile'),
     calendar: svg('calendar'),
     filter: svg('filter'),
@@ -404,7 +408,8 @@ Key = the key in `icons.tsx`. Component = the Reicon component. Default size is 
 | Switch role | `switchRole` | `UserTag` | Top nav role switcher for multi-role users |
 | Sign in / out | `signIn` / `signOut` | `Login` / `Logout` | Sign-in button, profile menu → "Sign out" |
 | Language | `language` | `Language` | Profile menu and sign-in page language selector |
-| Dark / light mode | `darkMode` / `lightMode` | `Moon` / `Sun` | Top nav mode toggle (the icon of the mode it switches to); Profile menu → Appearance segmented control |
+| Mode toggle | `themeToggle` | `DarkLight` | Top nav mode toggle (same icon in both modes, turned 180° in dark mode; the label says which mode it switches to) |
+| Dark / light mode | `darkMode` / `lightMode` | `Moon` / `Sun2` | Profile menu → Appearance segmented control |
 | Density | `density` | `Layout` | Profile menu → Density (comfortable/compact) |
 | Menu | `menu` | `Menu` | Mobile nav toggle (through IconProvider) |
 | More actions | `more` | `MoreH` | Icon-only row action menus in tables and cards |
@@ -568,6 +573,7 @@ Key = the key in `icons.tsx`. Component = the Reicon component. Default size is 
 | Link | `link` | `Link` | "Copy link" |
 | External link | `external` | `ArrowUpRight` | Links that open a new tab |
 | Refresh | `refresh` | `Refresh` | Table refresh buttons, "Retry" in error states |
+| Table preferences | `tablePreferences` | `Setting2` | The preferences trigger on every table (through IconProvider) |
 | Favorite | `favorite` | `Star` | Pinned reports and saved filters (Filled when pinned) |
 | Success / error / warning / info | `success` / `error` / `warning` / `info` | `CheckCircle` / `XCircle` / `AlertTriangle` / `InfoCircle` | Only through IconProvider for status components. Never used alone. |
 

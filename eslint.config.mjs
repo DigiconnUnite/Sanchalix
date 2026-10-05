@@ -31,7 +31,7 @@ const eslintConfig = defineConfig([
     files: ['src/components/icons.tsx'],
     rules: { 'no-restricted-imports': 'off' },
   },
-  globalIgnores(['.next/**', 'out/**', 'build/**', 'next-env.d.ts']),
+  globalIgnores(['.next/**', 'out/**', 'build/**', 'next-env.d.ts', '.kilo/**']),
 ]);
 
 export default eslintConfig;

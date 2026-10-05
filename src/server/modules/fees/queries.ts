@@ -17,10 +17,14 @@ import { Section } from '@/server/models/section';
 import { User } from '@/server/models/user';
 import type {
   CounterStudent,
+  DueRow,
   FeeHeadRow,
   FeeStructureRow,
   InvoiceRow,
+  ListDues,
   ListInvoices,
+  ListPayments,
+  PaymentRow,
   Receipt,
   StudentMatch,
 } from './schemas';
@@ -210,5 +214,95 @@ export async function getReceipt(ctx: RequestContext, paymentId: string): Promis
       installment: invoiceById.get(String(allocation.invoiceId))?.installmentLabel ?? '',
       amountMinor: allocation.amountMinor,
     })),
+  };
+}
+
+async function studentsById(ctx: RequestContext, ids: unknown[]) {
+  const students = await Student.find({ schoolId: ctx.schoolId, _id: { $in: ids } })
+    .setOptions({ withDeleted: true })
+    .select('firstName lastName admissionNo')
+    .lean();
+  return new Map(students.map((student) => [String(student._id), student]));
+}
+
+/** Receipts, newest first. Receipt numbers are issued in order, so sorting by number is sorting by time. */
+export async function listPayments(ctx: RequestContext, query: ListPayments) {
+  const { rows, ...page } = await paginate(
+    Payment,
+    { schoolId: ctx.schoolId },
+    {
+      sortField: 'receiptNo',
+      descending: true,
+      select: ['receiptNo', 'studentId', 'method', 'amountMinor', 'createdAt'],
+      limit: query.pageSize,
+      cursor: query.cursor,
+    },
+  );
+  const students = await studentsById(ctx, rows.map((payment) => payment.studentId));
+  const payments: PaymentRow[] = rows.map((payment) => {
+    const student = students.get(String(payment.studentId));
+    return {
+      id: String(payment._id),
+      receiptNo: payment.receiptNo,
+      collectedAt: payment.createdAt.toISOString(),
+      studentName: student ? fullName(student) : '',
+      admissionNo: student?.admissionNo ?? '',
+      method: payment.method,
+      amountMinor: payment.amountMinor,
+    };
+  });
+  return { rows: payments, ...page };
+}
+
+const DAY_MS = 86_400_000;
+const daysBefore = (date: string, days: number) =>
+  new Date(Date.parse(`${date}T00:00:00Z`) - days * DAY_MS).toISOString().slice(0, 10);
+
+/** Unpaid balances past their due date, oldest first, optionally limited to an ageing band of days overdue. */
+export async function listDues(ctx: RequestContext, query: ListDues) {
+  const { schoolId } = ctx;
+  const school = await School.findById(schoolId).select('timezone').lean();
+  const today = todayIn(school?.timezone ?? 'Asia/Kolkata');
+  const bands = {
+    all: { $lt: today },
+    '1-15': { $lt: today, $gte: daysBefore(today, 15) },
+    '16-30': { $lt: daysBefore(today, 15), $gte: daysBefore(today, 30) },
+    '31-60': { $lt: daysBefore(today, 30), $gte: daysBefore(today, 60) },
+    '60+': { $lt: daysBefore(today, 60) },
+  };
+  const filter = { schoolId, status: { $in: [...OPEN] }, dueDate: bands[query.ageing] };
+
+  const [{ rows, ...page }, totals] = await Promise.all([
+    paginate(Invoice, filter, {
+      sortField: 'dueDate',
+      select: ['invoiceNo', 'studentId', 'installmentLabel', 'dueDate', 'balanceMinor'],
+      limit: query.pageSize,
+      cursor: query.cursor,
+    }),
+    Invoice.aggregate<{ outstandingMinor: number; count: number }>([
+      { $match: filter },
+      { $group: { _id: null, outstandingMinor: { $sum: '$balanceMinor' }, count: { $sum: 1 } } },
+    ]),
+  ]);
+  const students = await studentsById(ctx, rows.map((invoice) => invoice.studentId));
+  const dues: DueRow[] = rows.map((invoice) => {
+    const student = students.get(String(invoice.studentId));
+    return {
+      id: String(invoice._id),
+      invoiceNo: invoice.invoiceNo,
+      studentId: String(invoice.studentId),
+      studentName: student ? fullName(student) : '',
+      admissionNo: student?.admissionNo ?? '',
+      installment: invoice.installmentLabel,
+      dueDate: invoice.dueDate,
+      daysOverdue: Math.round((Date.parse(today) - Date.parse(invoice.dueDate)) / DAY_MS),
+      balanceMinor: invoice.balanceMinor,
+    };
+  });
+  return {
+    rows: dues,
+    ...page,
+    outstandingMinor: totals[0]?.outstandingMinor ?? 0,
+    count: totals[0]?.count ?? 0,
   };
 }

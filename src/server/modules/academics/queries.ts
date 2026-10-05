@@ -4,6 +4,7 @@ import { AcademicYear } from '@/server/models/academicYear';
 import { Class } from '@/server/models/class';
 import { Enrollment } from '@/server/models/enrollment';
 import { Section } from '@/server/models/section';
+import { Staff } from '@/server/models/staff';
 import type { SectionRow } from './schemas';
 
 export async function getCurrentYearId(ctx: RequestContext) {
@@ -32,13 +33,18 @@ export async function listSections(ctx: RequestContext): Promise<SectionRow[]> {
   const [classes, sections] = await Promise.all([
     listClasses(ctx),
     Section.find({ schoolId, academicYearId, ...branchFilter(ctx) })
-      .select('classId displayName capacity room')
+      .select('classId displayName capacity room classTeacherId')
       .lean(),
   ]);
   const strengths = await Enrollment.aggregate<{ _id: unknown; students: number }>([
     { $match: { schoolId, status: 'active', sectionId: { $in: sections.map((section) => section._id) } } },
     { $group: { _id: '$sectionId', students: { $sum: 1 } } },
   ]);
+  const teachers = await Staff.find({ schoolId, _id: { $in: sections.map((section) => section.classTeacherId) } })
+    .setOptions({ withDeleted: true })
+    .select('name')
+    .lean();
+  const teacherById = new Map(teachers.map((teacher) => [String(teacher._id), teacher.name]));
   const strengthById = new Map(strengths.map((row) => [String(row._id), row.students]));
   const classById = new Map(classes.map((schoolClass) => [schoolClass.id, schoolClass]));
 
@@ -52,6 +58,9 @@ export async function listSections(ctx: RequestContext): Promise<SectionRow[]> {
       strength: strengthById.get(String(section._id)) ?? 0,
       capacity: section.capacity,
       room: section.room || null,
+      classTeacher: teacherById.has(String(section.classTeacherId))
+        ? { id: String(section.classTeacherId), name: teacherById.get(String(section.classTeacherId)) ?? '' }
+        : null,
     }));
 }
 

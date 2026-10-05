@@ -92,6 +92,16 @@ Vidyawan's UI is built entirely from the **AWS Cloudscape Design System** (`@clo
 
 ## 5. Theming (school branding)
 
+**Default accent: orange** ([ADR-021](23-decision-log.md#adr-021-orange-as-the-default-accent-colour)). `src/app/providers.tsx` replaces Cloudscape's blue `primary` reference palette with an orange one through `generateThemeStylesheet` and renders it as a `<style>` on the server, so there is no blue flash. Every accent follows from that palette: primary and normal buttons, links, focus rings, selected rows, tabs, the active navigation link, checkboxes, toggles and progress bars. The `info` palette is untouched, so info status, info alerts and info flashes stay blue.
+
+| Step | Value | Carries |
+|---|---|---|
+| 600 | `#c2410c` | Light mode: primary button fill under white text (5.18:1) and link text on white (5.18:1) |
+| 400 | `#fb923c` | Dark mode: primary button fill under dark text and link text on the dark background (8.17:1) |
+| 900 | `#6a2408` | Light mode hover and pressed |
+| 300 | `#fdba74` | Dark mode hover and pressed |
+| 50 / 1000 | `#fff7ed` / `#2a0c03` | Selected-row background in light / dark |
+
 Schools may set a **primary brand colour** and a **logo**. Vidyawan applies the colour with Cloudscape `applyTheme` (`@cloudscape-design/components/theming`) to a restricted set of tokens only:
 
 ```ts
@@ -114,7 +124,7 @@ applyTheme({
 ## 6. Visual modes (dark mode)
 
 - Three options in Profile → Appearance: System (default), Light, Dark (a `SegmentedControl` with `lightMode` / `darkMode` icons).
-- The top navigation also has a one-click toggle: an icon-only utility showing `darkMode` in light mode ("Switch to dark mode") and `lightMode` in dark mode ("Switch to light mode"). It applies the mode at once and saves it with `setVisualMode`.
+- The top navigation also has a one-click toggle: an icon-only utility showing `themeToggle` in both modes, labelled "Switch to dark mode" in light mode and "Switch to light mode" in dark mode. It applies the mode at once and saves it with `setVisualMode`.
 - The choice is mirrored in the `vw.mode` cookie (set on sign-in and on every change) so the server renders `awsui-dark-mode` on `<body>` and there is no flash. With System, the mode is applied after hydration from `prefers-color-scheme`.
 - Everything uses tokens and `currentColor`, so dark mode needs no per-screen work. PDFs and printed pages are always light.
 - Charts use the Cloudscape chart palette, which adapts automatically. Never hard-code series colours.

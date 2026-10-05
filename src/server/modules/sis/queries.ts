@@ -9,7 +9,18 @@ import { Section } from '@/server/models/section';
 import { Student } from '@/server/models/student';
 import { AuditLog } from '@/server/models/auditLog';
 import { User } from '@/server/models/user';
-import type { HistoryEntry, ListStudents, StudentProfile, StudentRow, StudentStatus } from './schemas';
+import { AttendanceRecord } from '@/server/models/attendanceRecord';
+import { Invoice } from '@/server/models/invoice';
+import { Payment } from '@/server/models/payment';
+import type {
+  HistoryEntry,
+  ListStudents,
+  StudentAttendance,
+  StudentFees,
+  StudentProfile,
+  StudentRow,
+  StudentStatus,
+} from './schemas';
 
 const COUNT_CAP = 10_001;
 
@@ -85,7 +96,9 @@ export async function getStudent(ctx: RequestContext, id: string): Promise<Stude
   // and() rather than a spread, because the teacher scope already filters on _id and a spread would replace it.
   const student = await Student.findOne(await scopeFilter(ctx))
     .and([{ _id: id }])
-    .select('firstName lastName admissionNo dob gender bloodGroup status address guardianIds primaryGuardianId currentEnrollmentId')
+    .select(
+      'firstName lastName admissionNo dob gender bloodGroup status address guardianIds primaryGuardianId currentEnrollmentId updatedAt',
+    )
     .lean();
   if (!student) return null;
 
@@ -108,7 +121,18 @@ export async function getStudent(ctx: RequestContext, id: string): Promise<Stude
     status: student.status,
     classSection: section?.displayName ?? null,
     rollNo: enrollment?.rollNo ?? null,
-    address: address ? [address.line1, address.line2, address.city, address.state, address.pincode].filter(Boolean).join(', ') : null,
+    address: address
+      ? [address.line1, address.line2, address.city, address.state, address.pincode].filter(Boolean).join(', ')
+      : null,
+    editable: {
+      firstName: student.firstName,
+      lastName: student.lastName ?? '',
+      line1: address?.line1 ?? '',
+      city: address?.city ?? '',
+      state: address?.state ?? '',
+      pincode: address?.pincode ?? '',
+      version: student.updatedAt.toISOString(),
+    },
     guardians: guardians.map((guardian) => ({
       id: String(guardian._id),
       name: guardian.name,
@@ -134,4 +158,63 @@ export async function listStudentHistory(ctx: RequestContext, studentId: string)
     actor: nameById.get(String(entry.actorId)) ?? '',
     action: entry.action,
   }));
+}
+
+/** The student's marks for the last 60 days, newest first. Call only after getStudent has confirmed access. */
+export async function getStudentAttendance(ctx: RequestContext, studentId: string): Promise<StudentAttendance> {
+  const since = new Date(Date.now() - 60 * 86_400_000).toISOString().slice(0, 10);
+  const records = await AttendanceRecord.find({
+    schoolId: ctx.schoolId,
+    'entries.studentId': studentId,
+    mode: 'daily',
+    date: { $gte: since },
+  })
+    .sort({ date: -1 })
+    .select('date entries.studentId entries.status')
+    .lean();
+  const days = records.flatMap((record) => {
+    const entry = record.entries.find((candidate) => String(candidate.studentId) === studentId);
+    return entry ? [{ date: record.date, status: entry.status as string }] : [];
+  });
+  const count = (...statuses: string[]) => days.filter((day) => statuses.includes(day.status)).length;
+  const attended = count('present', 'late') + count('half_day') * 0.5;
+  return {
+    present: count('present', 'late'),
+    absent: count('absent'),
+    percent: days.length ? Math.round((attended / days.length) * 1000) / 10 : null,
+    days,
+  };
+}
+
+/** Every invoice and receipt of the student. Call only after getStudent has confirmed access. */
+export async function getStudentFees(ctx: RequestContext, studentId: string): Promise<StudentFees> {
+  const { schoolId } = ctx;
+  const [invoices, payments] = await Promise.all([
+    Invoice.find({ schoolId, studentId })
+      .sort({ dueDate: 1 })
+      .select('invoiceNo installmentLabel dueDate totalMinor balanceMinor status')
+      .lean(),
+    Payment.find({ schoolId, studentId }).sort({ createdAt: -1 }).select('receiptNo method amountMinor createdAt').lean(),
+  ]);
+  return {
+    dueMinor: invoices
+      .filter((invoice) => invoice.status !== 'void')
+      .reduce((sum, invoice) => sum + invoice.balanceMinor, 0),
+    invoices: invoices.map((invoice) => ({
+      id: String(invoice._id),
+      invoiceNo: invoice.invoiceNo,
+      installment: invoice.installmentLabel,
+      dueDate: invoice.dueDate,
+      totalMinor: invoice.totalMinor,
+      balanceMinor: invoice.balanceMinor,
+      status: invoice.status,
+    })),
+    payments: payments.map((payment) => ({
+      id: String(payment._id),
+      receiptNo: payment.receiptNo,
+      collectedAt: payment.createdAt.toISOString(),
+      method: payment.method,
+      amountMinor: payment.amountMinor,
+    })),
+  };
 }

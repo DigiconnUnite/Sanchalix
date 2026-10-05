@@ -14,7 +14,7 @@ import { useIsDark } from '@/lib/useIsDark';
 import { useIsMobile } from '@/lib/useIsMobile';
 import type { VisualMode } from '@/lib/visualMode';
 
-export type NavItem = { text: string; href: string; icon: IconKey };
+export type NavItem = { text: string; href: string; icon: IconKey; group?: string };
 
 export function AppShell({
   nav,
@@ -24,8 +24,10 @@ export function AppShell({
   signOut,
   visualMode,
   setVisualMode,
+  unread,
   children,
 }: {
+  unread: number;
   visualMode: VisualMode;
   setVisualMode: (mode: VisualMode) => Promise<unknown>;
   nav: NavItem[];
@@ -54,6 +56,13 @@ export function AppShell({
   const [navigationChoice, setNavigationChoice] = useState<boolean | null>(null);
   const navigationOpen = navigationChoice ?? !isMobile;
   const collapsed = !isMobile && !navigationOpen;
+  const link = ({ text, href, icon }: NavItem) => ({
+    type: 'link' as const,
+    text,
+    href,
+    icon: <Icon size="medium" svg={svg(icon, isActive(href))} />,
+  });
+  const groups = [...new Set(nav.flatMap((item) => item.group ?? []))];
 
   return (
     <>
@@ -70,7 +79,19 @@ export function AppShell({
           utilities={[
             {
               type: 'button',
-              iconSvg: svg(isDark ? 'lightMode' : 'darkMode'),
+              iconSvg: svg('notifications'),
+              ariaLabel: t('notifications', { count: unread }),
+              title: t('notifications', { count: unread }),
+              badge: unread > 0,
+              onClick: () => router.push('/notifications'),
+            },
+            {
+              type: 'button',
+              iconSvg: (
+                <span className="vw-icon vw-theme-toggle" data-dark={isDark}>
+                  {svg('themeToggle')}
+                </span>
+              ),
               ariaLabel: t(isDark ? 'theme.toLight' : 'theme.toDark'),
               title: t(isDark ? 'theme.toLight' : 'theme.toDark'),
               onClick: () => {
@@ -85,8 +106,14 @@ export function AppShell({
               text: userName,
               description: roleLabel,
               iconSvg: svg('profile'),
-              items: [{ id: 'signOut', text: t('signOut'), iconSvg: svg('signOut') }],
-              onItemClick: () => void signOut().then(() => router.replace('/signin')),
+              items: [
+                { id: 'profile', text: t('profile'), iconSvg: svg('profile') },
+                { id: 'signOut', text: t('signOut'), iconSvg: svg('signOut') },
+              ],
+              onItemClick: ({ detail }) =>
+                detail.id === 'profile'
+                  ? router.push('/profile')
+                  : void signOut().then(() => router.replace('/signin')),
             },
           ]}
         />
@@ -111,13 +138,14 @@ export function AppShell({
           <SideNavigation
             collapsed={collapsed}
             activeHref={active?.href ?? ''}
-            items={nav.map(({ text, href, icon }) => ({
-              type: 'link',
-              text,
-              href,
-              // The collapsed rail's active circle is sized for a 16px icon; a 20px one sits off-centre in it.
-              icon: <Icon size={collapsed ? 'normal' : 'medium'} svg={svg(icon, isActive(href))} />,
-            }))}
+            items={[
+              ...nav.filter((item) => !item.group).map(link),
+              ...groups.map((title) => ({
+                type: 'section-group' as const,
+                title,
+                items: nav.filter((item) => item.group === title).map(link),
+              })),
+            ]}
             onFollow={(event) => {
               if (event.detail.external) return;
               event.preventDefault();

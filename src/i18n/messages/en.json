@@ -8,12 +8,24 @@
       "today": "Today",
       "home": "Home",
       "students": "Students",
-      "academics": "Academics",
+      "academics": "Classes",
       "attendance": "Attendance",
       "calendar": "Holidays",
       "feeStructures": "Fee structures",
       "invoices": "Invoices",
-      "feeCounter": "Fee counter"
+      "feeCounter": "Fee counter",
+      "payments": "Payments",
+      "dues": "Dues",
+      "announcements": "Announcements",
+      "staff": "Staff",
+      "admissions": "Admissions",
+      "subjects": "Subjects",
+      "timetable": "Timetable",
+      "homework": "Homework",
+      "leave": "Leave",
+      "users": "Users",
+      "calendarEvents": "Calendar",
+      "promotion": "Promotion"
     },
     "breadcrumbs": "Breadcrumbs",
     "signOut": "Sign out",
@@ -31,6 +43,15 @@
       "accountant": "Accountant",
       "librarian": "Librarian",
       "transport_manager": "Transport manager"
+    },
+    "notifications": "{count, plural, =0 {Notifications, none unread} one {Notifications, # unread} other {Notifications, # unread}}",
+    "profile": "Profile",
+    "groups": {
+      "people": "People",
+      "academics": "Academics",
+      "fees": "Fees",
+      "communication": "Communication",
+      "admin": "Administration"
     }
   },
   "auth": {
@@ -87,6 +108,39 @@
           "download": "Download codes"
         }
       }
+    },
+    "password": {
+      "currentRequired": "Enter your current password",
+      "wrongCurrent": "That isn't your current password. Check it and try again.",
+      "tooShort": "Use at least 10 characters",
+      "tooLong": "Use 256 characters or fewer",
+      "mismatch": "The two new passwords don't match",
+      "same": "Choose a password that is different from your current one"
+    },
+    "profile": {
+      "title": "Profile",
+      "account": "Account",
+      "name": "Name",
+      "role": "Role",
+      "email": "Email",
+      "display": "Display",
+      "density": {
+        "label": "Density",
+        "description": "How much space tables and forms use. Saved to your account.",
+        "comfortable": "Comfortable",
+        "comfortableHint": "More space between rows. Easier to read and to tap.",
+        "compact": "Compact",
+        "compactHint": "More rows on the screen. Suits large tables on a desktop."
+      },
+      "password": {
+        "title": "Change password",
+        "current": "Current password",
+        "next": "New password",
+        "confirm": "Confirm new password",
+        "hint": "At least 10 characters. A long phrase is stronger than a short mix of symbols.",
+        "submit": "Change password",
+        "changed": "Password changed. Other devices signed in to this account have been signed out."
+      }
     }
   },
   "dashboard": {
@@ -99,6 +153,51 @@
     "empty": {
       "heading": "Nothing here yet",
       "body": "Your daily tasks appear here once your school sets them up."
+    },
+    "actions": {
+      "counter": "Open fee counter",
+      "attendance": "Take attendance"
+    },
+    "attendance": {
+      "title": "Attendance today",
+      "none": "No sections",
+      "noSections": "You are not the class teacher of a section.",
+      "notNeeded": "Not needed",
+      "holiday": "Today is a holiday ({name}).",
+      "nonWorking": "Today isn't a working day.",
+      "notTaken": "Not taken yet",
+      "pending": "{count, plural, one {# section} other {# sections}} of {total} still to submit",
+      "allSubmitted": "Every section submitted · {absent, plural, =0 {nobody absent} one {# student absent} other {# students absent}}"
+    },
+    "fees": {
+      "title": "Fees",
+      "collectedToday": "Collected today",
+      "receipts": "{count, plural, =0 {No receipts today} one {# receipt today} other {# receipts today}} · {month} this month",
+      "overdue": "Overdue dues",
+      "overdueInvoices": "{count, plural, one {# invoice} other {# invoices}} past the due date",
+      "noDues": "Nothing is overdue",
+      "approvals": "Fee structures",
+      "drafts": "{count, plural, one {# draft} other {# drafts}}",
+      "approveHint": "Waiting for your approval.",
+      "waitingHint": "Waiting for the principal to approve."
+    },
+    "announcements": {
+      "title": "Latest announcements",
+      "all": "View all announcements",
+      "by": "{author} · {date}",
+      "empty": {
+        "heading": "No announcements yet",
+        "body": "Announcements from your school appear here."
+      }
+    },
+    "classes": {
+      "title": "Your classes today",
+      "timetable": "Full timetable",
+      "period": "Period {number} · {start}–{end}",
+      "empty": {
+        "heading": "No classes today",
+        "body": "Periods the office gives you on the timetable appear here."
+      }
     }
   },
   "sis": {
@@ -157,7 +256,10 @@
         "tabs": {
           "overview": "Overview",
           "guardians": "Parents",
-          "history": "History"
+          "history": "History",
+          "attendance": "Attendance",
+          "fees": "Fees",
+          "portal": "Portal access"
         },
         "dob": "Date of birth",
         "gender": "Gender",
@@ -173,13 +275,55 @@
           "emptyHeading": "No history yet",
           "emptyBody": "Changes to this student appear here.",
           "actions": {
-            "sis_student_create": "Added the student"
+            "sis_student_create": "Added the student",
+            "sis_student_update": "Edited the student's details",
+            "sis_student_withdraw": "Withdrew the student",
+            "sis_student_transfer": "Moved the student to another section"
           }
         },
         "notFound": {
           "heading": "Student not found",
           "body": "We couldn't find that student. It may have been removed or you may have followed an old link.",
           "action": "Back to students"
+        },
+        "updated": "Changes to {name} saved.",
+        "withdrawn": "{name} is withdrawn. The record and its history are kept.",
+        "edit": "Edit",
+        "withdraw": {
+          "action": "Withdraw student",
+          "title": "Withdraw {name}?",
+          "body": "The student leaves the class and no longer appears in attendance. Their record, invoices and receipts are kept. This can't be undone here.",
+          "reason": "Reason for leaving",
+          "confirm": "Withdraw student",
+          "cancel": "Cancel"
+        },
+        "attendance": {
+          "heading": "Last 60 days",
+          "percent": "Attendance",
+          "present": "Days present",
+          "absent": "Days absent",
+          "date": "Date",
+          "emptyHeading": "No attendance yet",
+          "emptyBody": "Days appear here once attendance is taken for this student's class."
+        },
+        "fees": {
+          "due": "Balance due",
+          "invoices": "Invoices",
+          "payments": "Payments",
+          "installment": "Installment",
+          "noInvoicesHeading": "No invoices yet",
+          "noInvoicesBody": "Invoices appear here once a fee structure for this class is approved.",
+          "noPaymentsHeading": "No payments yet",
+          "noPaymentsBody": "Receipts appear here after a payment is collected at the fee counter."
+        },
+        "actions": "Actions",
+        "transferred": "{name} moved to the new section with a new roll number.",
+        "transfer": {
+          "action": "Change section",
+          "title": "Move {name} to another section?",
+          "body": "The student gets the next roll number in the new section. Attendance already taken stays with the old section.",
+          "section": "New section",
+          "confirm": "Move student"
         }
       },
       "form": {
@@ -208,7 +352,10 @@
         "pincode": "Pincode",
         "submit": "Add student",
         "cancel": "Cancel",
-        "noSections": "Add classes and sections for the current academic year before adding students."
+        "noSections": "Add classes and sections for the current academic year before adding students.",
+        "editTitle": "Edit {name}",
+        "editMeta": "Edit student",
+        "save": "Save changes"
       },
       "errors": {
         "firstName": "Enter the student's first name",
@@ -224,7 +371,45 @@
         "addressLine1": "Enter the house, street and area",
         "city": "Enter the city",
         "state": "Enter the state",
-        "pincode": "Enter a 6-digit pincode"
+        "pincode": "Enter a 6-digit pincode",
+        "reason": "Enter the reason for withdrawing the student",
+        "stale": "Someone else changed this student while you were editing. Reload the page and make your changes again.",
+        "notFound": "We couldn't find that student.",
+        "notActive": "Only an active student can be withdrawn.",
+        "sameSection": "The student is already in that section."
+      },
+      "import": "Import students"
+    },
+    "import": {
+      "title": "Import students",
+      "description": "Add many students at once from a CSV file. The file is checked first; nothing is saved until every row is correct.",
+      "template": "Download template",
+      "file": "CSV file",
+      "columns": "The first row must be exactly these columns, in this order: {columns}. Dates are YYYY-MM-DD, phone numbers are 10 digits, and gender and relation use the same words as the Add student form.",
+      "sections": "The section column must be one of: {sections}.",
+      "noSections": "Add classes and sections for the current academic year before importing students.",
+      "choose": "Choose file",
+      "drop": "Drop the CSV file here",
+      "remove": "Remove file",
+      "showFewer": "Show fewer files",
+      "showMore": "Show more files",
+      "errorIcon": "Error",
+      "constraint": "One .csv file, up to 500 students.",
+      "check": "Check file",
+      "import": "{count, plural, one {Import # student} other {Import # students}}",
+      "ready": "{count, plural, one {# student is ready to import.} other {All # students are ready to import.}} Nothing has been saved yet.",
+      "imported": "{count, plural, one {# student imported.} other {# students imported.}}",
+      "viewStudents": "View students",
+      "errorsTitle": "Rows to fix",
+      "errorsDescription": "Nothing was imported. Fix these in the file and check it again. Showing {shown} of {count}.",
+      "row": "Row",
+      "column": "Column",
+      "problem": "Problem",
+      "errors": {
+        "noFile": "Choose a CSV file first.",
+        "header": "The first row doesn't match the template. Download the template and copy your data into it.",
+        "empty": "The file has no students below the header row.",
+        "tooMany": "A file can hold up to {max} students. Split it into smaller files."
       }
     }
   },
@@ -269,7 +454,8 @@
         "class": "Class",
         "section": "Section",
         "students": "Students",
-        "room": "Room"
+        "room": "Room",
+        "classTeacher": "Class teacher"
       },
       "empty": {
         "heading": "No classes yet",
@@ -304,7 +490,81 @@
         "sectionTaken": "{name} already exists. Choose a different section.",
         "capacity": "Enter a capacity from 1 to 200",
         "room": "Room can be up to 20 characters",
-        "noYear": "Set up the current academic year before adding classes."
+        "noYear": "Set up the current academic year before adding classes.",
+        "teacher": "We couldn't find that teacher, or they are no longer active teaching staff.",
+        "section": "We couldn't find that section."
+      },
+      "noClassTeacher": "Not assigned",
+      "editClassTeacher": "Change",
+      "classTeacherError": "Error",
+      "classTeacherFor": "Class teacher of {section}"
+    },
+    "subjects": {
+      "title": "Subjects",
+      "add": "Add subject",
+      "save": "Add subject",
+      "cancel": "Cancel",
+      "dismiss": "Dismiss message",
+      "added": "{name} added.",
+      "name": "Subject",
+      "code": "Code",
+      "codeHint": "2 to 8 letters or digits, for example MATH or SCI.",
+      "typeLabel": "Type",
+      "type": {
+        "scholastic": "Scholastic",
+        "co_scholastic": "Co-scholastic"
+      },
+      "empty": {
+        "heading": "No subjects yet",
+        "body": "Add the subjects your school teaches. They are used on the timetable and for homework."
+      }
+    },
+    "timetable": {
+      "title": "Timetable",
+      "description": "The weekly periods of one section. A teacher can't be given two sections in the same period.",
+      "section": "Section",
+      "sectionPlaceholder": "Choose a section",
+      "period": "Period",
+      "periodNo": "Period {number}",
+      "days": {
+        "1": "Monday",
+        "2": "Tuesday",
+        "3": "Wednesday",
+        "4": "Thursday",
+        "5": "Friday",
+        "6": "Saturday"
+      },
+      "cellLabel": "{day}, period {number}",
+      "free": "Free",
+      "set": "Set",
+      "change": "Change",
+      "clear": "Clear period",
+      "save": "Save",
+      "cancel": "Cancel",
+      "subject": "Subject",
+      "subjectPlaceholder": "Choose a subject",
+      "teacher": "Teacher",
+      "teacherPlaceholder": "Choose a teacher",
+      "noSubjects": "Add subjects before building the timetable.",
+      "noTeachers": "Add teaching staff before building the timetable.",
+      "choose": {
+        "heading": "Choose a section",
+        "body": "Pick a section above to see its week."
+      },
+      "empty": {
+        "heading": "No sections yet",
+        "body": "Add classes and sections for the current academic year first."
+      },
+      "errors": {
+        "subjectName": "Enter a subject name of up to 60 characters",
+        "subjectCode": "Enter a code of 2 to 8 letters or digits",
+        "subjectType": "Choose scholastic or co-scholastic",
+        "codeTaken": "The code {code} is already used by another subject.",
+        "section": "Choose a section of the current academic year",
+        "subject": "Choose a subject",
+        "teacher": "Choose an active teacher",
+        "slot": "That period is already free.",
+        "teacherBusy": "{name} already teaches another section in this period. Choose a different teacher or period."
       }
     }
   },
@@ -342,7 +602,8 @@
         "future": "You can't take attendance for a future date.",
         "nonWorking": "This isn't a working day. Attendance isn't needed.",
         "holiday": "This day is a holiday ({name}). Attendance isn’t needed.",
-        "locked": "Attendance for this day was submitted and can no longer be changed here. Ask the principal to correct it."
+        "locked": "Attendance for this day was submitted and can no longer be changed here. Ask the principal to correct it.",
+        "noPeriod": "You don't teach this section on this day, so there is no period to take attendance for."
       },
       "empty": {
         "heading": "No students in {section} yet",
@@ -352,7 +613,10 @@
         "heading": "No section to take attendance for",
         "body": "Attendance is taken by the class teacher. Ask the office to make you class teacher of your section."
       },
-      "openRegister": "Open register"
+      "openRegister": "Open register",
+      "period": "Period",
+      "wholeDay": "Whole day",
+      "periodOption": "Period {number} · {time} · {subject}"
     },
     "errors": {
       "section": "We couldn't find that section, or you aren't its class teacher.",
@@ -362,7 +626,8 @@
       "future": "You can't take attendance for a future date.",
       "nonWorking": "This isn't a working day. Attendance isn't needed.",
       "holiday": "This day is a holiday. Attendance isn't needed.",
-      "locked": "Attendance for this day was submitted and can no longer be changed here. Ask the principal to correct it."
+      "locked": "Attendance for this day was submitted and can no longer be changed here. Ask the principal to correct it.",
+      "noPeriod": "That period isn't on this section's timetable for this day."
     },
     "register": {
       "title": "Attendance register",
@@ -417,6 +682,58 @@
         "name": "Enter a holiday name of up to 80 characters",
         "taken": "That day is already a holiday.",
         "notFound": "We couldn't find that holiday. It may already have been deleted."
+      }
+    },
+    "events": {
+      "title": "Calendar",
+      "description": "School events and holidays this month. Holidays are managed on the Holidays page.",
+      "add": "Add event",
+      "save": "Add event",
+      "cancel": "Cancel",
+      "dismiss": "Dismiss message",
+      "added": "{title} added to the calendar.",
+      "deleted": "{title} removed from the calendar.",
+      "delete": "Delete",
+      "deleteLabel": "Delete event {title}",
+      "deleteTitle": "Delete {title}?",
+      "deleteBody": "The event disappears from everyone's calendar. This can't be undone.",
+      "deleteConfirm": "Delete event",
+      "previous": "Previous",
+      "next": "Next",
+      "previousLabel": "Previous month",
+      "nextLabel": "Next month",
+      "today": "Today",
+      "columns": {
+        "when": "When",
+        "title": "Event",
+        "type": "Type",
+        "actions": "Actions"
+      },
+      "type": {
+        "academic": "Academic",
+        "exam": "Exam",
+        "ptm": "Parent-teacher meeting",
+        "sports": "Sports",
+        "cultural": "Cultural",
+        "holiday": "Holiday",
+        "other": "Other"
+      },
+      "form": {
+        "start": "Starts on",
+        "end": "Ends on",
+        "endHint": "Leave empty for a one-day event."
+      },
+      "empty": {
+        "heading": "Nothing this month",
+        "body": "Events and holidays in this month appear here."
+      },
+      "errors": {
+        "title": "Enter a title of up to 120 characters",
+        "type": "Choose a type",
+        "start": "Choose the start date",
+        "end": "Choose the end date",
+        "endBeforeStart": "The end date can't be before the start date",
+        "notFound": "We couldn't find that event."
       }
     }
   },
@@ -498,7 +815,13 @@
         "submit": "Save as draft",
         "noHeads": "Add at least one fee head before creating a fee structure.",
         "noClasses": "Add classes for the current academic year before creating a fee structure."
-      }
+      },
+      "delete": "Delete",
+      "deleteLabel": "Delete draft fee structure {name}",
+      "deleteTitle": "Delete {name}?",
+      "deleteBody": "This draft was never approved, so no invoices depend on it. To correct a draft, delete it and add it again.",
+      "deleteConfirm": "Delete draft",
+      "deleted": "{name} deleted."
     },
     "invoices": {
       "title": "Invoices",
@@ -564,7 +887,8 @@
       "bankName": "A bank name can be up to 80 characters",
       "note": "A note can be up to 200 characters",
       "chequeNo": "Enter the 6-digit cheque number",
-      "overBalance": "One of these invoices was just paid or changed. Reload the page to see the current dues."
+      "overBalance": "One of these invoices was just paid or changed. Reload the page to see the current dues.",
+      "notDraft": "Only a fee structure that is waiting for approval can be deleted."
     },
     "counter": {
       "title": "Fee counter",
@@ -652,6 +976,676 @@
         "body": "We couldn't find that receipt. You may have followed an old link.",
         "action": "Go to the fee counter"
       }
+    },
+    "payments": {
+      "title": "Payments and receipts",
+      "loading": "Loading payments",
+      "showing": "Showing {count, plural, one {# payment} other {# payments}}",
+      "pageSize": "{count, plural, one {# payment} other {# payments}}",
+      "columns": {
+        "receiptNo": "Receipt no.",
+        "date": "Date",
+        "student": "Student",
+        "admissionNo": "Admission no.",
+        "method": "Method",
+        "amount": "Amount"
+      },
+      "empty": {
+        "heading": "No payments yet",
+        "body": "Receipts appear here as payments are collected at the fee counter."
+      }
+    },
+    "dues": {
+      "title": "Dues",
+      "hint": "Choose a student to collect their dues at the fee counter.",
+      "loading": "Loading dues",
+      "showing": "Showing {count, plural, one {# overdue invoice} other {# overdue invoices}}",
+      "pageSize": "{count, plural, one {# invoice} other {# invoices}}",
+      "outstanding": "Total overdue",
+      "ageing": "Days overdue",
+      "bands": {
+        "all": "All",
+        "1-15": "1–15 days",
+        "16-30": "16–30 days",
+        "31-60": "31–60 days",
+        "60+": "Over 60 days"
+      },
+      "days": "{count, plural, one {# day} other {# days}}",
+      "columns": {
+        "student": "Student",
+        "admissionNo": "Admission no.",
+        "invoiceNo": "Invoice no.",
+        "installment": "Installment",
+        "dueDate": "Due date",
+        "overdue": "Overdue by",
+        "balance": "Balance"
+      },
+      "empty": {
+        "heading": "No dues",
+        "body": "No invoice is past its due date."
+      },
+      "noMatches": {
+        "heading": "No matches",
+        "body": "No dues fall in this range.",
+        "clear": "Show all dues"
+      }
+    }
+  },
+  "comms": {
+    "cancel": "Cancel",
+    "dismiss": "Dismiss message",
+    "audience": {
+      "school": "Whole school",
+      "roles": "Roles: {roles}"
+    },
+    "announcements": {
+      "title": "Announcements",
+      "add": "New announcement",
+      "published": "Announcement '{title}' published to {count, plural, =0 {nobody else yet} one {# person} other {# people}}.",
+      "by": "{author} · {date}",
+      "columns": {
+        "title": "Title",
+        "audience": "Audience",
+        "author": "From",
+        "published": "Published"
+      },
+      "empty": {
+        "heading": "No announcements yet",
+        "body": "Announcements from your school appear here."
+      },
+      "back": "Back to announcements",
+      "reached": "Sent to {count, plural, =0 {nobody else} one {# person} other {# people}} in the app.",
+      "notFound": {
+        "heading": "Announcement not found",
+        "body": "We couldn't find that announcement. It may have been removed or it wasn't sent to you."
+      },
+      "form": {
+        "title": "New announcement",
+        "heading": "Title",
+        "headingHint": "Up to 120 characters.",
+        "body": "Message",
+        "bodyHint": "{count} of 5,000 characters.",
+        "audience": "Audience",
+        "school": "Whole school",
+        "schoolHint": "Everyone at the school with an account.",
+        "role": "Chosen roles",
+        "roleHint": "Only people with the roles you pick.",
+        "roles": "Roles",
+        "rolesPlaceholder": "Choose roles",
+        "channels": "Sent by",
+        "inApp": "In the app",
+        "inAppReason": "Every announcement appears in the app. Email and SMS are not set up yet.",
+        "reach": "This will reach {count, plural, =0 {nobody yet} one {# person} other {# people}} in the app.",
+        "reachLoading": "Working out who this reaches…",
+        "submit": "Publish announcement"
+      }
+    },
+    "notifications": {
+      "title": "Notifications",
+      "markAll": "Mark all as read",
+      "unread": "Unread",
+      "open": "Open",
+      "empty": {
+        "heading": "You're all caught up",
+        "body": "New notifications appear here."
+      },
+      "columns": {
+        "status": "Status",
+        "notification": "Notification",
+        "received": "Received"
+      },
+      "read": "Read"
+    },
+    "errors": {
+      "title": "Enter a title of up to 120 characters",
+      "body": "Enter a message of up to 5,000 characters",
+      "roles": "Choose at least one role",
+      "notificationNotFound": "We couldn't find that notification."
+    }
+  },
+  "hr": {
+    "title": "Staff",
+    "add": "Add staff member",
+    "cancel": "Cancel",
+    "dismiss": "Dismiss message",
+    "optional": "optional",
+    "loading": "Loading staff",
+    "created": "{name} added to the staff directory.",
+    "showing": "Showing {count, plural, one {# staff member} other {# staff members}}",
+    "pageSize": "{count, plural, one {# staff member} other {# staff members}}",
+    "columns": {
+      "name": "Name",
+      "employeeNo": "Employee no.",
+      "designation": "Designation",
+      "type": "Type",
+      "phone": "Phone",
+      "status": "Status"
+    },
+    "type": {
+      "teaching": "Teaching",
+      "non_teaching": "Non-teaching"
+    },
+    "status": {
+      "active": "Active",
+      "on_leave": "On leave",
+      "resigned": "Resigned",
+      "terminated": "Terminated"
+    },
+    "empty": {
+      "heading": "No staff yet",
+      "body": "Add teachers and office staff so they can be given classes and accounts."
+    },
+    "form": {
+      "title": "Add staff member",
+      "name": "Full name",
+      "designation": "Designation",
+      "designationHint": "For example, TGT Mathematics or Office assistant.",
+      "type": "Type",
+      "department": "Department",
+      "phone": "Mobile number",
+      "phoneHint": "10 digits, without +91.",
+      "email": "Email",
+      "joinedOn": "Joined on",
+      "dateHint": "Use YYYY/MM/DD.",
+      "editTitle": "Edit {name}",
+      "editMeta": "Edit staff member",
+      "save": "Save changes"
+    },
+    "errors": {
+      "name": "Enter a name of up to 120 characters",
+      "designation": "Enter a designation of up to 80 characters",
+      "department": "A department can be up to 80 characters",
+      "type": "Choose teaching or non-teaching",
+      "phone": "Enter a 10-digit mobile number",
+      "email": "Enter an email address like name@example.com",
+      "joinedOn": "Choose the joining date",
+      "noBranch": "Set up a branch before adding staff.",
+      "status": "Choose a status",
+      "notFound": "We couldn't find that staff member."
+    },
+    "updated": "Changes to {name} saved.",
+    "editLabel": "Edit {name}",
+    "leave": {
+      "title": "Leave",
+      "description": "Your leave requests and their status.",
+      "descriptionApprover": "Leave requests from staff. Approve or reject the pending ones.",
+      "apply": "Apply for leave",
+      "applied": "Leave request sent for approval.",
+      "cancel": "Cancel",
+      "dismiss": "Dismiss message",
+      "optional": "optional",
+      "loading": "Loading leave requests",
+      "days": "{count, plural, one {# day} other {# days}}",
+      "cancelBody": "The request is withdrawn and nobody needs to decide on it.",
+      "commentHint": "The staff member sees this with the decision.",
+      "columns": {
+        "staff": "Staff member",
+        "type": "Leave type",
+        "dates": "Dates",
+        "days": "Length",
+        "reason": "Reason",
+        "status": "Status",
+        "comment": "Comment",
+        "actions": "Actions"
+      },
+      "type": {
+        "CL": "Casual leave",
+        "SL": "Sick leave",
+        "EL": "Earned leave",
+        "LOP": "Leave without pay"
+      },
+      "status": {
+        "pending": "Waiting for approval",
+        "approved": "Approved",
+        "rejected": "Rejected",
+        "cancelled": "Cancelled"
+      },
+      "filter": {
+        "label": "Status",
+        "all": "All requests",
+        "pending": "Waiting for approval",
+        "approved": "Approved",
+        "rejected": "Rejected",
+        "cancelled": "Cancelled"
+      },
+      "action": {
+        "approved": "Approve",
+        "rejected": "Reject",
+        "cancel": "Cancel request"
+      },
+      "actionLabel": {
+        "approved": "Approve leave for {name} from {from}",
+        "rejected": "Reject leave for {name} from {from}",
+        "cancel": "Cancel your leave request from {from}"
+      },
+      "confirm": {
+        "approved": "Approve leave for {name}?",
+        "rejected": "Reject leave for {name}?",
+        "cancel": "Cancel this leave request?"
+      },
+      "done": {
+        "approved": "Leave approved for {name}.",
+        "rejected": "Leave rejected for {name}.",
+        "cancel": "Leave request cancelled."
+      },
+      "empty": {
+        "heading": "No leave requests",
+        "body": "Requests from staff appear here.",
+        "bodyStaff": "Apply for leave and follow its approval here."
+      },
+      "noMatches": {
+        "heading": "No requests with this status",
+        "body": "Try another status.",
+        "clear": "Show all requests"
+      },
+      "form": {
+        "title": "Apply for leave",
+        "typePlaceholder": "Choose a leave type",
+        "from": "From",
+        "to": "To",
+        "dateHint": "Use YYYY/MM/DD.",
+        "halfDay": "Half day only",
+        "submit": "Send for approval"
+      },
+      "errors": {
+        "type": "Choose a leave type",
+        "from": "Choose the first day of leave",
+        "to": "Choose the last day of leave",
+        "toBeforeFrom": "The last day can't be before the first day",
+        "halfDay": "A half day is a single date",
+        "reason": "Enter a reason of up to 300 characters",
+        "comment": "A comment can be up to 300 characters",
+        "notStaff": "Only someone with a staff record can apply for leave. Ask the office to link your account.",
+        "overlap": "You already have a leave request for some of these dates.",
+        "notFound": "We couldn't find that leave request.",
+        "cannotDecide": "This request has already been decided or cancelled, or it is your own.",
+        "cannotCancel": "Only your own request that is still waiting for approval can be cancelled."
+      },
+      "halfDay": "Half day"
+    }
+  },
+  "homework": {
+    "title": "Homework",
+    "add": "Set homework",
+    "cancel": "Cancel",
+    "dismiss": "Dismiss message",
+    "optional": "optional",
+    "loading": "Loading homework",
+    "created": "{title} set.",
+    "deleted": "{title} deleted.",
+    "delete": "Delete",
+    "deleteLabel": "Delete homework {title}",
+    "deleteTitle": "Delete {title}?",
+    "deleteBody": "Students will no longer see this homework. This can't be undone.",
+    "deleteConfirm": "Delete homework",
+    "due": "Due {date}",
+    "wasDue": "Was due {date}",
+    "columns": {
+      "title": "Homework",
+      "subject": "Subject",
+      "sections": "Sections",
+      "teacher": "Teacher",
+      "dueOn": "Due date",
+      "actions": "Actions"
+    },
+    "empty": {
+      "heading": "No homework yet",
+      "body": "Homework set by teachers appears here.",
+      "bodyTeacher": "Set homework for your sections and it appears here."
+    },
+    "form": {
+      "title": "Set homework",
+      "name": "Title",
+      "instructions": "Instructions",
+      "subjectPlaceholder": "Choose a subject",
+      "sectionsPlaceholder": "Choose sections",
+      "dateHint": "Use YYYY/MM/DD.",
+      "submit": "Set homework",
+      "noSections": "You have no sections yet. Ask the office to make you a class teacher or to put you on the timetable.",
+      "noSubjects": "The school has no subjects yet. Ask the office to add them."
+    },
+    "errors": {
+      "title": "Enter a title of up to 120 characters",
+      "instructions": "Instructions can be up to 2,000 characters",
+      "subject": "Choose a subject",
+      "sections": "Choose at least one of your sections",
+      "dueOn": "Choose the due date",
+      "dueOnPast": "The due date can't be before today.",
+      "notTeacher": "Only a teacher with a staff record can set homework.",
+      "notFound": "We couldn't find that homework. Only the teacher who set it can delete it."
+    }
+  },
+  "admissions": {
+    "title": "Admissions",
+    "add": "New application",
+    "cancel": "Cancel",
+    "dismiss": "Dismiss message",
+    "loading": "Loading applications",
+    "created": "Application {applicationNo} recorded.",
+    "moved": "Application moved to {status}.",
+    "columns": {
+      "applicationNo": "Application no.",
+      "name": "Applicant",
+      "classSought": "Class sought",
+      "guardian": "Guardian",
+      "phone": "Phone",
+      "status": "Stage",
+      "appliedOn": "Recorded on"
+    },
+    "status": {
+      "enquiry": "Enquiry",
+      "applied": "Applied",
+      "documents_pending": "Documents pending",
+      "assessment": "Assessment",
+      "offered": "Offered",
+      "accepted": "Admitted",
+      "rejected": "Rejected",
+      "withdrawn": "Withdrawn"
+    },
+    "filter": {
+      "label": "Stage",
+      "open": "All open applications",
+      "enquiry": "Enquiry",
+      "applied": "Applied",
+      "documents_pending": "Documents pending",
+      "assessment": "Assessment",
+      "offered": "Offered",
+      "accepted": "Admitted",
+      "rejected": "Rejected",
+      "withdrawn": "Withdrawn"
+    },
+    "move": {
+      "applied": "Mark as applied",
+      "documents_pending": "Ask for documents",
+      "assessment": "Move to assessment",
+      "offered": "Offer a seat",
+      "accepted": "Admit student",
+      "rejected": "Reject",
+      "withdrawn": "Withdraw"
+    },
+    "confirm": {
+      "enquiry": "{name}",
+      "applied": "Mark {name} as applied?",
+      "documents_pending": "Ask {name} for documents?",
+      "assessment": "Move {name} to assessment?",
+      "offered": "Offer {name} a seat?",
+      "accepted": "Admit {name}?",
+      "rejected": "Reject {name}'s application?",
+      "withdrawn": "Withdraw {name}'s application?"
+    },
+    "accept": {
+      "body": "This creates the student record, links the guardian and enrols the student in the section. The application is then closed.",
+      "noSections": "The class has no sections yet. Add a section before admitting the student."
+    },
+    "source": {
+      "walk_in": "Walk-in",
+      "website": "Website",
+      "referral": "Referral",
+      "campaign": "Campaign"
+    },
+    "empty": {
+      "heading": "No open applications",
+      "body": "Record an enquiry or application and follow it here until the student is admitted."
+    },
+    "noMatches": {
+      "heading": "No applications at this stage",
+      "body": "Try another stage.",
+      "clear": "Show open applications"
+    },
+    "form": {
+      "title": "New application",
+      "applicant": "Applicant",
+      "previousSchool": "Previous school",
+      "source": "How they found the school",
+      "submit": "Record application",
+      "noClasses": "Add classes for the current academic year before recording applications."
+    },
+    "view": {
+      "application": "Application",
+      "student": "Student record",
+      "openStudent": "Open student profile",
+      "history": "History",
+      "when": "When",
+      "stage": "Stage",
+      "note": "Note"
+    },
+    "errors": {
+      "class": "Choose a class of the current academic year",
+      "previousSchool": "The previous school can be up to 120 characters",
+      "source": "Choose how they found the school",
+      "note": "A note can be up to 300 characters",
+      "notFound": "We couldn't find that application.",
+      "section": "Choose a section of the class the applicant asked for",
+      "cannotMove": "This application has already moved on. Reload the page to see where it is now.",
+      "notOffered": "Only an application with an offered seat can be admitted."
+    }
+  },
+  "users": {
+    "title": "Users",
+    "description": "People who can sign in to this school, and what role each has.",
+    "add": "Add user",
+    "cancel": "Cancel",
+    "dismiss": "Dismiss message",
+    "loading": "Loading users",
+    "never": "Never",
+    "columns": {
+      "name": "Name",
+      "email": "Email",
+      "role": "Role",
+      "staff": "Staff record",
+      "status": "Status",
+      "lastLogin": "Last sign-in",
+      "actions": "Actions"
+    },
+    "status": {
+      "invited": "Invited",
+      "active": "Active",
+      "locked": "Locked",
+      "disabled": "Disabled"
+    },
+    "action": {
+      "reset": "Reset password",
+      "disable": "Disable",
+      "enable": "Enable"
+    },
+    "actionLabel": {
+      "reset": "Reset password for {name}",
+      "disable": "Disable sign-in for {name}",
+      "enable": "Enable sign-in for {name}"
+    },
+    "confirm": {
+      "reset": "Reset the password for {name}?",
+      "disable": "Disable sign-in for {name}?",
+      "enable": "Enable sign-in for {name}?"
+    },
+    "confirmBody": {
+      "reset": "They are signed out everywhere and get a new temporary password, which you will see once.",
+      "disable": "They are signed out everywhere and can't sign in until you enable the account again. Their records stay.",
+      "enable": "They can sign in again with their existing password."
+    },
+    "done": {
+      "disable": "Sign-in disabled for {name}.",
+      "enable": "Sign-in enabled for {name}."
+    },
+    "empty": {
+      "heading": "No users yet",
+      "body": "Add a user so they can sign in."
+    },
+    "password": {
+      "header": "Account ready for {name}",
+      "body": "Give them this temporary password now. It is shown only this once. Ask them to change it from Profile after signing in.",
+      "email": "Sign-in email",
+      "password": "Temporary password",
+      "copy": "Copy temporary password",
+      "copied": "Password copied",
+      "copyFailed": "Couldn't copy the password"
+    },
+    "form": {
+      "title": "Add user",
+      "staff": "Staff record",
+      "staffHint": "Link the account to a staff member so they can take attendance, set homework and apply for leave.",
+      "noStaff": "No staff record",
+      "emailHint": "They sign in with this email.",
+      "rolePlaceholder": "Choose a role",
+      "submit": "Create account",
+      "done": "Back to users"
+    },
+    "errors": {
+      "name": "Enter a name of up to 120 characters",
+      "email": "Enter an email address like name@example.com",
+      "role": "Choose a role",
+      "emailTaken": "An account with this email already exists.",
+      "staff": "Choose a staff member of this school",
+      "staffLinked": "That staff member already has an account.",
+      "notFound": "We couldn't find that user.",
+      "self": "You can't disable your own account.",
+      "selfReset": "Change your own password from Profile."
+    }
+  },
+  "promotion": {
+    "title": "Promotion",
+    "description": "Move students into the next academic year at the end of this one.",
+    "cancel": "Cancel",
+    "dismiss": "Dismiss message",
+    "fromTo": "From {current} to {next}",
+    "section": "Section",
+    "sectionPlaceholder": "Choose a section",
+    "noSections": "Every section has been promoted",
+    "studentCount": "{count, plural, one {# student} other {# students}}",
+    "remaining": "{count, plural, one {# student is} other {# students are}} still enrolled in this year. Promote after the last working day: a promoted student leaves this year's attendance sheets.",
+    "allDone": "Everyone has been moved. You can now close this year and start {next}.",
+    "sheetTitle": "Students of {section}",
+    "submit": "{count, plural, one {Move # student} other {Move # students}}",
+    "promoted": "{section}: {promoted} promoted, {detained} detained, {graduated} graduated, {left} left.",
+    "yearCreated": "{label} planned with {classes, plural, one {# class} other {# classes}} and {sections, plural, one {# section} other {# sections}} copied from this year.",
+    "closed": "{closed} is closed. {current} is now the current academic year.",
+    "decisionFor": "Decision for {name}",
+    "to": {
+      "promote": "Promote to {section}",
+      "detain": "Detain in {section}",
+      "graduate": "Graduate (leaves as alumni)",
+      "leave": "Leaves the school"
+    },
+    "columns": {
+      "rollNo": "Roll no.",
+      "name": "Student",
+      "decision": "Next year"
+    },
+    "choose": {
+      "title": "Students",
+      "heading": "Choose a section",
+      "body": "Pick a section above to decide where each of its students goes next year."
+    },
+    "sheetEmpty": {
+      "heading": "Nobody left in this section",
+      "body": "All of its students have already been moved."
+    },
+    "noYear": {
+      "heading": "No current academic year",
+      "body": "A current academic year is needed before students can be promoted."
+    },
+    "year": {
+      "title": "Plan the next academic year",
+      "description": "This year is {current}. The next year starts with a copy of its classes and sections, without students.",
+      "label": "Name",
+      "labelHint": "For example 2027–28.",
+      "startDate": "First day",
+      "endDate": "Last day",
+      "submit": "Plan next year"
+    },
+    "close": {
+      "action": "Close {current}",
+      "title": "Close {current}?",
+      "body": "{next} becomes the current academic year for attendance, timetable, fees and admissions. {current} stays readable but can't be reopened here.",
+      "confirm": "Close year"
+    },
+    "errors": {
+      "label": "Use the form 2027–28",
+      "startDate": "Choose the first day",
+      "endDate": "The last day must be after the first day",
+      "section": "Choose a section of the current academic year",
+      "none": "There is nobody to move",
+      "target": "Choose a section of the next year for every promoted or detained student.",
+      "noCurrent": "There is no current academic year.",
+      "nextExists": "The next academic year is already planned.",
+      "overlap": "The next year must start after this year ends.",
+      "noNext": "Plan the next academic year first.",
+      "remaining": "{count, plural, one {# student is} other {# students are}} still enrolled in this year. Move everyone before closing it."
+    }
+  },
+  "portal": {
+    "child": "Child",
+    "admissionNo": "Admission no. {admissionNo} · {classSection}",
+    "notLinked": {
+      "heading": "Your account isn't linked to a student yet",
+      "body": "Ask the school office to link your account. Announcements and the calendar still work."
+    },
+    "attendance": {
+      "label": "Attendance, last 60 days",
+      "detail": "{present} present, {absent} absent"
+    },
+    "fees": {
+      "label": "Fees due",
+      "open": "{count, plural, one {# installment to pay} other {# installments to pay}}",
+      "clear": "Nothing to pay",
+      "title": "Fees to pay",
+      "installment": "Installment",
+      "empty": {
+        "heading": "Nothing to pay",
+        "body": "Installments appear here when they are issued. Pay at the school fee counter."
+      }
+    },
+    "homework": {
+      "label": "Homework due",
+      "detail": "Due today or later",
+      "title": "Homework",
+      "columns": {
+        "title": "Homework",
+        "subject": "Subject",
+        "dueOn": "Due"
+      },
+      "empty": {
+        "heading": "No homework due",
+        "body": "Homework set by teachers appears here."
+      }
+    },
+    "today": {
+      "title": "Today's classes",
+      "period": "Period {number} · {time}",
+      "empty": {
+        "heading": "No classes today",
+        "body": "The timetable for today appears here once the school sets it."
+      }
+    },
+    "upcoming": {
+      "title": "Coming up",
+      "empty": {
+        "heading": "Nothing coming up",
+        "body": "School events and holidays appear here."
+      }
+    },
+    "accounts": {
+      "title": "Portal access",
+      "description": "Sign-ins for the student and their parents. A parent sees every child linked to them.",
+      "name": "Name",
+      "kind": "Who",
+      "student": "Student",
+      "parent": "Parent or guardian",
+      "account": "Account",
+      "none": "No account",
+      "actions": "Actions",
+      "create": "Create account",
+      "createLabel": "Create a portal account for {name}",
+      "createTitle": "Create a portal account for {name}?",
+      "createBody": "They get a temporary password, shown to you once, and can see this student's attendance, homework, timetable and fees.",
+      "email": "Sign-in email",
+      "emailHint": "They sign in with this email.",
+      "cancel": "Cancel"
+    },
+    "errors": {
+      "email": "Enter an email address like name@example.com",
+      "notFound": "We couldn't find that student or guardian.",
+      "exists": "This person already has a portal account."
     }
   }
 }

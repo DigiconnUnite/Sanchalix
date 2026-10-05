@@ -27,6 +27,9 @@ export const SectionInput = z.object({
 });
 export type SectionInput = z.infer<typeof SectionInput>;
 
+const Id = z.string().regex(/^[0-9a-f]{24}$/);
+export const AssignClassTeacher = z.object({ sectionId: Id, staffId: Id.nullable() });
+
 export type SectionRow = {
   id: string;
   className: string;
@@ -34,4 +37,5 @@ export type SectionRow = {
   strength: number;
   capacity: number;
   room: string | null;
+  classTeacher: { id: string; name: string } | null;
 };

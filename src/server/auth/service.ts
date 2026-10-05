@@ -11,6 +11,7 @@ const MAX_FAILED_ATTEMPTS = 10;
 const LOCK_MS = 15 * 60_000;
 
 export const hashPassword = (password: string) => hash(password, ARGON2);
+export const verifyPassword = (passwordHash: string, password: string) => verify(passwordHash, password);
 
 // Verified against when the account doesn't exist, so response time doesn't reveal which emails are registered.
 const decoyHash = hashPassword('decoy');

@@ -4,7 +4,7 @@ import type { Metadata } from 'next';
 import { cookies } from 'next/headers';
 import { getLocale, getTranslations } from 'next-intl/server';
 import type { ReactNode } from 'react';
-import { MODE_COOKIE, parseVisualMode } from '@/lib/visualMode';
+import { DENSITY_COOKIE, MODE_COOKIE, parseDensity, parseVisualMode } from '@/lib/visualMode';
 import { Providers } from './providers';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -19,11 +19,16 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function RootLayout({ children }: { children: ReactNode }) {
-  const mode = parseVisualMode((await cookies()).get(MODE_COOKIE)?.value);
+  const store = await cookies();
+  const mode = parseVisualMode(store.get(MODE_COOKIE)?.value);
+  const density = parseDensity(store.get(DENSITY_COOKIE)?.value);
+  const classes = [mode === 'dark' && 'awsui-dark-mode', density === 'compact' && 'awsui-compact-mode'];
   return (
     <html lang={await getLocale()}>
-      <body className={mode === 'dark' ? 'awsui-dark-mode' : undefined}>
-        <Providers mode={mode}>{children}</Providers>
+      <body className={classes.filter(Boolean).join(' ') || undefined}>
+        <Providers mode={mode} density={density}>
+          {children}
+        </Providers>
       </body>
     </html>
   );

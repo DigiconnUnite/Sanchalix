@@ -9,6 +9,7 @@ import { Enrollment } from '@/server/models/enrollment';
 import { Holiday } from '@/server/models/holiday';
 import { School } from '@/server/models/school';
 import { Section } from '@/server/models/section';
+import { TimetableSlot } from '@/server/models/timetableSlot';
 import { getAttendanceSheet } from './queries';
 import type { MarkableStatus } from './schemas';
 import { submitAttendance } from './service';
@@ -181,4 +182,45 @@ it('refuses a section from another school', async () => {
     code: 'NOT_FOUND',
   });
   expect(await getAttendanceSheet(admin, otherSectionId, TODAY)).toBeNull();
+});
+
+it('takes period attendance only for a period on the timetable, by the teacher who teaches it', async () => {
+  const section = await Section.findOne({ schoolId: admin.schoolId, _id: sectionId }).orFail().lean();
+  const subjectTeacher = new Types.ObjectId();
+  await TimetableSlot.create({
+    schoolId: admin.schoolId,
+    branchId: section.branchId,
+    academicYearId: section.academicYearId,
+    sectionId: section._id,
+    day: weekdayOf(TODAY) || 7,
+    period: 2,
+    subjectId: new Types.ObjectId(),
+    teacherId: subjectTeacher,
+  });
+  // The timetable runs Monday to Saturday; on a Sunday there is no period to take, which is the rule under test.
+  if (weekdayOf(TODAY) === 0) {
+    await expect(submitAttendance(admin, sheet([], { mode: 'period', period: 2 }))).rejects.toMatchObject({
+      code: 'BUSINESS_RULE',
+    });
+    return;
+  }
+  const teacher = { role: 'teacher', scope: 'assigned' } as const;
+  const teaches = context(admin.schoolId, { ...teacher, staffId: subjectTeacher });
+  const homeroom = context(admin.schoolId, { ...teacher, staffId: classTeacher });
+  const period = (overrides: Record<string, unknown> = {}) => sheet(['absent'], { mode: 'period', period: 2, ...overrides });
+
+  await expect(submitAttendance(admin, period({ period: 5 }))).rejects.toMatchObject({ code: 'BUSINESS_RULE' });
+  await expect(submitAttendance(homeroom, period())).rejects.toMatchObject({ code: 'NOT_FOUND' });
+  await expect(submitAttendance(teaches, sheet([]))).rejects.toMatchObject({ code: 'NOT_FOUND' });
+  await expect(submitAttendance(teaches, period())).resolves.toMatchObject({ summary: { absent: 1, present: 2 } });
+
+  expect(await getAttendanceSheet(teaches, sectionId, TODAY)).toMatchObject({
+    period: 2,
+    canDaily: false,
+    submitted: true,
+    students: [{ status: 'absent' }, { status: 'present' }, { status: 'present' }],
+  });
+  const daily = await getAttendanceSheet(homeroom, sectionId, TODAY);
+  expect(daily).toMatchObject({ period: null, canDaily: true, periods: [] });
+  expect(await AttendanceRecord.countDocuments({ schoolId: admin.schoolId, sectionId, date: TODAY, mode: 'period' })).toBe(1);
 });

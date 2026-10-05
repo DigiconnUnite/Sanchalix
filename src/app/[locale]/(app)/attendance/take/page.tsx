@@ -19,9 +19,9 @@ export default async function TakeAttendancePage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const ctx = await pageContext('attendance.record.read');
-  const [t, sections, { section, date }] = await Promise.all([
+  const [t, sections, { section, date, period }] = await Promise.all([
     getTranslations('attendance.take'),
-    listAttendanceSections(ctx),
+    listAttendanceSections(ctx, 'any'),
     searchParams,
   ]);
 
@@ -34,12 +34,17 @@ export default async function TakeAttendancePage({
     );
   }
 
-  const sheet = await getAttendanceSheet(ctx, sectionId, typeof date === 'string' ? date : undefined);
+  const sheet = await getAttendanceSheet(
+    ctx,
+    sectionId,
+    typeof date === 'string' ? date : undefined,
+    Number(period) || undefined,
+  );
   if (!sheet) notFound();
 
   return (
     <TakeAttendance
-      key={`${sheet.section.id}:${sheet.date}:${sheet.submitted}`}
+      key={`${sheet.section.id}:${sheet.date}:${sheet.period}:${sheet.submitted}`}
       sections={sections}
       sheet={sheet}
       canSubmit={can(ctx.role, 'attendance.record.create')}

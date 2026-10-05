@@ -43,7 +43,15 @@ export function TakeAttendance({
   const summary = Object.fromEntries(STATUSES.map((status) => [status, 0])) as AttendanceSummary;
   for (const status of marks.values()) summary[status] += 1;
   const registerHref = `/attendance/register?section=${sheet.section.id}&month=${sheet.date.slice(0, 7)}`;
-  const open = (section: string, date: string) => router.replace(`${pathname}?section=${section}&date=${date}`);
+  const open = (section: string, date: string, period: number | null = sheet.period) =>
+    router.replace(`${pathname}?section=${section}&date=${date}${period ? `&period=${period}` : ''}`);
+  const periodOptions = [
+    ...(sheet.canDaily ? [{ value: '', label: t('wholeDay') }] : []),
+    ...sheet.periods.map(({ number, time, subject }) => ({
+      value: String(number),
+      label: t('periodOption', { number, time, subject }),
+    })),
+  ];
 
   async function submit() {
     setBusy(true);
@@ -51,7 +59,8 @@ export function TakeAttendance({
     const result = await submitAttendance({
       sectionId: sheet.section.id,
       date: sheet.date,
-      mode: 'daily',
+      mode: sheet.period ? 'period' : 'daily',
+      ...(sheet.period && { period: sheet.period }),
       entries: sheet.students.map(({ id }) => ({ studentId: id, status: marks.get(id) ?? 'present' })),
       idempotencyKey,
     });
@@ -75,7 +84,7 @@ export function TakeAttendance({
         : sheet.submitted
           ? t('alreadySubmitted', { section: sheet.section.name })
           : null;
-  const hidesRoster = sheet.state === 'future' || sheet.state === 'nonWorking' || sheet.state === 'holiday';
+  const hidesRoster = ['future', 'nonWorking', 'holiday', 'noPeriod'].includes(sheet.state);
 
   return (
     <Table
@@ -91,15 +100,17 @@ export function TakeAttendance({
             counter={hidesRoster ? '' : `(${sheet.students.length})`}
             actions={
               <SpaceBetween direction="horizontal" size="xs">
-                <Button
-                  href={registerHref}
-                  onFollow={(event) => {
-                    event.preventDefault();
-                    router.push(registerHref);
-                  }}
-                >
-                  {t('openRegister')}
-                </Button>
+                {sheet.canDaily && (
+                  <Button
+                    href={registerHref}
+                    onFollow={(event) => {
+                      event.preventDefault();
+                      router.push(registerHref);
+                    }}
+                  >
+                    {t('openRegister')}
+                  </Button>
+                )}
                 {editable && sheet.students.length > 0 && (
                   <>
                     <Button onClick={() => setMarks(new Map(sheet.students.map(({ id }) => [id, 'present'])))}>
@@ -120,16 +131,27 @@ export function TakeAttendance({
               <Select
                 selectedOption={{ value: sheet.section.id, label: sheet.section.name }}
                 options={sections.map(({ id, name }) => ({ value: id, label: name }))}
-                onChange={({ detail }) => open(detail.selectedOption.value ?? sheet.section.id, sheet.date)}
+                onChange={({ detail }) => open(detail.selectedOption.value ?? sheet.section.id, sheet.date, null)}
               />
             </FormField>
+            {sheet.periods.length > 0 && (
+              <FormField label={t('period')}>
+                <Select
+                  selectedOption={periodOptions.find((option) => option.value === String(sheet.period ?? '')) ?? null}
+                  options={periodOptions}
+                  onChange={({ detail }) =>
+                    open(sheet.section.id, sheet.date, Number(detail.selectedOption.value) || null)
+                  }
+                />
+              </FormField>
+            )}
             <FormField label={t('date')} constraintText={t('dateConstraint')}>
               <DatePicker
                 value={sheet.date}
                 placeholder="YYYY/MM/DD"
                 isDateEnabled={(date) => date <= new Date()}
                 onChange={({ detail }) => {
-                  if (/^\d{4}-\d{2}-\d{2}$/.test(detail.value)) open(sheet.section.id, detail.value);
+                  if (/^\d{4}-\d{2}-\d{2}$/.test(detail.value)) open(sheet.section.id, detail.value, null);
                 }}
               />
             </FormField>

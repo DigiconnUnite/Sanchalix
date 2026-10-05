@@ -7,13 +7,14 @@ type Row<T, K extends keyof T> = Pick<T, K> & { _id: Types.ObjectId };
 export async function paginate<T, K extends keyof T & string>(
   model: Model<T>,
   filter: QueryFilter<T>,
-  options: { sortField: K; select: K[]; limit: number; cursor?: string | undefined },
+  options: { sortField: K; select: K[]; limit: number; cursor?: string | undefined; descending?: boolean },
 ) {
   const { sortField, select, limit } = options;
   const cursor = decodeCursor(options.cursor);
   const back = cursor?.dir === 'prev';
-  const op = back ? '$lt' : '$gt';
-  const order = back ? -1 : 1;
+  // Paging backwards reads in the opposite order to the one shown, then the rows are reversed below.
+  const order = back === Boolean(options.descending) ? 1 : -1;
+  const op = order === 1 ? '$gt' : '$lt';
 
   const query = model.find(filter);
   if (cursor) {

@@ -17,7 +17,7 @@ export async function submitAttendance(input: unknown) {
       ctx,
       before ? 'attendance.record.update' : 'attendance.record.create',
       { type: 'attendanceRecord', id: new Types.ObjectId(String(recordId)) },
-      { ...(before && { before }), after: { date: data.date, ...summary } },
+      { ...(before && { before }), after: { date: data.date, ...(data.period && { period: data.period }), ...summary } },
     );
     return { sectionName, summary, edited: Boolean(before) };
   });

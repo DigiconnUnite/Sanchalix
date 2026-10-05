@@ -8,29 +8,47 @@ import { Holiday } from '@/server/models/holiday';
 import { School } from '@/server/models/school';
 import { Section } from '@/server/models/section';
 import { Student } from '@/server/models/student';
+import { Subject } from '@/server/models/subject';
+import { TimetableSlot } from '@/server/models/timetableSlot';
 import { getCurrentYearId } from '@/server/modules/academics/queries';
+import { listTaughtSectionIds, PERIODS } from '@/server/modules/timetable/service';
 import type { AttendanceRegister, AttendanceSheet, MarkableStatus } from './schemas';
 
-/** The section, if the user may take or see its attendance: a teacher only for the section they are class teacher of. */
-export async function findAttendanceSection(ctx: RequestContext, sectionId: string) {
+/**
+ * The section, if the user may take or see its attendance. A teacher gets daily attendance only for the section they
+ * are class teacher of; with `mode: 'any'` a section they teach on the timetable also counts (period attendance).
+ */
+export async function findAttendanceSection(ctx: RequestContext, sectionId: string, mode: 'daily' | 'any' = 'daily') {
   if (!Types.ObjectId.isValid(sectionId)) return null;
   const section = await Section.findOne({ schoolId: ctx.schoolId, _id: sectionId }).lean();
   if (!section) return null;
   if (ctx.scope === 'branch' && !section.branchId.equals(ctx.branchId)) return null;
-  if (ctx.scope === 'assigned' && !(ctx.staffId && section.classTeacherId?.equals(ctx.staffId))) return null;
+  if (ctx.scope === 'assigned') {
+    if (!ctx.staffId) return null;
+    const teaches =
+      mode === 'any' &&
+      (await TimetableSlot.exists({ schoolId: ctx.schoolId, sectionId: section._id, teacherId: ctx.staffId }));
+    if (!section.classTeacherId?.equals(ctx.staffId) && !teaches) return null;
+  }
   return ['school', 'branch', 'assigned'].includes(ctx.scope) ? section : null;
 }
 
-export async function listAttendanceSections(ctx: RequestContext) {
+/** With `mode: 'any'` a teacher also gets the sections they teach on the timetable, for period attendance. */
+export async function listAttendanceSections(ctx: RequestContext, mode: 'daily' | 'any' = 'daily') {
   const academicYearId = await getCurrentYearId(ctx);
   if (!academicYearId) return [];
   if (ctx.scope === 'assigned' && !ctx.staffId) return [];
+  const taught = ctx.scope === 'assigned' && mode === 'any' ? await listTaughtSectionIds(ctx) : [];
   const sections = await Section.find({
     schoolId: ctx.schoolId,
     academicYearId,
     ...(ctx.scope === 'branch' && ctx.branchId && { branchId: ctx.branchId }),
-    ...(ctx.scope === 'assigned' && ctx.staffId && { classTeacherId: ctx.staffId }),
   })
+    .and(
+      ctx.scope === 'assigned' && ctx.staffId
+        ? [{ $or: [{ classTeacherId: ctx.staffId }, { _id: { $in: taught } }] }]
+        : [{}],
+    )
     .select('displayName')
     .lean();
   return sections
@@ -66,17 +84,46 @@ export async function getAttendanceSheet(
   ctx: RequestContext,
   sectionId: string,
   requestedDate: string | undefined,
+  requestedPeriod?: number,
 ): Promise<AttendanceSheet | null> {
   const { schoolId } = ctx;
-  const section = await findAttendanceSection(ctx, sectionId);
+  const section = await findAttendanceSection(ctx, sectionId, 'any');
   if (!section) return null;
+  const assigned = ctx.scope === 'assigned';
+  const canDaily = !assigned || Boolean(ctx.staffId && section.classTeacherId?.equals(ctx.staffId));
 
   const validDate = requestedDate && /^\d{4}-\d{2}-\d{2}$/.test(requestedDate) ? requestedDate : undefined;
   const day = await getDayState(ctx, validDate);
   const { date } = day;
 
+  // A teacher takes period attendance only for the periods they teach; the office sees every period.
+  const slots = await TimetableSlot.find({
+    schoolId,
+    sectionId: section._id,
+    day: weekdayOf(date),
+    status: 'published',
+    ...(assigned && { teacherId: ctx.staffId ?? null }),
+  })
+    .sort({ period: 1 })
+    .select('period subjectId')
+    .lean();
+  const subjects = await Subject.find({ schoolId, _id: { $in: slots.map((slot) => slot.subjectId) } })
+    .setOptions({ withDeleted: true })
+    .select('name')
+    .lean();
+  const subjectOf = new Map(subjects.map((subject) => [String(subject._id), subject.name]));
+  const periods = slots.flatMap((slot) => {
+    const bell = PERIODS.find((candidate) => candidate.number === slot.period);
+    return bell
+      ? [{ number: slot.period, time: `${bell.start}–${bell.end}`, subject: subjectOf.get(String(slot.subjectId)) ?? '' }]
+      : [];
+  });
+  const period =
+    periods.find(({ number }) => number === requestedPeriod)?.number ?? (canDaily ? null : (periods[0]?.number ?? null));
+  const noPeriod = !canDaily && period === null;
+
   const [record, enrollments] = await Promise.all([
-    AttendanceRecord.findOne({ schoolId, sectionId: section._id, date, mode: 'daily' })
+    AttendanceRecord.findOne({ schoolId, sectionId: section._id, date, mode: period ? 'period' : 'daily', period })
       .select('entries editedAfterSubmit')
       .lean(),
     Enrollment.find({ schoolId, sectionId: section._id, status: 'active' }).select('studentId rollNo').lean(),
@@ -92,7 +139,10 @@ export async function getAttendanceSheet(
     date,
     today: day.today,
     // A submitted day can be changed by its teacher only on that same day.
-    state: day.state === 'open' && record && date !== day.today ? 'locked' : day.state,
+    state: noPeriod ? 'noPeriod' : day.state === 'open' && record && date !== day.today ? 'locked' : day.state,
+    period,
+    periods,
+    canDaily,
     holidayName: day.holidayName,
     submitted: Boolean(record),
     edited: record?.editedAfterSubmit ?? false,

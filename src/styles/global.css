@@ -29,8 +29,122 @@
   padding-block: 0 !important;
 }
 
+/* ADR-020: breadcrumb text is 12px so the trail reads as secondary to the page title. Cloudscape offers no size option. */
+[class*='awsui_universal-toolbar-breadcrumbs_'] [class*='awsui_breadcrumb-group_'],
+[class*='awsui_universal-toolbar-breadcrumbs_'] [class*='awsui_breadcrumb-group_'] * {
+  font-size: var(--font-size-body-s-89y7qg, 12px) !important;
+  line-height: var(--line-height-body-s-gako33, 16px) !important;
+}
+
+/* ADR-020: the navigation toggle keeps its resting look while the navigation is open. Cloudscape fills it blue
+   and offers no option. The open panel itself and aria-expanded still say that the navigation is open. */
+[class*='awsui_universal-toolbar-nav_'] [class*='awsui_selected_'] {
+  background: transparent !important;
+  color: var(--color-text-interactive-default-pauydh) !important;
+}
+
+[class*='awsui_universal-toolbar-nav_'] [class*='awsui_selected_']:hover {
+  background: var(--color-background-input-disabled-pyvhb1) !important;
+  color: var(--color-text-interactive-hover-zj1911) !important;
+}
+
+[class*='awsui_universal-toolbar-nav_'] [class*='awsui_selected_']:active {
+  background: var(--color-background-control-disabled-m61b8s) !important;
+  color: var(--color-text-interactive-hover-zj1911) !important;
+}
+
+/* ADR-020: a larger menu glyph in the navigation toggle (20px instead of Cloudscape's 16px). It is scaled, not
+   resized, so the 30px button and the 34px row around it keep their size. */
+[class*='awsui_universal-toolbar-nav_'] [class*='awsui_icon_'] {
+  transform: scale(1.25);
+}
+
+/* ADR-020: navigation icons stay 20px when the navigation collapses. Cloudscape centres a 16px icon in the
+   rail's 30px circle, so the inset is recalculated for 20px to keep the icon in the middle. */
+[class*='awsui_link--collapsed_']:has([class*='awsui_item-icon_']) {
+  padding-inline-start: calc(
+    (var(--size-side-navigation-item-collapsed-khs945, 30px) - var(--size-icon-medium-0cbske, 20px)) / 2
+  ) !important;
+}
+
+/* ADR-020: a 20px navigation icon sits in a 24px box, 4px taller than the 20px line of the link text beside it,
+   and Cloudscape aligns the two at the top. Pulling the box in by the difference puts the icon on the text's centre line. */
+[class*='awsui_link_'] [class*='awsui_item-icon_'] {
+  margin-block: calc((var(--line-height-body-m-5xw6xo, 20px) - var(--line-height-heading-l-zmt48b, 24px)) / 2);
+}
+
+/* ADR-020: the collapsed rail is one evenly spaced column of icons. Cloudscape leaves a 24px gap above each group
+   there; the hidden title goes too, because its empty box would keep the groups' margins from collapsing. */
+[class*='awsui_list-item--collapsed_'][class*='awsui_list-item--group_'] {
+  margin-block-start: var(--space-side-navigation-item-icon-gap-0fty3a, 4px) !important;
+}
+
+[class*='awsui_list-item--collapsed_'] > [class*='awsui_section-group_'],
+[class*='awsui_list-variant-section-group--collapsed_'] {
+  margin-block: 0 !important;
+}
+
+[class*='awsui_section-group-title--collapsed_'] {
+  display: none !important;
+}
+
+.vw-theme-toggle[data-dark='true'] {
+  transform: rotate(180deg);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .vw-theme-toggle {
+    transition: transform 0.2s ease-in-out;
+  }
+}
+
+.vw-auth-page {
+  display: grid;
+  align-content: center;
+  min-block-size: 100dvh;
+}
+
 .vw-top-nav {
   position: sticky;
   inset-block-start: 0;
   z-index: 1002;
+}
+
+/* ADR-020: navigation group titles (People, Academics, Fees) are small secondary labels. Cloudscape renders them
+   as 18px headings and offers no size option, which outweighs the links under them. */
+[class*='awsui_section-group-title_'],
+[class*='awsui_section-group-title_'] * {
+  font-size: var(--font-size-body-s-89y7qg, 12px) !important;
+  line-height: var(--line-height-body-s-gako33, 16px) !important;
+  color: var(--color-text-body-secondary-66ygbb) !important;
+}
+
+/* ADR-020: a divider runs from each group title to the panel's edge, so the groups read as separate blocks.
+   The collapsed rail hides the titles, so it gets no line. */
+[class*='awsui_section-group-title_']:not([class*='awsui_section-group-title--collapsed_']) {
+  grid-template-columns: auto 1fr !important;
+  column-gap: var(--space-xs-m9b7jf, 8px);
+}
+
+[class*='awsui_section-group-title_']:not([class*='awsui_section-group-title--collapsed_'])::after {
+  content: '';
+  border-block-start: var(--border-divider-section-width-dlkb8v, 1px) solid var(--color-border-divider-default-diwd4w);
+}
+
+/* ADR-020: the navigation panel scrolls with a thin scrollbar on a clear track. The operating system's default
+   bar is wide and draws a solid track beside the links. */
+[class*='awsui_navigation-container_'] > [class*='awsui_navigation_'] {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--color-text-body-secondary-66ygbb) 35%, transparent) transparent;
+}
+
+/* ADR-020: paper gets the document only. Cloudscape ships no print styles for its shell, so the header, the
+   navigation and the breadcrumb row are removed here, along with anything marked vw-no-print. */
+@media print {
+  .vw-top-nav,
+  .vw-no-print,
+  [class*='awsui_navigation_'],
+  [class*='awsui_toolbar-container_'] {
+    display: none !important;
+  }
 }

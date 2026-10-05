@@ -11,7 +11,7 @@ export default defineConfig({
   },
   test: {
     globalSetup: './tests/globalSetup.ts',
-    exclude: ['tests/e2e/**', '**/node_modules/**'],
+    exclude: ['tests/e2e/**', '**/node_modules/**', '.kilo/**'],
     // The first run downloads the in-memory MongoDB binary.
     hookTimeout: 120_000,
   },

@@ -13,7 +13,7 @@ import { useState } from 'react';
 import { EmptyState } from '@/components/EmptyState';
 import { usePathname, useRouter } from '@/i18n/navigation';
 import { formatMoney } from '@/lib/money';
-import { approveFeeStructure } from '@/server/modules/fees/actions';
+import { approveFeeStructure, deleteFeeStructure } from '@/server/modules/fees/actions';
 import type { FeeStructureRow } from '@/server/modules/fees/schemas';
 
 const NEW = '/fees/structures/new';
@@ -41,6 +41,7 @@ export function FeeStructuresTable({
   const router = useRouter();
   const pathname = usePathname();
   const [pending, setPending] = useState<FeeStructureRow | null>(null);
+  const [removing, setRemoving] = useState<FeeStructureRow | null>(null);
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<Feedback | null>(null);
   const feedback = result ?? (created ? { type: 'success' as const, text: t('structures.created', { name: created }) } : null);
@@ -70,6 +71,21 @@ export function FeeStructuresTable({
             type: 'success',
             text: t('structures.approved', { name: response.data.name, count: response.data.invoicesIssued }),
           }
+        : { type: 'error', text: response.error.message },
+    );
+    router.replace(pathname);
+    router.refresh();
+  }
+
+  async function remove() {
+    if (!removing) return;
+    setBusy(true);
+    const response = await deleteFeeStructure(removing.id);
+    setBusy(false);
+    setRemoving(null);
+    setResult(
+      response.ok
+        ? { type: 'success', text: t('structures.deleted', { name: response.data.name }) }
         : { type: 'error', text: response.error.message },
     );
     router.replace(pathname);
@@ -133,20 +149,33 @@ export function FeeStructuresTable({
               <StatusIndicator type={STATUS_TYPE[row.status]}>{t(`structures.status.${row.status}`)}</StatusIndicator>
             ),
           },
-          ...(canApprove
+          ...(canApprove || canEdit
             ? [
                 {
                   id: 'actions',
                   header: t('structures.columns.actions'),
                   cell: (row: FeeStructureRow) =>
                     row.status === 'draft' && (
-                      <Button
-                        variant="inline-link"
-                        ariaLabel={t('structures.approveLabel', { name: row.name })}
-                        onClick={() => setPending(row)}
-                      >
-                        {t('structures.approve')}
-                      </Button>
+                      <SpaceBetween direction="horizontal" size="s">
+                        {canApprove && (
+                          <Button
+                            variant="inline-link"
+                            ariaLabel={t('structures.approveLabel', { name: row.name })}
+                            onClick={() => setPending(row)}
+                          >
+                            {t('structures.approve')}
+                          </Button>
+                        )}
+                        {canEdit && (
+                          <Button
+                            variant="inline-link"
+                            ariaLabel={t('structures.deleteLabel', { name: row.name })}
+                            onClick={() => setRemoving(row)}
+                          >
+                            {t('structures.delete')}
+                          </Button>
+                        )}
+                      </SpaceBetween>
                     ),
                 },
               ]
@@ -170,6 +199,24 @@ export function FeeStructuresTable({
         }
       >
         {t('structures.approveBody')}
+      </Modal>
+      <Modal
+        visible={Boolean(removing)}
+        header={t('structures.deleteTitle', { name: removing?.name ?? '' })}
+        closeAriaLabel={t('cancel')}
+        onDismiss={() => setRemoving(null)}
+        footer={
+          <Box float="right">
+            <SpaceBetween direction="horizontal" size="xs">
+              <Button onClick={() => setRemoving(null)}>{t('cancel')}</Button>
+              <Button variant="primary" loading={busy} onClick={() => void remove()}>
+                {t('structures.deleteConfirm')}
+              </Button>
+            </SpaceBetween>
+          </Box>
+        }
+      >
+        {t('structures.deleteBody')}
       </Modal>
     </>
   );

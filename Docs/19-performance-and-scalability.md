@@ -41,7 +41,7 @@ A budget breach in CI fails the build for JS size. RUM breaches raise an alert.
 
 ## Pagination
 
-- **Cursor-based everywhere** a collection can grow ([ADR-009](23-decision-log.md#adr-009-cursor-pagination-for-collections)). The cursor is an opaque base64 of `{ value, id, dir, page }`: the sort value and `_id` of the edge row, the direction (`next` or `prev`) and the page number shown by `Pagination`. The query uses `(sortField, _id) > (value, id)` (or `<` when going back) on a compound index matching the sort. `src/server/db/paginate.ts` is the one implementation.
+- **Cursor-based everywhere** a collection can grow ([ADR-009](23-decision-log.md#adr-009-cursor-pagination-for-collections)). The cursor is an opaque base64 of `{ value, id, dir, page }`: the sort value and `_id` of the edge row, the direction (`next` or `prev`) and the page number shown by `Pagination`. The query uses `(sortField, _id) > (value, id)` (or `<` when going back) on a compound index matching the sort. `src/server/db/paginate.ts` is the one implementation; its `descending` option shows the newest first (receipts).
 - Page sizes are 10, 25 (default), 50 or 100 (max).
 - Cloudscape `Pagination` with `openEnd`. The total count is shown only where it's cheap and useful (a counted estimate via `countDocuments` with a limit of 10,001 → "10,000+").
 - **Offset pagination is banned** for tenant collections (it degrades with depth and shifts under writes).

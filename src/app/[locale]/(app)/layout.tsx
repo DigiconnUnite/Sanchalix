@@ -5,26 +5,64 @@ import { AppShell, type NavItem } from '@/components/AppShell';
 import { MODE_COOKIE, parseVisualMode } from '@/lib/visualMode';
 import { setVisualMode, signOut } from '@/server/auth/actions';
 import { can, type Permission } from '@/server/auth/permissions';
+import { countUnread } from '@/server/modules/comms/service';
 import { getSchoolName } from '@/server/platform/queries';
 import { homeLabel, pageContext } from './pageContext';
 
 type ModuleKey =
   | 'students'
+  | 'admissions'
+  | 'staff'
+  | 'leave'
   | 'academics'
+  | 'subjects'
+  | 'timetable'
   | 'attendance'
+  | 'homework'
   | 'calendar'
   | 'feeCounter'
   | 'feeStructures'
-  | 'invoices';
+  | 'invoices'
+  | 'payments'
+  | 'dues'
+  | 'announcements'
+  | 'calendarEvents'
+  | 'promotion'
+  | 'users';
+type Group = 'people' | 'academics' | 'fees' | 'communication' | 'admin';
 
-const MODULES: (Omit<NavItem, 'text'> & { key: ModuleKey; permission: Permission })[] = [
-  { key: 'students', href: '/students', icon: 'students', permission: 'sis.student.read' },
-  { key: 'academics', href: '/academics/classes', icon: 'academics', permission: 'academics.class.read' },
-  { key: 'attendance', href: '/attendance/take', icon: 'attendance', permission: 'attendance.record.read' },
-  { key: 'calendar', href: '/calendar/holidays', icon: 'holiday', permission: 'calendar.holiday.read' },
-  { key: 'feeCounter', href: '/fees/counter', icon: 'collectPayment', permission: 'fees.payment.create' },
-  { key: 'feeStructures', href: '/fees/structures', icon: 'fees', permission: 'fees.structure.read' },
-  { key: 'invoices', href: '/fees/invoices', icon: 'invoice', permission: 'fees.invoice.read' },
+const MODULES: (Omit<NavItem, 'text' | 'group'> & { key: ModuleKey; group: Group; permission: Permission })[] = [
+  { key: 'students', group: 'people', href: '/students', icon: 'students', permission: 'sis.student.read' },
+  { key: 'admissions', group: 'people', href: '/admissions', icon: 'admissions', permission: 'sis.admission.read' },
+  { key: 'staff', group: 'people', href: '/staff', icon: 'staff', permission: 'hr.staff.read' },
+  { key: 'leave', group: 'people', href: '/leave', icon: 'leave', permission: 'hr.leave.read' },
+  { key: 'academics', group: 'academics', href: '/academics/classes', icon: 'classes', permission: 'academics.class.read' },
+  { key: 'subjects', group: 'academics', href: '/academics/subjects', icon: 'subjects', permission: 'academics.class.read' },
+  {
+    key: 'timetable',
+    group: 'academics',
+    href: '/academics/timetable',
+    icon: 'timetable',
+    permission: 'academics.timetable.read',
+  },
+  { key: 'attendance', group: 'academics', href: '/attendance/take', icon: 'attendance', permission: 'attendance.record.read' },
+  { key: 'homework', group: 'academics', href: '/homework', icon: 'homework', permission: 'homework.assignment.read' },
+  { key: 'calendar', group: 'academics', href: '/calendar/holidays', icon: 'holiday', permission: 'calendar.holiday.read' },
+  { key: 'feeCounter', group: 'fees', href: '/fees/counter', icon: 'collectPayment', permission: 'fees.payment.create' },
+  { key: 'feeStructures', group: 'fees', href: '/fees/structures', icon: 'fees', permission: 'fees.structure.read' },
+  { key: 'invoices', group: 'fees', href: '/fees/invoices', icon: 'invoice', permission: 'fees.invoice.read' },
+  { key: 'payments', group: 'fees', href: '/fees/payments', icon: 'receipt', permission: 'fees.payment.read' },
+  { key: 'dues', group: 'fees', href: '/fees/dues', icon: 'dues', permission: 'fees.invoice.read' },
+  {
+    key: 'announcements',
+    group: 'communication',
+    href: '/communication/announcements',
+    icon: 'announcements',
+    permission: 'comms.announcement.read',
+  },
+  { key: 'calendarEvents', group: 'communication', href: '/calendar/events', icon: 'calendar', permission: 'calendar.event.read' },
+  { key: 'promotion', group: 'admin', href: '/promotion', icon: 'promote', permission: 'sis.enrollment.update' },
+  { key: 'users', group: 'admin', href: '/users', icon: 'users', permission: 'users.user.read' },
 ];
 
 export default async function AppGroupLayout({ children }: { children: ReactNode }) {
@@ -32,8 +70,9 @@ export default async function AppGroupLayout({ children }: { children: ReactNode
   const t = await getTranslations('shell');
   const nav: NavItem[] = [
     { text: t(`nav.${homeLabel(ctx.role)}`), href: '/', icon: 'dashboard' },
-    ...MODULES.filter((item) => can(ctx.role, item.permission)).map(({ key, href, icon }) => ({
+    ...MODULES.filter((item) => can(ctx.role, item.permission)).map(({ key, group, href, icon }) => ({
       text: t(`nav.${key}`),
+      group: t(`groups.${group}`),
       href,
       icon,
     })),
@@ -48,6 +87,7 @@ export default async function AppGroupLayout({ children }: { children: ReactNode
       signOut={signOut}
       visualMode={parseVisualMode((await cookies()).get(MODE_COOKIE)?.value)}
       setVisualMode={setVisualMode}
+      unread={await countUnread(ctx)}
     >
       {children}
     </AppShell>

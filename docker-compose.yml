@@ -1,6 +1,8 @@
 services:
   mongo:
     image: mongo:8.0.12
+    # Comes back on its own when Docker Desktop starts, so the app isn't left without a database after a reboot.
+    restart: unless-stopped
     command: ['--replSet', 'rs0', '--bind_ip_all']
     ports:
       # Host port 27018, so it doesn't collide with another project's MongoDB on the default 27017.

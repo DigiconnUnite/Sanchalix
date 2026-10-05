@@ -3,6 +3,8 @@ import { AppError } from '@/lib/appError';
 import type { RequestContext } from '@/server/auth/context';
 import { AttendanceRecord } from '@/server/models/attendanceRecord';
 import { Enrollment } from '@/server/models/enrollment';
+import { weekdayOf } from '@/lib/dates';
+import { TimetableSlot } from '@/server/models/timetableSlot';
 import { findAttendanceSection, getDayState } from './queries';
 import { type AttendanceSummary, MARKABLE_STATUSES, type SubmitAttendance } from './schemas';
 
@@ -14,13 +16,31 @@ function summarise(entries: { status: string }[]): AttendanceSummary {
 
 export async function submitAttendance(ctx: RequestContext, input: SubmitAttendance) {
   const { schoolId } = ctx;
-  const section = await findAttendanceSection(ctx, input.sectionId);
+  const section = await findAttendanceSection(ctx, input.sectionId, input.mode === 'period' ? 'any' : 'daily');
   if (!section) throw new AppError('NOT_FOUND', 'attendance.errors.section');
+
+  // Period attendance needs that period on the section's timetable that weekday, and a teacher must be the one teaching it.
+  const slot =
+    input.mode === 'period'
+      ? await TimetableSlot.findOne({
+          schoolId,
+          sectionId: section._id,
+          day: weekdayOf(input.date),
+          period: input.period ?? 0,
+          status: 'published',
+        })
+          .select('subjectId teacherId')
+          .lean()
+      : null;
+  if (input.mode === 'period' && !slot) throw new AppError('BUSINESS_RULE', 'attendance.errors.noPeriod');
+  if (slot && ctx.scope === 'assigned' && !slot.teacherId.equals(ctx.staffId)) {
+    throw new AppError('NOT_FOUND', 'attendance.errors.section');
+  }
 
   const day = await getDayState(ctx, input.date);
   if (day.state !== 'open') throw new AppError('BUSINESS_RULE', `attendance.errors.${day.state}`);
 
-  const key = { schoolId, sectionId: section._id, date: input.date, mode: 'daily' as const, period: null };
+  const key = { schoolId, sectionId: section._id, date: input.date, mode: input.mode, period: input.period ?? null };
   const existing = await AttendanceRecord.findOne(key).select('entries idempotencyKey').lean();
   const result = (record: { _id: unknown; entries: { status: string }[] }, before: AttendanceSummary | null) => ({
     recordId: record._id,
@@ -61,6 +81,7 @@ export async function submitAttendance(ctx: RequestContext, input: SubmitAttenda
       $setOnInsert: {
         branchId: section.branchId,
         academicYearId: section.academicYearId,
+        ...(slot && { subjectId: slot.subjectId }),
         submittedAt: now,
         createdBy: ctx.userId,
       },

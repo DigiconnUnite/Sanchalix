@@ -4,7 +4,7 @@ import type { Types } from 'mongoose';
 import { cookies, headers } from 'next/headers';
 import { cache } from 'react';
 import { SESSION_COOKIE } from '@/lib/sessionCookie';
-import { MODE_COOKIE, type VisualMode } from '@/lib/visualMode';
+import { type Density, MODE_COOKIE, type VisualMode } from '@/lib/visualMode';
 import { connectDb } from '@/server/db/connect';
 import { Session } from '@/server/models/session';
 import { type RoleKey, TOTP_REQUIRED_ROLES } from './permissions';
@@ -54,8 +54,8 @@ export async function createSession(
   });
 }
 
-export async function setModeCookie(mode: VisualMode) {
-  (await cookies()).set(MODE_COOKIE, mode, {
+export async function setModeCookie(mode: VisualMode | Density, name = MODE_COOKIE) {
+  (await cookies()).set(name, mode, {
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
     path: '/',

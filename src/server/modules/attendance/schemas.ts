@@ -6,10 +6,12 @@ const Id = z.string().regex(/^[0-9a-f]{24}$/, 'attendance.errors.section');
 export const MARKABLE_STATUSES = ['present', 'absent', 'late', 'half_day', 'leave'] as const;
 export type MarkableStatus = (typeof MARKABLE_STATUSES)[number];
 
-export const SubmitAttendance = z.object({
+export const SubmitAttendance = z
+  .object({
   sectionId: Id,
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'attendance.errors.date'),
-  mode: z.literal('daily'),
+  mode: z.enum(['daily', 'period']),
+  period: z.number().int().min(1).max(12).optional(),
   entries: z
     .array(
       z.object({
@@ -20,7 +22,11 @@ export const SubmitAttendance = z.object({
     )
     .min(1, 'attendance.errors.roster'),
   idempotencyKey: z.uuid(),
-});
+  })
+  .refine(({ mode, period }) => (mode === 'period') === (period !== undefined), {
+    path: ['period'],
+    message: 'attendance.errors.noPeriod',
+  });
 export type SubmitAttendance = z.infer<typeof SubmitAttendance>;
 
 export type AttendanceSummary = Record<MarkableStatus, number>;
@@ -30,7 +36,12 @@ export type AttendanceSheet = {
   date: string;
   today: string;
   /** Why the sheet can't be changed, or `open` when it can. */
-  state: 'open' | 'future' | 'nonWorking' | 'holiday' | 'locked';
+  state: 'open' | 'future' | 'nonWorking' | 'holiday' | 'locked' | 'noPeriod';
+  /** The period this sheet is for, or null for the whole day. */
+  period: number | null;
+  /** Periods of this section on this date that the user may take attendance for. */
+  periods: { number: number; time: string; subject: string }[];
+  canDaily: boolean;
   holidayName: string | null;
   submitted: boolean;
   edited: boolean;
