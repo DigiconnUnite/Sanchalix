@@ -5,7 +5,7 @@ import { AppShell, type NavItem } from '@/components/AppShell';
 import { MODE_COOKIE, parseVisualMode } from '@/lib/visualMode';
 import { setVisualMode, signOut } from '@/server/auth/actions';
 import { can, type Permission } from '@/server/auth/permissions';
-import { countUnread } from '@/server/modules/comms/service';
+import { countUnread, listNotifications } from '@/server/modules/comms/service';
 import { getSchoolBrand } from '@/server/platform/queries';
 import { homeLabel, pageContext } from './pageContext';
 
@@ -32,7 +32,8 @@ type ModuleKey =
   | 'calendarEvents'
   | 'promotion'
   | 'users'
-  | 'settings';
+  | 'settings'
+  | 'outbox';
 type Group = 'people' | 'academics' | 'fees' | 'communication' | 'admin';
 
 const MODULES: (Omit<NavItem, 'text' | 'group'> & { key: ModuleKey; group: Group; permission: Permission })[] = [
@@ -82,6 +83,7 @@ const MODULES: (Omit<NavItem, 'text' | 'group'> & { key: ModuleKey; group: Group
   { key: 'calendarEvents', group: 'communication', href: '/calendar/events', icon: 'calendar', permission: 'calendar.event.read' },
   { key: 'promotion', group: 'admin', href: '/promotion', icon: 'promote', permission: 'sis.enrollment.update' },
   { key: 'users', group: 'admin', href: '/users', icon: 'users', permission: 'users.user.read' },
+  { key: 'outbox', group: 'admin', href: '/outbox', icon: 'sms', permission: 'messaging.outbox.read' },
   { key: 'settings', group: 'admin', href: '/settings', icon: 'settings', permission: 'settings.school.update' },
 ];
 
@@ -109,6 +111,7 @@ export default async function AppGroupLayout({ children }: { children: ReactNode
       visualMode={parseVisualMode((await cookies()).get(MODE_COOKIE)?.value)}
       setVisualMode={setVisualMode}
       unread={await countUnread(ctx)}
+      notifications={await listNotifications(ctx, 5)}
     >
       {children}
     </AppShell>

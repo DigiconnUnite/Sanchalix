@@ -7,9 +7,10 @@ import SideNavigation from '@cloudscape-design/components/side-navigation';
 import TopNavigation from '@cloudscape-design/components/top-navigation';
 import { applyMode, Mode } from '@cloudscape-design/global-styles';
 import { useTranslations } from 'next-intl';
-import { type ReactNode, useEffect, useRef, useState } from 'react';
+import { type CSSProperties, type ReactNode, useEffect, useRef, useState } from 'react';
 import { CrumbContext } from '@/components/Crumb';
 import { type IconKey, svg } from '@/components/icons';
+import { markNotificationsRead } from '@/server/modules/comms/actions';
 import { usePathname, useRouter } from '@/i18n/navigation';
 import { useIsDark } from '@/lib/useIsDark';
 import { useIsMobile } from '@/lib/useIsMobile';
@@ -17,6 +18,8 @@ import type { VisualMode } from '@/lib/visualMode';
 
 // Paths that are part of a URL but have no page of their own, so they get no crumb.
 const NO_PAGE = [/^\/academics\/sections$/, /^\/staff\/[0-9a-f]{24}$/, /^\/fees$/, /^\/academics$/, /^\/attendance$/, /^\/calendar$/, /^\/communication$/];
+
+const VIEW_ALL = 'view-all';
 
 export type NavItem = { text: string; href: string; icon: IconKey; group?: string };
 
@@ -30,9 +33,11 @@ export function AppShell({
   visualMode,
   setVisualMode,
   unread,
+  notifications,
   children,
 }: {
   unread: number;
+  notifications: { id: string; title: string; body: string | null; link: string | null; read: boolean }[];
   visualMode: VisualMode;
   setVisualMode: (mode: VisualMode) => Promise<unknown>;
   nav: NavItem[];
@@ -63,17 +68,15 @@ export function AppShell({
   const navigationOpen = navigationChoice ?? !isMobile;
   const collapsed = !isMobile && !navigationOpen;
   // Without a logo the header shows the school icon. TopNavigation's logo is an <img>, so the icon from the icon map
-  // is read back as markup and handed over as an image, in the header's own text colour.
+  // is read back as markup and handed over as an image. It is always white: the header is dark in both themes, and
+  // an image can't follow the text colour the way an inline icon does.
   const iconRef = useRef<HTMLSpanElement>(null);
   const [iconLogo, setIconLogo] = useState<string | null>(null);
   useEffect(() => {
     const glyph = iconRef.current?.querySelector('svg');
-    const title = document.querySelector('#top-nav a');
-    if (!glyph || !title) return;
+    if (!glyph) return;
     // XMLSerializer adds the SVG namespace, which a standalone image needs and inline markup may leave out.
-    const markup = new XMLSerializer()
-      .serializeToString(glyph)
-      .replaceAll('currentColor', getComputedStyle(title).color);
+    const markup = new XMLSerializer().serializeToString(glyph).replaceAll('currentColor', 'white');
     setIconLogo(`data:image/svg+xml,${encodeURIComponent(markup)}`);
   }, []);
   const logo = schoolLogo ?? iconLogo;
@@ -106,12 +109,28 @@ export function AppShell({
       <span ref={iconRef} hidden>
         {svg('school')}
       </span>
-      <div id="top-nav" className="vw-top-nav">
+      <div
+        id="top-nav"
+        className="vw-top-nav"
+        {...(logo && {
+          'data-school-logo': schoolLogo ? 'image' : 'icon',
+          style: { '--vw-school-logo': `url(${JSON.stringify(logo)})` } as CSSProperties,
+        })}
+      >
+        <a
+          // Cloudscape's own header context, so the box takes the header's dark colours in both light and dark mode.
+          className="vw-platform-logo awsui-context-top-navigation"
+          href="/"
+          aria-label={t('platformLogoAlt')}
+          onClick={(event) => {
+            event.preventDefault();
+            router.push('/');
+          }}
+        />
         <TopNavigation
           identity={{
             href: '/',
             title: schoolName,
-            ...(logo && { logo: { src: logo, alt: t('logoAlt', { school: schoolName }) } }),
             onFollow: (event) => {
               event.preventDefault();
               router.push('/');
@@ -119,12 +138,29 @@ export function AppShell({
           }}
           utilities={[
             {
-              type: 'button',
+              type: 'menu-dropdown',
               iconSvg: svg('notifications'),
               ariaLabel: t('notifications', { count: unread }),
-              title: t('notifications', { count: unread }),
+              title: t('notificationsMenu.title'),
               badge: unread > 0,
-              onClick: () => router.push('/notifications'),
+              items: [
+                ...(notifications.length
+                  ? notifications.map((notification) => ({
+                      id: notification.id,
+                      text: notification.title,
+                      ...(notification.body && { description: notification.body.slice(0, 90) }),
+                      ...(!notification.read && { secondaryText: t('notificationsMenu.new') }),
+                    }))
+                  : [{ id: 'none', text: t('notificationsMenu.empty'), disabled: true }]),
+                { id: VIEW_ALL, text: t('notificationsMenu.viewAll') },
+              ],
+              onItemClick: ({ detail }) => {
+                const opened = notifications.find((notification) => notification.id === detail.id);
+                if (!opened) return router.push('/notifications');
+                // Opening a notification from the menu is reading it.
+                if (!opened.read) void markNotificationsRead([opened.id]).then(() => router.refresh());
+                router.push(opened.link ?? '/notifications');
+              },
             },
             {
               type: 'button',

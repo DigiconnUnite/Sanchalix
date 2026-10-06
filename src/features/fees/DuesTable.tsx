@@ -18,6 +18,7 @@ import { usePathname, useRouter } from '@/i18n/navigation';
 import { formatMoney } from '@/lib/money';
 import { useIsMobile } from '@/lib/useIsMobile';
 import type { Ageing, DueRow } from '@/server/modules/fees/schemas';
+import { DuesReminders } from './DuesReminders';
 
 const AGEING: Ageing[] = ['all', '1-15', '16-30', '31-60', '60+'];
 const PAGE_SIZES = [10, 25, 50, 100];
@@ -88,7 +89,12 @@ export function DuesTable({
           variant="h1"
           counter={data ? `(${data.count})` : ''}
           description={canCollect && t('hint')}
-          actions={<ExportButton kind="dues" />}
+          actions={
+            <SpaceBetween direction="horizontal" size="xs">
+              {canCollect && <DuesReminders />}
+              <ExportButton kind="dues" />
+            </SpaceBetween>
+          }
         >
           {t('title')}
         </Header>

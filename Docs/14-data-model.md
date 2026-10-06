@@ -134,8 +134,12 @@ Database sessions ([ADR-017](23-decision-log.md#adr-017-password-sign-in-writes-
 Feature flags ([20-devops-and-deployment.md](20-devops-and-deployment.md#cicd-pipeline)). `{ key, schoolId? , enabled, updatedBy }`. A document without `schoolId` is the platform default. A school-level document overrides it.
 Indexes: `{ key: 1, schoolId: 1 } unique`.
 
+### outboundMessages
+`schoolId`, `channel: 'sms' | 'email'`, `to`, `template`, `subject?`, `body?` (kept only by the development provider), `status: 'sent' | 'failed' | 'skipped'`, `provider`, `error?`, `dedupeKey?`.
+Indexes: `{ schoolId: 1, createdAt: -1 }`, `{ schoolId: 1, dedupeKey: 1 } unique` where `dedupeKey` is a string, and a 30-day TTL on `createdAt`.
+
 ### otpChallenges
-`phone`, `codeHash`, `attempts` (max 5), `expiresAt` (5 min, TTL index), `purpose: 'login' | 'verify_phone'`.
+`phone`, `codeHash` (HMAC-SHA-256 of phone and code, keyed with `AUTH_SECRET`), `attempts` (max 5), `sentAt`, `expiresAt` (5 min, TTL index), `purpose: 'login' | 'verify_phone'`. `users` also has `passwordReset: { tokenHash, expiresAt }` for the reset link.
 
 ## School structure
 

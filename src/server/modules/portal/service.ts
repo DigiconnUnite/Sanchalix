@@ -50,7 +50,7 @@ async function studentWithGuardians(ctx: RequestContext, studentId: string) {
     : null;
   if (!student) throw new AppError('NOT_FOUND', `${E}.notFound`);
   const guardians = await Guardian.find({ schoolId: ctx.schoolId, _id: { $in: student.guardianIds } })
-    .select('name email')
+    .select('name email phone')
     .lean();
   return { student, guardians, name: `${student.firstName} ${student.lastName ?? ''}`.trim() };
 }
@@ -85,7 +85,11 @@ export async function createPortalAccount(ctx: RequestContext, { studentId, guar
   const { student, guardians, name } = await studentWithGuardians(ctx, studentId);
   const guardian = guardianId ? guardians.find((candidate) => String(candidate._id) === guardianId) : null;
   if (guardianId && !guardian) throw new AppError('NOT_FOUND', `${E}.notFound`);
-  const link = guardian ? { guardianId: guardian._id } : { studentId: student._id };
+  // A parent's account carries the guardian's phone, which is what lets them sign in with a code sent to it.
+  const phoneFree = guardian && !(await User.exists({ phone: guardian.phone }));
+  const link = guardian
+    ? { guardianId: guardian._id, ...(phoneFree && { phone: guardian.phone }) }
+    : { studentId: student._id };
   if (await User.exists({ roles: { $elemMatch: { schoolId: ctx.schoolId } }, ...link })) {
     throw new AppError('CONFLICT', `${E}.exists`);
   }

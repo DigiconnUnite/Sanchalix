@@ -101,6 +101,9 @@ The roadmap's M0 walking skeleton ([Docs/05-roadmap.md](Docs/05-roadmap.md)):
 - Subjects and a weekly timetable per section, with a hard stop on double-booking a teacher, and "Your classes today" for teachers
 - Homework: teachers set it for the sections they teach; the office sees all of it
 - Move a student to another section from the profile (new roll number, audited)
+- Forgot password by emailed link, and sign-in with a phone code for parents and students
+- Absence alerts to guardians and fee reminders by SMS (recorded on the Sent messages page until an SMS service is connected)
+- A public home page at `/welcome`, the platform and school logos in the header, and a notifications menu
 - Settings: school profile, working days and the bell schedule
 - CSV export of active students, overdue dues and payments
 - Users: create sign-ins for staff with a one-time temporary password, reset passwords, disable or enable accounts

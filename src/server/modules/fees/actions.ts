@@ -4,10 +4,23 @@ import 'server-only';
 import { Types } from 'mongoose';
 import { withAction } from '@/server/action';
 import { audit } from '@/server/audit';
+import { getTranslations } from 'next-intl/server';
 import { requirePermission } from '@/server/auth/context';
+import { sendDuesReminders as remind } from '@/server/messaging/alerts';
+import { getSchoolBrand } from '@/server/platform/queries';
 import { collectPayment as collect } from './paymentService';
 import { CollectPayment, FeeHeadInput, FeeStructureId, FeeStructureInput } from './schemas';
 import { approveFeeStructure as approve, createFeeHead, createFeeStructure, deleteDraftFeeStructure } from './service';
+
+export async function sendDuesReminders() {
+  return withAction('fees.reminder.create', async () => {
+    const ctx = await requirePermission('fees.payment.create');
+    const [t, school] = await Promise.all([getTranslations('outbound'), getSchoolBrand(ctx.schoolId)]);
+    const result = await remind(ctx, ({ student, amount }) => t('dues', { school: school.name, student, amount }));
+    await audit(ctx, 'fees.reminder.create', { type: 'school', id: ctx.schoolId }, { after: result });
+    return result;
+  });
+}
 
 export async function deleteFeeStructure(input: unknown) {
   return withAction('fees.structure.delete', async () => {

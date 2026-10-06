@@ -1,6 +1,7 @@
 'use server';
 
 import 'server-only';
+import { getTranslations } from 'next-intl/server';
 import { type ActionResult, AppError } from '@/lib/appError';
 import { withAction } from '@/server/action';
 import { audit } from '@/server/audit';
@@ -8,6 +9,16 @@ import { User } from '@/server/models/user';
 import { getContext, getPendingSession } from './context';
 import { DENSITY_COOKIE } from '@/lib/visualMode';
 import { Session } from '@/server/models/session';
+import {
+  requestOtp,
+  RequestOtp,
+  requestPasswordReset as requestReset,
+  RequestReset,
+  resetPassword as reset,
+  ResetPassword,
+  verifyOtp,
+  VerifyOtp,
+} from './recovery';
 import { ChangePassword, SetDensity, SetVisualMode, SignIn, TotpCode } from './schemas';
 import { hashPassword, verifyCredentials, verifyPassword } from './service';
 import { createSession, destroySession, readSession, setModeCookie } from './session';
@@ -67,6 +78,40 @@ export async function completeTotpSetup() {
 
 export async function signOut() {
   return withAction('auth.signOut', destroySession);
+}
+
+export async function requestPasswordReset(input: unknown) {
+  return withAction('auth.requestPasswordReset', async () => {
+    const { email } = RequestReset.parse(input);
+    const t = await getTranslations('outbound.passwordReset');
+    await requestReset(email, (link) => ({ subject: t('subject'), body: t('body', { link }) }));
+  });
+}
+
+export async function resetPassword(input: unknown) {
+  return withAction('auth.resetPassword', async () => {
+    const { token, next } = ResetPassword.parse(input);
+    const actor = await reset(token, next);
+    await audit(actor, 'auth.password.reset', { type: USER, id: actor.userId });
+  });
+}
+
+export async function requestOtpCode(input: unknown) {
+  return withAction('auth.requestOtp', async () => {
+    const { phone } = RequestOtp.parse(input);
+    const t = await getTranslations('outbound');
+    await requestOtp(phone, (code) => t('otp', { code }));
+  });
+}
+
+export async function signInWithOtp(input: unknown) {
+  return withAction('auth.signInWithOtp', async () => {
+    const { phone, code } = VerifyOtp.parse(input);
+    const { userId, role, schoolId, visualMode } = await verifyOtp(phone, code);
+    await createSession(userId, role, schoolId);
+    await setModeCookie(visualMode);
+    await audit({ userId, role, schoolId }, 'auth.signIn.otp', { type: USER, id: userId });
+  });
 }
 
 export async function setDensity(input: unknown) {

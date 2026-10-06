@@ -1,5 +1,6 @@
 'use client';
 
+import Box from '@cloudscape-design/components/box';
 import Button from '@cloudscape-design/components/button';
 import Container from '@cloudscape-design/components/container';
 import Form from '@cloudscape-design/components/form';
@@ -9,6 +10,7 @@ import Input, { type InputProps } from '@cloudscape-design/components/input';
 import SpaceBetween from '@cloudscape-design/components/space-between';
 import { useTranslations } from 'next-intl';
 import { useActionState, useEffect, useRef, useState } from 'react';
+import { AppLink } from '@/components/AppLink';
 import { svg } from '@/components/icons';
 import { signInWithPassword } from '@/server/auth/actions';
 
@@ -65,6 +67,12 @@ export function SignInForm() {
             </FormField>
           </SpaceBetween>
         </Container>
+        <Box margin={{ top: 'm' }}>
+          <SpaceBetween direction="horizontal" size="l">
+            <AppLink href="/forgot-password">{t('forgot')}</AppLink>
+            <AppLink href="/signin/otp">{t('useCode')}</AppLink>
+          </SpaceBetween>
+        </Box>
       </Form>
     </form>
   );

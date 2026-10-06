@@ -63,7 +63,7 @@ const inSchool = (ctx: RequestContext) => ({ roles: { $elemMatch: { schoolId: ct
 export async function createAccount(
   ctx: RequestContext,
   input: { name: string; email: string; role: RoleKey },
-  link: { staffId?: Types.ObjectId; studentId?: Types.ObjectId; guardianId?: Types.ObjectId } = {},
+  link: { staffId?: Types.ObjectId; studentId?: Types.ObjectId; guardianId?: Types.ObjectId; phone?: string } = {},
 ) {
   const password = temporaryPassword();
   if (await User.exists({ email: input.email })) throw new AppError('CONFLICT', `${E}.emailTaken`);

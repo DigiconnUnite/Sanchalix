@@ -68,6 +68,7 @@ export type Permission =
   | 'sis.enrollment.update'
   | 'portal.self.read'
   | 'settings.school.update'
+  | 'messaging.outbox.read'
   | 'audit.log.read';
 
 const EVERYONE: readonly Permission[] = ['comms.announcement.read', 'calendar.event.read'];
@@ -89,6 +90,7 @@ const ROLE_PERMISSIONS: Record<RoleKey, readonly Permission[]> = {
     'hr.leave.read',
     'hr.leave.approve',
     'settings.school.update',
+    'messaging.outbox.read',
     'users.user.read',
     'users.user.create',
     'users.user.update',

@@ -38,6 +38,7 @@ const schema = new Schema(
       recoveryCodeHashes: { type: [String], select: false },
     },
     status: { type: String, enum: ['invited', 'active', 'locked', 'disabled'], default: 'invited' },
+    passwordReset: { tokenHash: { type: String, select: false }, expiresAt: Date },
     lastLoginAt: Date,
     failedLoginCount: { type: Number, default: 0 },
     lockedUntil: Date,

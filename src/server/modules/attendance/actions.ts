@@ -4,7 +4,11 @@ import 'server-only';
 import { Types } from 'mongoose';
 import { withAction } from '@/server/action';
 import { audit } from '@/server/audit';
+import { getTranslations } from 'next-intl/server';
 import { requirePermission } from '@/server/auth/context';
+import { logger } from '@/server/logger';
+import { sendAbsenceAlerts } from '@/server/messaging/alerts';
+import { getSchoolBrand } from '@/server/platform/queries';
 import { SubmitAttendance } from './schemas';
 import { submitAttendance as submit } from './service';
 
@@ -19,6 +23,14 @@ export async function submitAttendance(input: unknown) {
       { type: 'attendanceRecord', id: new Types.ObjectId(String(recordId)) },
       { ...(before && { before }), after: { date: data.date, ...(data.period && { period: data.period }), ...summary } },
     );
+    // Guardians of absent students are told once the day's attendance is in. A failed alert never undoes the sheet.
+    if (data.mode === 'daily') {
+      const t = await getTranslations('outbound');
+      const school = await getSchoolBrand(ctx.schoolId);
+      await sendAbsenceAlerts(ctx, data.sectionId, data.date, ({ student }) =>
+        t('absence', { school: school.name, student, date: data.date }),
+      ).catch((error: unknown) => logger.error({ err: error }, 'absence alerts failed'));
+    }
     return { sectionName, summary, edited: Boolean(before) };
   });
 }

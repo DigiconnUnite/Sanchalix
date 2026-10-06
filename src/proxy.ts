@@ -5,7 +5,7 @@ import { SESSION_COOKIE } from '@/lib/sessionCookie';
 
 const handleLocale = createMiddleware(routing);
 const LOCALE_PREFIX = new RegExp(`^/(${routing.locales.join('|')})(?=/|$)`);
-const PUBLIC_PATH = /^\/signin(\/|$)/;
+const PUBLIC_PATH = /^\/(signin|welcome|forgot-password|reset-password)(\/|$)/;
 
 const SECURITY_HEADERS = {
   'Content-Security-Policy': "frame-ancestors 'none'",
@@ -23,9 +23,12 @@ export default function proxy(request: NextRequest) {
   let response: NextResponse;
   if (PUBLIC_PATH.test(path) || request.cookies.has(SESSION_COOKIE)) {
     response = handleLocale(request);
+  } else if (path === '/') {
+    // A visitor with no session who opens the site sees what Vidyawan is, not a bare sign-in form.
+    response = NextResponse.redirect(new URL(`${prefix}/welcome`, request.url));
   } else {
     const signIn = new URL(`${prefix}/signin`, request.url);
-    if (path !== '/') signIn.searchParams.set('next', path + search);
+    signIn.searchParams.set('next', path + search);
     response = NextResponse.redirect(signIn);
   }
 

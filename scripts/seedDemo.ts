@@ -83,7 +83,7 @@ export async function seedGreenValleyDemo(schoolId: Types.ObjectId, domain: stri
   const accountant = ctxOf('accountant');
   const priya = ctxOf('teacher', 'assigned');
   const email = (name: string) => `${name}@${domain}`;
-  const account = (name: string, mail: string, role: RoleKey, scope: Scope, link: Record<string, Types.ObjectId>) =>
+  const account = (name: string, mail: string, role: RoleKey, scope: Scope, link: Record<string, Types.ObjectId | string>) =>
     User.create({ name, email: email(mail), passwordHash, roles: [{ role, schoolId, scope }], status: 'active', ...link });
 
   // Staff and their sign-ins.
@@ -441,8 +441,11 @@ export async function seedGreenValleyDemo(schoolId: Types.ObjectId, domain: stri
     const student = await Student.findOne({ schoolId, _id: childOne.studentId }).select('firstName lastName').lean();
     if (!guardian || !otherGuardian || !student) throw new Error('The seed found no guardian for the portal accounts');
     await Student.updateOne({ schoolId, _id: childTwo.studentId }, { $addToSet: { guardianIds: guardian._id } });
-    await account(guardian.name, 'parent', 'parent', 'ward', { guardianId: guardian._id });
-    await account(otherGuardian.name, 'parent2', 'parent', 'ward', { guardianId: otherGuardian._id });
+    await account(guardian.name, 'parent', 'parent', 'ward', { guardianId: guardian._id, phone: guardian.phone });
+    await account(otherGuardian.name, 'parent2', 'parent', 'ward', {
+      guardianId: otherGuardian._id,
+      phone: otherGuardian.phone,
+    });
     await account(`${student.firstName} ${student.lastName ?? ''}`.trim(), 'student', 'student', 'self', { studentId: student._id });
   }
 

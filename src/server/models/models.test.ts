@@ -5,7 +5,7 @@ import { TenantScopeError } from '@/server/db/tenantPlugin';
 
 import.meta.glob(['./*.ts', '!./*.test.ts'], { eager: true });
 
-const PLATFORM = ['Counter', 'Organization', 'School', 'User', 'Session'];
+const PLATFORM = ['Counter', 'Organization', 'School', 'User', 'Session', 'OtpChallenge'];
 
 it('registers every model as either tenant-scoped or platform-level', () => {
   const unscoped = mongoose.modelNames().filter((name) => !mongoose.model(name).schema.path('schoolId'));

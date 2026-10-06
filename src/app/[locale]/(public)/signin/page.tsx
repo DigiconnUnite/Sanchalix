@@ -1,5 +1,4 @@
 import Box from '@cloudscape-design/components/box';
-import Grid from '@cloudscape-design/components/grid';
 import { getLocale, getTranslations } from 'next-intl/server';
 import { SignInForm } from '@/features/auth/SignInForm';
 import { redirect } from '@/i18n/navigation';
@@ -25,9 +24,9 @@ export default async function SignInPage({
 
   return (
     <Box padding={{ vertical: 'xxxl', horizontal: 'l' }}>
-      <Grid gridDefinition={[{ colspan: { default: 12, xs: 8, s: 6, m: 4 }, offset: { xs: 2, s: 3, m: 4 } }]}>
+      <div className="vw-auth-card">
         <SignInForm />
-      </Grid>
+      </div>
     </Box>
   );
 }

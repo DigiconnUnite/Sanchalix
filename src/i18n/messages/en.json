@@ -29,7 +29,8 @@
       "settings": "Settings",
       "staffAttendance": "Staff attendance",
       "exams": "Exams",
-      "reportCards": "Report cards"
+      "reportCards": "Report cards",
+      "outbox": "Sent messages"
     },
     "breadcrumbs": "Breadcrumbs",
     "signOut": "Sign out",
@@ -91,9 +92,20 @@
       "homework": "Homework",
       "leave": "Leave",
       "admissions": "Admissions",
-      "2fa": "Two-step verification"
+      "2fa": "Two-step verification",
+      "outbox": "Sent messages",
+      "otp": "Phone code",
+      "forgot-password": "Forgot password",
+      "reset-password": "Reset password"
     },
-    "logoAlt": "{school} logo"
+    "logoAlt": "{school} logo",
+    "platformLogoAlt": "Vidyawan",
+    "notificationsMenu": {
+      "title": "Notifications",
+      "new": "New",
+      "empty": "No notifications yet",
+      "viewAll": "View all notifications"
+    }
   },
   "auth": {
     "signIn": {
@@ -104,7 +116,9 @@
       "emailInvalid": "Enter an email address like name@example.com",
       "passwordRequired": "Enter your password",
       "invalid": "That email or password isn't right. Check both and try again.",
-      "locked": "Too many attempts. Try again in 15 minutes."
+      "locked": "Too many attempts. Try again in 15 minutes.",
+      "forgot": "Forgot password?",
+      "useCode": "Sign in with a phone code"
     },
     "totp": {
       "cancel": "Cancel sign-in",
@@ -182,6 +196,38 @@
         "submit": "Change password",
         "changed": "Password changed. Other devices signed in to this account have been signed out."
       }
+    },
+    "reset": {
+      "forgotTitle": "Forgot your password?",
+      "forgotBody": "Enter the email you sign in with and we'll send you a link to choose a new password.",
+      "email": "Email",
+      "send": "Send reset link",
+      "back": "Back to sign in",
+      "sentTitle": "Check your email",
+      "sentBody": "If an account exists for {email}, a reset link is on its way. It works for 30 minutes.",
+      "resetTitle": "Choose a new password",
+      "save": "Save new password",
+      "doneTitle": "Password changed",
+      "doneBody": "You've been signed out everywhere. Sign in with your new password.",
+      "signIn": "Sign in",
+      "invalid": "This reset link has expired or was already used. Ask for a new one."
+    },
+    "otp": {
+      "title": "Sign in with a phone code",
+      "body": "For parents and students. Enter the mobile number the school has for you.",
+      "phone": "Mobile number",
+      "phoneHint": "10 digits, without +91.",
+      "send": "Send code",
+      "usePassword": "Sign in with a password instead",
+      "codeTitle": "Enter the code",
+      "codeBody": "If {phone} is registered with a school, a 6-digit code has been sent to it. It works for 5 minutes.",
+      "code": "6-digit code",
+      "verify": "Sign in",
+      "change": "Use a different number",
+      "phoneInvalid": "Enter a 10-digit mobile number",
+      "codeInvalid": "Enter the 6-digit code",
+      "wrong": "That code isn't right or has expired. Check it, or ask for a new code.",
+      "wait": "A code was just sent. Wait a minute before asking for another."
     }
   },
   "dashboard": {
@@ -1078,6 +1124,14 @@
         "heading": "No matches",
         "body": "No dues fall in this range.",
         "clear": "Show all dues"
+      },
+      "reminders": {
+        "action": "Send reminders",
+        "title": "Send fee reminders?",
+        "body": "Each family with an overdue balance gets one SMS on the primary guardian's number with the amount due. A family is reminded at most once a day.",
+        "confirm": "Send reminders",
+        "close": "Close",
+        "sent": "{sent, plural, =0 {No new reminders: every family with dues was already reminded today.} one {# reminder sent.} other {# reminders sent.}}"
       }
     }
   },
@@ -2024,6 +2078,131 @@
         "noResults": "No student in this section has published exam results yet. Publish an exam's results first.",
         "nothingToPublish": "There are no draft cards to publish. Generate them first."
       }
+    }
+  },
+  "marketing": {
+    "metaTitle": "School management, made simple",
+    "brand": "Vidyawan",
+    "signIn": "Sign in",
+    "openApp": "Open dashboard",
+    "hero": {
+      "title": "Run your whole school from one place",
+      "body": "Vidyawan brings admissions, attendance, fees, exams and parent communication together, so the office, teachers and families all work from the same up-to-date records.",
+      "seeFeatures": "See what it does"
+    },
+    "features": {
+      "title": "Everything the school day needs",
+      "description": "One system instead of registers, spreadsheets and separate apps.",
+      "items": {
+        "students": {
+          "title": "Students and admissions",
+          "body": "Follow each applicant from enquiry to admission, keep student and guardian records in one place, import in bulk, and promote classes at year end."
+        },
+        "attendance": {
+          "title": "Attendance",
+          "body": "Take daily or period-wise attendance in seconds, with holidays and working days built in, and see the month at a glance in the register."
+        },
+        "fees": {
+          "title": "Fees and receipts",
+          "body": "Set fee structures with installments, collect at the counter with numbered receipts that can't be altered, and know who owes what."
+        },
+        "exams": {
+          "title": "Exams and report cards",
+          "body": "Schedule papers, let subject teachers enter marks, lock and publish results, and print report cards with remarks."
+        },
+        "timetable": {
+          "title": "Timetable and homework",
+          "body": "Build a weekly timetable that never double-books a teacher, and let teachers set homework for the sections they teach."
+        },
+        "communication": {
+          "title": "Announcements and calendar",
+          "body": "Reach the whole school or chosen roles with announcements, and keep events and holidays on one shared calendar."
+        }
+      }
+    },
+    "roles": {
+      "title": "Built for everyone at school",
+      "description": "Each person signs in to exactly what they need, and nothing they shouldn't see.",
+      "items": {
+        "office": {
+          "title": "Office and principal",
+          "body": "Records, approvals, staff, leave and a dashboard of the day."
+        },
+        "teachers": {
+          "title": "Teachers",
+          "body": "Today's classes, attendance, homework and marks for their own sections."
+        },
+        "accounts": {
+          "title": "Accounts",
+          "body": "The fee counter, receipts, payments and the dues report."
+        },
+        "families": {
+          "title": "Students and parents",
+          "body": "Attendance, homework, fees due, results and report cards for their own child."
+        }
+      }
+    },
+    "steps": {
+      "title": "Getting started",
+      "step": "Step {number}",
+      "items": {
+        "setup": {
+          "title": "Set up your school",
+          "body": "Add classes, sections, subjects and staff, then import your students from a spreadsheet."
+        },
+        "run": {
+          "title": "Run the day",
+          "body": "Take attendance, collect fees, set homework and enter marks as the day goes on."
+        },
+        "share": {
+          "title": "Keep families informed",
+          "body": "Parents and students sign in to see attendance, dues, results and announcements."
+        }
+      }
+    },
+    "cta": {
+      "title": "Ready to open your school?",
+      "body": "Sign in with the account your school gave you."
+    },
+    "footer": "© {year} Vidyawan by Digiconn Unite"
+  },
+  "outbound": {
+    "absence": "{school}: {student} was marked absent on {date}. Please contact the school office if this is a mistake.",
+    "dues": "{school}: fees of {amount} for {student} are overdue. Please pay at the school fee counter.",
+    "otp": "{code} is your Vidyawan sign-in code. It works for 5 minutes. Don't share it with anyone.",
+    "passwordReset": {
+      "subject": "Reset your Vidyawan password",
+      "body": "Open this link within 30 minutes to choose a new password: {link}\nIf you didn't ask for this, you can ignore this email."
+    }
+  },
+  "outbox": {
+    "title": "Sent messages",
+    "description": "SMS and email the school has sent in the last 30 days. Until an SMS and email service is connected, messages are recorded here instead of being delivered, so codes and links can be read from this list.",
+    "sentAt": "Sent",
+    "channel": "Channel",
+    "to": "To",
+    "kind": "Kind",
+    "message": "Message",
+    "status": "Status",
+    "notKept": "Not kept",
+    "channels": {
+      "sms": "SMS",
+      "email": "Email"
+    },
+    "kinds": {
+      "absence": "Absence alert",
+      "dues": "Fee reminder",
+      "otp": "Sign-in code",
+      "passwordReset": "Password reset"
+    },
+    "statuses": {
+      "sent": "Recorded",
+      "failed": "Failed",
+      "skipped": "Not delivered"
+    },
+    "empty": {
+      "heading": "No messages yet",
+      "body": "Absence alerts, fee reminders, sign-in codes and password reset links appear here."
     }
   }
 }

@@ -1,5 +1,4 @@
 import Box from '@cloudscape-design/components/box';
-import Grid from '@cloudscape-design/components/grid';
 import { getLocale, getTranslations } from 'next-intl/server';
 import { toDataURL } from 'qrcode';
 import { TotpChallengeForm } from '@/features/auth/TotpChallengeForm';
@@ -29,13 +28,13 @@ export default async function TwoFactorPage({
   const setup = await getTotpSetup(pending.userId);
   return (
     <Box padding={{ vertical: 'xxxl', horizontal: 'l' }}>
-      <Grid gridDefinition={[{ colspan: { default: 12, s: 8, m: 6 }, offset: { s: 2, m: 3 } }]}>
+      <div className="vw-auth-card vw-auth-card-wide">
         {setup ? (
           <TotpSetupWizard secret={setup.secret} qrCode={await toDataURL(setup.otpauthUrl, { margin: 1, width: 200 })} />
         ) : (
           <TotpChallengeForm />
         )}
-      </Grid>
+      </div>
     </Box>
   );
 }

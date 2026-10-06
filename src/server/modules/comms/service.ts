@@ -128,10 +128,10 @@ export async function getAnnouncement(ctx: RequestContext, id: string): Promise<
   return { ...row, recipients };
 }
 
-export async function listNotifications(ctx: RequestContext): Promise<NotificationRow[]> {
+export async function listNotifications(ctx: RequestContext, limit = 50): Promise<NotificationRow[]> {
   const notifications = await Notification.find({ schoolId: ctx.schoolId, userId: ctx.userId })
     .sort({ createdAt: -1 })
-    .limit(50)
+    .limit(limit)
     .select('title body link readAt createdAt')
     .lean();
   return notifications.map((notification) => ({

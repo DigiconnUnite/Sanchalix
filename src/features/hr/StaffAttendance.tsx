@@ -110,7 +110,7 @@ export function StaffAttendance({ sheet, canEdit }: { sheet: StaffSheet; canEdit
           isRowHeader: true,
           cell: (member) => (
             <SpaceBetween direction="horizontal" size="xs">
-              {member.name}
+              <span>{member.name}</span>
               {member.onApprovedLeave && <Badge color="blue">{t('approvedLeave')}</Badge>}
             </SpaceBetween>
           ),

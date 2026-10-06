@@ -243,7 +243,7 @@ export function StudentProfileView({
                       isRowHeader: true,
                       cell: (guardian) => (
                         <SpaceBetween direction="horizontal" size="xs">
-                          {guardian.name}
+                          <span>{guardian.name}</span>
                           {guardian.isPrimary && <Badge>{t('profile.primary')}</Badge>}
                         </SpaceBetween>
                       ),

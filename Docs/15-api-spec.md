@@ -57,6 +57,11 @@ type Page<T> = { data: T[]; nextCursor: string | null };
 
 ## 1. Auth and session
 
+**Messaging and account recovery, built on 2026-10-06.** No SMS or email provider is connected yet. `sendMessages` (`src/server/messaging/send.ts`) has one provider, `dev`, which records each message in `outboundMessages` instead of delivering it; `/outbox` (`messaging.outbox.read`, school admin) lists them so a code or link can be read while testing. In production the `dev` provider keeps no message body and marks the message `skipped`. Real providers plug in at that one function.
+- `requestPasswordReset({ email })` always answers the same way. For an active account it stores the SHA-256 of a random token for 30 minutes and emails `/reset-password?token=…`. `resetPassword({ token, next, confirm })` consumes the token atomically, sets the password, clears any lockout and deletes the user's sessions. Pages: `/forgot-password`, `/reset-password`.
+- `requestOtpCode({ phone })` and `signInWithOtp({ phone, code })` (`/signin/otp`) are for the `parent` and `student` roles only. The 6-digit code is stored as an HMAC keyed with `AUTH_SECRET`, lasts 5 minutes, allows 5 attempts (counted atomically) and one new code per minute; a number without an account gets the same answer and no message. A parent's account gets the guardian's phone when it is created.
+- Not built: rate limits per IP, the breached-password check, Google sign-in, invitations by link.
+
 **Built on 2026-10-05:** `changePassword({ current, next, confirm })` checks the current password, requires at least 10 characters, stores an argon2id hash, deletes every other session of the user and is audited as `auth.password.change`. The breached-password check is not built. `setDensity('comfortable' | 'compact')` saves `User.density` and the `vw.density` cookie. Both need only a signed-in user. The screen is `/profile`.
 
 | Name | Type | Permission | Input | Output | Errors |
@@ -277,6 +282,8 @@ Server rules: each allocation ≤ the invoice balance; everything runs in one tr
 **Built so far (the counter):** `collectPayment` returns `{ paymentId, receiptNo }` (no PDF yet; the receipt is the page `/fees/payments/{id}`, printed with the browser). The balance check is part of each invoice update, so two cashiers can't both collect the same dues (`BUSINESS_RULE`); an invoice of another student or school is `NOT_FOUND`. A request repeating an `idempotencyKey` returns the first receipt, including when the two arrive at the same moment. The audit entry is written just after the transaction commits, not inside it. `GET /api/v1/students/search?q=` needs `fees.payment.create` and returns up to 10 active students: an exact admission number, otherwise first or last names starting with the text (`guardianName` instead of `photoUrl`, since photos aren't built). `/fees/payments` lists receipts newest first (by receipt number, which is issued in order) with cursor pagination. `/fees/dues` lists unpaid invoices past their due date, oldest first, with ageing bands (1–15, 16–30, 31–60, over 60 days), the total overdue and a link to the counter for each student; overdue is computed from the due date because the nightly job that sets `status: overdue` is not built. Not built: `sendDuesReminders`, receipt PDF and email, advance payments, refunds, online payment and reconciliation.
 
 ## 9. Communication
+
+**Alerts, built on 2026-10-06:** submitting daily attendance sends each absent student's primary guardian one SMS, and an in-app notification when that guardian has a portal account; a guardian hears once per child per day (`dedupeKey`), and a failed alert never fails the attendance save. `sendDuesReminders()` (needs `fees.payment.create`) sends one SMS per family with an overdue balance, at most once a day, and returns `{ sent, families }`. Both go through the `dev` provider for now. Not built: the configurable alert time, email and push channels, per-user preferences, quiet hours.
 
 | Name | Type | Permission | Input | Output |
 |---|---|---|---|---|

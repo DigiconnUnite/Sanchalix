@@ -104,16 +104,113 @@
   }
 }
 
+/* Pages outside the app shell (the home page, sign-in) have no AppLayout to paint the page, so the body carries
+   the theme's own page colour, in light and in dark mode. */
+body {
+  background: var(--color-background-layout-main-y4565g);
+}
+
 .vw-auth-page {
   display: grid;
   align-content: center;
   min-block-size: 100dvh;
 }
 
+/* ADR-020: the header keeps one height. Cloudscape decides between its compact and full header in JavaScript after
+   the page loads, so the header was drawn short for a moment and then grew. */
+[class*='awsui_top-navigation_'] > [class*='awsui_padding-box_'] {
+  block-size: calc(var(--space-xxxl-pjngik, 40px) + var(--space-scaled-m-lfeh3i, 16px)) !important;
+}
+
+/* ADR-020: menus opened from the header (notifications, the user menu) are as dark as the header, with one thin
+   border. Cloudscape gives them a 2px frame plus a second line on the panel itself, and outlines the hovered row,
+   which together read as a double border. Here the hovered or selected row is only a little lighter.
+   A row reached with the keyboard keeps its outline, so focus stays visible. */
+.vw-top-nav [class*='awsui_dropdown-content-wrapper_'] {
+  --awsui-style-background-color: var(--color-background-container-content-mjfil9);
+  --awsui-style-border-width: 1px;
+  --awsui-style-border-radius: var(--border-radius-dropdown-azs8zp, 8px);
+  --awsui-style-border-color: var(--color-border-divider-default-diwd4w);
+  border-block: 0 !important;
+}
+
+.vw-top-nav [class*='awsui_item-element_'],
+.vw-top-nav [class*='awsui_dropdown-content-wrapper_'] * {
+  border-radius: 0 !important;
+}
+
+.vw-top-nav [class*='awsui_item-element_'] {
+  background-color: transparent !important;
+}
+
+/* The panel is rounded and its rows are square, so the last row follows the panel's bottom corners.
+   Otherwise its hover colour would poke out past the curve. */
+.vw-top-nav [class*='awsui_item-element_']:last-child {
+  border-end-start-radius: calc(var(--border-radius-dropdown-azs8zp, 8px) - 1px) !important;
+  border-end-end-radius: calc(var(--border-radius-dropdown-azs8zp, 8px) - 1px) !important;
+}
+
+/* A small title with a line under it, and a hairline between rows. */
+.vw-top-nav [class*='awsui_dropdown-content-wrapper_'] [class*='awsui_header_'] {
+  padding-block: var(--space-xs-m9b7jf, 8px);
+  padding-inline: var(--space-m-dsumyt, 16px);
+  border-block-end: 1px solid var(--color-border-divider-default-diwd4w);
+}
+
+.vw-top-nav [class*='awsui_dropdown-content-wrapper_'] [class*='awsui_header_'] [class*='awsui_title_'] {
+  font-size: var(--font-size-body-m-tq5a14, 14px);
+  line-height: var(--line-height-body-m-5xw6xo, 20px);
+  font-weight: 700;
+}
+
+.vw-top-nav [class*='awsui_item-element_']:not(:first-child) {
+  box-shadow: inset 0 1px 0 var(--color-border-divider-default-diwd4w);
+}
+
+.vw-top-nav [class*='awsui_item-element_'][class*='awsui_highlighted_'] {
+  background-color: color-mix(in srgb, white 8%, transparent) !important;
+}
+
+.vw-top-nav [class*='awsui_item-element_'][class*='awsui_highlighted_']:not([class*='awsui_is-focused_']) {
+  border-color: transparent !important;
+}
+
+/* The sign-in card is centred in CSS. A responsive Grid picks its columns in JavaScript after the page loads, which
+   showed the form at the left for a moment before it jumped to the centre. */
+.vw-auth-card {
+  max-inline-size: 440px;
+  margin-inline: auto;
+}
+
+.vw-auth-card-wide {
+  max-inline-size: 720px;
+}
+
 .vw-top-nav {
   position: sticky;
   inset-block-start: 0;
   z-index: 1002;
+  display: flex;
+}
+
+.vw-top-nav > :not(.vw-platform-logo) {
+  flex: 1;
+  min-inline-size: 0;
+}
+
+/* The platform's logo has its own box beside the header, as tall as the header and divided from it by a line.
+   The image is /public/favicon.ico; replace that file to change the logo. */
+.vw-platform-logo {
+  flex: none;
+  inline-size: 56px;
+  background: var(--color-background-container-content-mjfil9) url('/favicon.ico') center / 28px no-repeat;
+  border-inline-end: var(--border-divider-section-width-dlkb8v, 1px) solid var(--color-border-divider-default-diwd4w);
+  border-block-end: var(--border-divider-section-width-dlkb8v, 1px) solid var(--color-border-divider-default-diwd4w);
+}
+
+.vw-platform-logo:focus-visible {
+  outline: 2px solid var(--color-border-item-focused-sewkzn);
+  outline-offset: -2px;
 }
 
 /* ADR-020: navigation group titles (People, Academics, Fees) are small secondary labels. Cloudscape renders them
@@ -144,19 +241,27 @@
   scrollbar-color: color-mix(in srgb, var(--color-text-body-secondary-66ygbb) 20%, transparent) transparent;
 }
 
-/* ADR-020: the school logo in the header is a circle. Cloudscape renders it as a plain image with no shape option.
-   The fallback icon (an SVG image) sits on a tinted disc so it reads as a logo, not a stray glyph. */
-.vw-top-nav [class*='awsui_logo_'] {
-  box-sizing: border-box;
-  aspect-ratio: 1;
-  block-size: 32px;
-  border-radius: 50%;
-  object-fit: cover;
+/* ADR-020: the school's circular logo sits before its name. Cloudscape's identity offers one plain image and no
+   shape option, so the logo is drawn on the title. It arrives as --vw-school-logo; without one it is the school
+   icon, drawn smaller on a tinted disc so it reads as a logo, not a stray glyph. */
+.vw-top-nav [class*='awsui_padding-box_'] {
+  padding-inline-start: var(--space-m-dsumyt, 16px) !important;
 }
 
-.vw-top-nav [class*='awsui_logo_'][src^='data:image/svg'] {
-  padding: 6px;
-  background: color-mix(in srgb, currentColor 18%, transparent);
+.vw-top-nav[data-school-logo] [class*='awsui_identity_'] [class*='awsui_title_']::before {
+  content: '';
+  display: inline-block;
+  inline-size: 28px;
+  block-size: 28px;
+  margin-inline-end: 8px;
+  vertical-align: middle;
+  border-radius: 50%;
+  background: var(--vw-school-logo) center / cover no-repeat;
+}
+
+.vw-top-nav[data-school-logo='icon'] [class*='awsui_identity_'] [class*='awsui_title_']::before {
+  background-color: color-mix(in srgb, white 18%, transparent);
+  background-size: 60%;
 }
 
 /* ADR-020: paper gets the document only. Cloudscape ships no print styles for its shell, so the header, the
