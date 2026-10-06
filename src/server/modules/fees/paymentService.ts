@@ -19,8 +19,15 @@ async function findByKey(ctx: RequestContext, idempotencyKey: string) {
   return payment && { id: payment._id, receiptNo: payment.receiptNo, amountMinor: payment.amountMinor, repeated: true };
 }
 
-/** Records a counter payment: the receipt, its number and the invoice balances change together or not at all. */
-export async function collectPayment(ctx: RequestContext, input: CollectPayment) {
+/** A counter payment, or an online one, which arrives from the gateway with its own references. */
+export type PaymentInput = Omit<CollectPayment, 'method' | 'idempotencyKey'> & {
+  method: CollectPayment['method'] | 'online';
+  idempotencyKey: string;
+  gateway?: { provider: 'dev' | 'razorpay' | 'stripe'; orderId: string; paymentId: string };
+};
+
+/** Records a payment: the receipt, its number and the invoice balances change together or not at all. */
+export async function collectPayment(ctx: RequestContext, input: PaymentInput) {
   const { schoolId } = ctx;
   // A double click or a retried request returns the first receipt instead of taking the money twice.
   const repeated = await findByKey(ctx, input.idempotencyKey);
@@ -94,6 +101,7 @@ export async function collectPayment(ctx: RequestContext, input: CollectPayment)
             reference: input.method === 'cheque' ? null : input.reference || null,
             bankName: input.bankName || null,
             note: input.note || null,
+            ...(input.gateway && { gateway: { ...input.gateway, signatureVerified: true } }),
             status: 'captured' as const,
             collectedBy: ctx.userId,
             idempotencyKey: input.idempotencyKey,

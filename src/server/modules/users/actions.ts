@@ -3,7 +3,9 @@
 import 'server-only';
 import { withAction } from '@/server/action';
 import { audit } from '@/server/audit';
+import { getTranslations } from 'next-intl/server';
 import { requirePermission } from '@/server/auth/context';
+import { requestPasswordReset } from '@/server/auth/recovery';
 import { createUser as create, resetUserPassword as reset, setUserStatus as setStatus } from './service';
 import { UserId, UserInput, UserStatus } from './service';
 
@@ -15,6 +17,13 @@ export async function createUser(input: unknown) {
     await audit(ctx, 'users.user.create', { type: 'user', id: user.id }, {
       after: { role: data.role, staffId: data.staffId ?? null },
     });
+    // The new user also gets a link to choose their own password, so the temporary one needn't be passed on.
+    const t = await getTranslations('outbound.invite');
+    await requestPasswordReset(
+      user.email,
+      (link) => ({ subject: t('subject'), body: t('body', { name: user.name, link }) }),
+      'invite',
+    );
     return { name: user.name, email: user.email, password: user.password };
   });
 }

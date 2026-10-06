@@ -8,9 +8,40 @@ import { getTranslations } from 'next-intl/server';
 import { requirePermission } from '@/server/auth/context';
 import { sendDuesReminders as remind } from '@/server/messaging/alerts';
 import { getSchoolBrand } from '@/server/platform/queries';
+import { z } from 'zod';
+import { CheckoutInput, createCheckout as checkout, OrderId, payWithDevGateway } from './online';
 import { collectPayment as collect } from './paymentService';
 import { CollectPayment, FeeHeadInput, FeeStructureId, FeeStructureInput } from './schemas';
 import { approveFeeStructure as approve, createFeeHead, createFeeStructure, deleteDraftFeeStructure } from './service';
+
+const TestPayment = z.object({ orderId: OrderId, outcome: z.enum(['captured', 'failed']) });
+
+export async function createCheckout(input: unknown) {
+  return withAction('fees.checkout.create', async () => {
+    const ctx = await requirePermission('portal.self.read');
+    const order = await checkout(ctx, CheckoutInput.parse(input));
+    if (!order.reused) {
+      await audit(ctx, 'fees.checkout.create', { type: 'school', id: ctx.schoolId }, {
+        after: { orderId: order.orderId, amountMinor: order.amountMinor },
+      });
+    }
+    return { orderId: order.orderId };
+  });
+}
+
+export async function payTestOrder(input: unknown) {
+  return withAction('fees.checkout.pay', async () => {
+    const ctx = await requirePermission('portal.self.read');
+    const { orderId, outcome } = TestPayment.parse(input);
+    const result = await payWithDevGateway(ctx, orderId, outcome);
+    if (result.status === 'paid') {
+      await audit(ctx, 'fees.payment.create', { type: 'payment', id: result.paymentId }, {
+        after: { receiptNo: result.receiptNo, method: 'online', orderId },
+      });
+    }
+    return { status: result.status };
+  });
+}
 
 export async function sendDuesReminders() {
   return withAction('fees.reminder.create', async () => {

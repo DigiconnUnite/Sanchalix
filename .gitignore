@@ -45,3 +45,6 @@ next-env.d.ts
 
 # other tools' working copies
 /.kilo/
+
+# uploaded files in development
+/.data/

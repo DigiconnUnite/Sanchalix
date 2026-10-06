@@ -32,8 +32,10 @@ import { formatMoney } from '@/lib/money';
 import { formatPhone } from '@/lib/phone';
 import type { StudentResult } from '@/server/modules/exams/service';
 import type { PortalAccountRow } from '@/server/modules/portal/service';
+import type { DocumentRow } from '@/server/modules/sis/documents';
 import { transferStudent, withdrawStudent } from '@/server/modules/sis/actions';
 import type { HistoryEntry, StudentAttendance, StudentFees, StudentProfile } from '@/server/modules/sis/schemas';
+import { StudentDocuments } from './StudentDocuments';
 import { STATUS_TYPE } from './studentStatus';
 
 const NONE = '—';
@@ -67,10 +69,12 @@ export function StudentProfileView({
   sections,
   accounts,
   results,
+  documents,
 }: {
   sections: { id: string; name: string }[];
   accounts: PortalAccountRow[] | null;
   results: StudentResult[] | null;
+  documents: DocumentRow[] | null;
   student: StudentProfile;
   attendance: StudentAttendance | null;
   fees: StudentFees | null;
@@ -429,6 +433,15 @@ export function StudentProfileView({
               : []),
             ...(results
               ? [{ id: 'results', label: t('profile.tabs.results'), content: <Results results={results} /> }]
+              : []),
+            ...(documents
+              ? [
+                  {
+                    id: 'documents',
+                    label: t('profile.tabs.documents'),
+                    content: <StudentDocuments studentId={student.id} documents={documents} canEdit={canEdit} />,
+                  },
+                ]
               : []),
             ...(accounts
               ? [

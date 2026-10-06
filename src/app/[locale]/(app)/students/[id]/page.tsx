@@ -5,6 +5,7 @@ import { can } from '@/server/auth/permissions';
 import { listCurrentSections } from '@/server/modules/academics/queries';
 import { getStudentResults } from '@/server/modules/exams/service';
 import { listPortalAccounts } from '@/server/modules/portal/service';
+import { listDocuments } from '@/server/modules/sis/documents';
 import { getStudent, getStudentAttendance, getStudentFees, listStudentHistory } from '@/server/modules/sis/queries';
 import { pageContext } from '../../pageContext';
 
@@ -25,7 +26,8 @@ export default async function StudentPage({
   const student = await getStudent(ctx, id);
   if (!student) notFound();
   const canEdit = can(ctx.role, 'sis.student.update');
-  const [results, accounts, sections, attendance, fees, history] = await Promise.all([
+  const [documents, results, accounts, sections, attendance, fees, history] = await Promise.all([
+    can(ctx.role, 'sis.document.read') ? listDocuments(ctx, id) : null,
     can(ctx.role, 'exams.exam.read') ? getStudentResults(ctx, id, false) : null,
     can(ctx.role, 'users.user.create') ? listPortalAccounts(ctx, id) : null,
     canEdit && student.status === 'active' ? listCurrentSections(ctx) : [],
@@ -41,6 +43,7 @@ export default async function StudentPage({
       fees={fees}
       history={history}
       results={results}
+      documents={documents}
       accounts={accounts}
       tab={typeof tab === 'string' ? tab : 'overview'}
       notice={

@@ -264,6 +264,32 @@ body {
   background-size: 60%;
 }
 
+/* ADR-020: a line divides the title row of every card and table from what is under it. Cloudscape draws this
+   border itself but fixes it at 0px and transparent, with no option. A header with nothing under it gets no line.
+   The padding on both sides of the line is evened out, so the title is not pressed against it. */
+[class*='awsui_content-wrapper_']
+  > [class*='awsui_header_']:not(:empty):not([class*='awsui_with-hidden-content_']):not(:has([class*='awsui_tools_'])) {
+  border-block-end: var(--border-divider-section-width-dlkb8v, 1px) solid var(--color-border-divider-default-diwd4w) !important;
+}
+
+/* A table keeps its filter and pagination in the same header, under the title. There the line goes between the
+   title and that row. The negative margin carries it across the header's side padding to the card's edges. */
+[class*='awsui_header-controls_'] > [class*='awsui_tools_']:not(:first-child) {
+  margin-block-start: var(--space-container-header-top-3txhx4, 12px);
+  margin-inline: calc(-1 * var(--space-table-horizontal-o0ypm8, 20px));
+  padding-inline: var(--space-table-horizontal-o0ypm8, 20px) !important;
+  padding-block-start: var(--space-container-header-top-3txhx4, 12px) !important;
+  border-block-start: var(--border-divider-section-width-dlkb8v, 1px) solid var(--color-border-divider-default-diwd4w);
+}
+
+[class*='awsui_content-wrapper_'] > [class*='awsui_header_'][class*='awsui_with-paddings_'] {
+  padding-block-end: var(--space-container-header-top-3txhx4, 12px) !important;
+}
+
+[class*='awsui_content-inner_'][class*='awsui_with-paddings_'][class*='awsui_with-header_'] {
+  padding-block-start: var(--space-scaled-m-lfeh3i, 16px) !important;
+}
+
 /* ADR-020: paper gets the document only. Cloudscape ships no print styles for its shell, so the header, the
    navigation and the breadcrumb row are removed here, along with anything marked vw-no-print. */
 @media print {

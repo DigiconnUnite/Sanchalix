@@ -18,6 +18,7 @@ import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { EmptyState } from '@/components/EmptyState';
 import { Results } from '@/features/exams/Results';
+import { PayOnlineButton } from '@/features/fees/OnlinePayment';
 import { TemporaryPassword } from '@/features/users/Users';
 import { usePathname, useRouter } from '@/i18n/navigation';
 import { formatMoney } from '@/lib/money';
@@ -28,7 +29,17 @@ const NONE = '—';
 const date = new Intl.DateTimeFormat('en-IN', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' });
 const day = (value: string) => date.format(new Date(`${value}T00:00:00Z`));
 
-export function PortalHome({ home, title, welcome }: { home: Home; title: string; welcome: string }) {
+export function PortalHome({
+  home,
+  title,
+  welcome,
+  canPay,
+}: {
+  home: Home;
+  title: string;
+  welcome: string;
+  canPay: boolean;
+}) {
   const t = useTranslations('portal');
   const tInvoice = useTranslations('fees.invoices');
   const tEvent = useTranslations('calendar.events.type');
@@ -142,7 +153,17 @@ export function PortalHome({ home, title, welcome }: { home: Home; title: string
           variant="container"
           trackBy="id"
           items={open}
-          header={<Header variant="h2">{t('fees.title')}</Header>}
+          header={
+            <Header
+              variant="h2"
+              actions={
+                canPay &&
+                open.length > 0 && <PayOnlineButton studentId={selected.id} invoiceIds={open.map(({ id }) => id)} />
+              }
+            >
+              {t('fees.title')}
+            </Header>
+          }
           empty={<EmptyState icon="fees" heading={t('fees.empty.heading')} body={t('fees.empty.body')} />}
           columnDefinitions={[
             { id: 'installment', header: t('fees.installment'), cell: (invoice) => invoice.installment, isRowHeader: true },

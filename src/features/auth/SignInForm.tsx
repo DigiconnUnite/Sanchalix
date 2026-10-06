@@ -1,5 +1,6 @@
 'use client';
 
+import Alert from '@cloudscape-design/components/alert';
 import Box from '@cloudscape-design/components/box';
 import Button from '@cloudscape-design/components/button';
 import Container from '@cloudscape-design/components/container';
@@ -14,7 +15,7 @@ import { AppLink } from '@/components/AppLink';
 import { svg } from '@/components/icons';
 import { signInWithPassword } from '@/server/auth/actions';
 
-export function SignInForm() {
+export function SignInForm({ google, notice }: { google: boolean; notice: 'failed' | 'noAccount' | null }) {
   const t = useTranslations('auth.signIn');
   const [state, formAction, pending] = useActionState(signInWithPassword, null);
   const [email, setEmail] = useState('');
@@ -67,6 +68,18 @@ export function SignInForm() {
             </FormField>
           </SpaceBetween>
         </Container>
+        {notice && (
+          <Box margin={{ top: 'm' }}>
+            <Alert type="error">{t(`google.${notice}`)}</Alert>
+          </Box>
+        )}
+        {google && (
+          <Box margin={{ top: 'm' }}>
+            <Button href="/api/auth/google" formAction="none" fullWidth>
+              {t('google.button')}
+            </Button>
+          </Box>
+        )}
         <Box margin={{ top: 'm' }}>
           <SpaceBetween direction="horizontal" size="l">
             <AppLink href="/forgot-password">{t('forgot')}</AppLink>

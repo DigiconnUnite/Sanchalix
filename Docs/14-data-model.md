@@ -398,7 +398,7 @@ Indexes: `{ schoolId: 1, receiptNo: 1 } unique`, `{ schoolId: 1, idempotencyKey:
 Unallocated money (an online capture for invoices that were meanwhile paid at the counter) is kept as `advanceMinor` on the payment, and is shown to the accountant for allocation to the next invoice or a refund.
 
 ### paymentOrders
-Gateway orders created at checkout, reused while pending so a retry never creates a second charge. `schoolId`, `provider`, `orderId` (unique), `invoiceIds` (sorted), `invoiceSetHash`, `amountMinor`, `guardianId`, `status: 'created' | 'paid' | 'expired' | 'failed'`, `expiresAt` (30 min).
+Gateway orders created at checkout, reused while pending so a retry never creates a second charge. `schoolId`, `provider` (`dev` until a gateway is connected), `orderId` (unique), `studentId`, `paymentId?`, `error?`, `invoiceIds` (sorted), `invoiceSetHash`, `amountMinor`, `guardianId`, `status: 'created' | 'paid' | 'expired' | 'failed'`, `expiresAt` (30 min).
 Indexes: `{ orderId: 1 } unique`, `{ schoolId: 1, invoiceSetHash: 1, status: 1 }`.
 
 ### webhookEvents

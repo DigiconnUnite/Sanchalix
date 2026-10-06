@@ -54,7 +54,15 @@ export default async function DashboardPage({
         </ContentLayout>
       );
     }
-    return <PortalHome key={home.selected.id} home={home} title={title} welcome={t('welcome', { name: ctx.name })} />;
+    return (
+      <PortalHome
+        key={home.selected.id}
+        home={home}
+        title={title}
+        welcome={t('welcome', { name: ctx.name })}
+        canPay={ctx.role === 'parent'}
+      />
+    );
   }
 
   const loading = (title: string) => (

@@ -5,6 +5,8 @@ import { withAction } from '@/server/action';
 import { audit } from '@/server/audit';
 import { requirePermission } from '@/server/auth/context';
 import { getTranslations } from 'next-intl/server';
+import { z } from 'zod';
+import { removeDocument, verifyDocument } from './documents';
 import { importStudents as importService } from './importService';
 import { ImportStudents, StudentInput, StudentUpdate, TransferStudent, WithdrawStudent } from './schemas';
 import {
@@ -13,6 +15,9 @@ import {
   updateStudent as update,
   withdrawStudent as withdraw,
 } from './service';
+
+const Id = z.string().regex(/^[0-9a-f]{24}$/);
+const DocumentRef = z.object({ studentId: Id, documentId: Id });
 
 export async function createStudent(input: unknown) {
   return withAction('sis.student.create', async () => {
@@ -55,6 +60,30 @@ export async function updateStudent(input: unknown) {
       after: { firstName: data.firstName, lastName: data.lastName, dob: data.dob, gender: data.gender },
     });
     return { name: student.name };
+  });
+}
+
+export async function verifyStudentDocument(input: unknown) {
+  return withAction('sis.document.verify', async () => {
+    const ctx = await requirePermission('sis.student.update');
+    const { studentId, documentId } = DocumentRef.parse(input);
+    const document = await verifyDocument(ctx, studentId, documentId);
+    await audit(ctx, 'sis.document.verify', { type: 'student', id: document.studentId }, {
+      after: { documentId: String(document.id), type: document.type },
+    });
+    return { verified: true };
+  });
+}
+
+export async function deleteStudentDocument(input: unknown) {
+  return withAction('sis.document.delete', async () => {
+    const ctx = await requirePermission('sis.student.update');
+    const { studentId, documentId } = DocumentRef.parse(input);
+    const document = await removeDocument(ctx, studentId, documentId);
+    await audit(ctx, 'sis.document.delete', { type: 'student', id: document.studentId }, {
+      before: { documentId: String(document.id), type: document.type, fileName: document.fileName },
+    });
+    return { deleted: true };
   });
 }
 

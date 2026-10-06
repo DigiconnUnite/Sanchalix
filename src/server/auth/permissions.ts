@@ -31,6 +31,7 @@ export type Permission =
   | 'sis.admission.read'
   | 'sis.admission.update'
   | 'sis.student.import'
+  | 'sis.document.read'
   | 'attendance.record.read'
   | 'attendance.record.create'
   | 'calendar.holiday.read'
@@ -101,6 +102,7 @@ const ROLE_PERMISSIONS: Record<RoleKey, readonly Permission[]> = {
     'sis.student.create',
     'sis.student.update',
     'sis.student.import',
+    'sis.document.read',
     'sis.admission.read',
     'sis.admission.update',
     'academics.class.read',
@@ -135,6 +137,7 @@ const ROLE_PERMISSIONS: Record<RoleKey, readonly Permission[]> = {
     'hr.leave.approve',
     'comms.announcement.create',
     'sis.student.read',
+    'sis.document.read',
     'sis.admission.read',
     'academics.class.read',
     'academics.timetable.read',

@@ -22,7 +22,7 @@ const schema = new Schema(
     amountMinor: { ...minor, min: 1, immutable: true },
     method: { type: String, required: true, enum: PAYMENT_METHODS },
     gateway: {
-      provider: { type: String, enum: ['razorpay', 'stripe'] },
+      provider: { type: String, enum: ['dev', 'razorpay', 'stripe'] },
       orderId: String,
       paymentId: String,
       signatureVerified: Boolean,

@@ -12,6 +12,8 @@ import { hashPassword } from './service';
 
 const MINUTE = 60_000;
 const RESET_TTL = 30 * MINUTE;
+// A new user's first link lasts three days: it is often opened long after the office creates the account.
+const INVITE_TTL = 72 * 60 * MINUTE;
 const OTP_TTL = 5 * MINUTE;
 const OTP_RESEND_AFTER = MINUTE;
 const OTP_ATTEMPTS = 5;
@@ -43,7 +45,11 @@ const schoolOf = <R extends { schoolId?: unknown }>(user: { roles: R[] }) => use
  * Emails a single-use reset link that works for 30 minutes. Nothing is returned either way, so the form can't be
  * used to find out which emails have accounts.
  */
-export async function requestPasswordReset(email: string, text: (link: string) => { subject: string; body: string }) {
+export async function requestPasswordReset(
+  email: string,
+  text: (link: string) => { subject: string; body: string },
+  kind: 'passwordReset' | 'invite' = 'passwordReset',
+) {
   await connectDb();
   const user = await User.findOne({ email, status: 'active' }).select('roles').lean();
   const assignment = user && schoolOf(user);
@@ -51,14 +57,14 @@ export async function requestPasswordReset(email: string, text: (link: string) =
   const token = randomBytes(32).toString('base64url');
   await User.updateOne(
     { _id: user._id },
-    { passwordReset: { tokenHash: digest(token), expiresAt: new Date(Date.now() + RESET_TTL) } },
+    { passwordReset: { tokenHash: digest(token), expiresAt: new Date(Date.now() + (kind === 'invite' ? INVITE_TTL : RESET_TTL)) } },
   );
   await sendMessages([
     {
       schoolId: assignment.schoolId,
       channel: 'email',
       to: email,
-      template: 'passwordReset',
+      template: kind,
       ...text(`${env.APP_URL}/reset-password?token=${token}`),
     },
   ]);

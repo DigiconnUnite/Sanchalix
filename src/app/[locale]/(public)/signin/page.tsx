@@ -4,6 +4,7 @@ import { SignInForm } from '@/features/auth/SignInForm';
 import { redirect } from '@/i18n/navigation';
 import { safeNext } from '@/lib/safeNext';
 import { getContext, getPendingSession } from '@/server/auth/context';
+import { googleConfig } from '@/server/auth/google';
 
 export async function generateMetadata() {
   const t = await getTranslations('auth.signIn');
@@ -16,7 +17,8 @@ export default async function SignInPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const next = safeNext((await searchParams).next);
+  const params = await searchParams;
+  const next = safeNext(params.next);
   if (await getContext()) redirect({ href: next, locale: await getLocale() });
   if (await getPendingSession()) {
     redirect({ href: { pathname: '/signin/2fa', query: next === '/' ? {} : { next } }, locale: await getLocale() });
@@ -25,7 +27,10 @@ export default async function SignInPage({
   return (
     <Box padding={{ vertical: 'xxxl', horizontal: 'l' }}>
       <div className="vw-auth-card">
-        <SignInForm />
+        <SignInForm
+          google={Boolean(googleConfig())}
+          notice={params.google === 'failed' || params.google === 'noAccount' ? params.google : null}
+        />
       </div>
     </Box>
   );

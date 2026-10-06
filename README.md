@@ -101,6 +101,9 @@ The roadmap's M0 walking skeleton ([Docs/05-roadmap.md](Docs/05-roadmap.md)):
 - Subjects and a weekly timetable per section, with a hard stop on double-booking a teacher, and "Your classes today" for teachers
 - Homework: teachers set it for the sections they teach; the office sees all of it
 - Move a student to another section from the profile (new roll number, audited)
+- Student documents: upload, download, verify and delete (kept on the server's disk until file storage is connected)
+- Online fee payment for parents through a stand-in gateway, with a Razorpay webhook ready for keys
+- Google sign-in for staff, switched on by adding the Google keys; new users are emailed a link to set their password
 - Forgot password by emailed link, and sign-in with a phone code for parents and students
 - Absence alerts to guardians and fee reminders by SMS (recorded on the Sent messages page until an SMS service is connected)
 - A public home page at `/welcome`, the platform and school logos in the header, and a notifications menu

@@ -96,7 +96,8 @@
       "outbox": "Sent messages",
       "otp": "Phone code",
       "forgot-password": "Forgot password",
-      "reset-password": "Reset password"
+      "reset-password": "Reset password",
+      "pay": "Pay fees"
     },
     "logoAlt": "{school} logo",
     "platformLogoAlt": "Vidyawan",
@@ -118,7 +119,12 @@
       "invalid": "That email or password isn't right. Check both and try again.",
       "locked": "Too many attempts. Try again in 15 minutes.",
       "forgot": "Forgot password?",
-      "useCode": "Sign in with a phone code"
+      "useCode": "Sign in with a phone code",
+      "google": {
+        "button": "Sign in with Google",
+        "failed": "Google sign-in didn't finish. Try again, or sign in with your password.",
+        "noAccount": "That Google account isn't linked to a staff account at any school. Sign in with the email your school gave you."
+      }
     },
     "totp": {
       "cancel": "Cancel sign-in",
@@ -228,6 +234,10 @@
       "codeInvalid": "Enter the 6-digit code",
       "wrong": "That code isn't right or has expired. Check it, or ask for a new code.",
       "wait": "A code was just sent. Wait a minute before asking for another."
+    },
+    "google": {
+      "failed": "Google sign-in didn't finish. Try again.",
+      "noAccount": "That Google account isn't linked to a staff account."
     }
   },
   "dashboard": {
@@ -347,7 +357,8 @@
           "attendance": "Attendance",
           "fees": "Fees",
           "portal": "Portal access",
-          "results": "Results"
+          "results": "Results",
+          "documents": "Documents"
         },
         "dob": "Date of birth",
         "gender": "Gender",
@@ -366,7 +377,11 @@
             "sis_student_create": "Added the student",
             "sis_student_update": "Edited the student's details",
             "sis_student_withdraw": "Withdrew the student",
-            "sis_student_transfer": "Moved the student to another section"
+            "sis_student_transfer": "Moved the student to another section",
+            "sis_document_create": "Uploaded a document",
+            "sis_document_verify": "Verified a document",
+            "sis_document_delete": "Deleted a document",
+            "sis_document_read": "Opened a document"
           }
         },
         "notFound": {
@@ -503,6 +518,67 @@
         "header": "The first row doesn't match the template. Download the template and copy your data into it.",
         "empty": "The file has no students below the header row.",
         "tooMany": "A file can hold up to {max} students. Split it into smaller files."
+      }
+    },
+    "documents": {
+      "title": "Documents",
+      "description": "Certificates and identity documents kept for this student. Every time one is opened is recorded in History.",
+      "dismiss": "Dismiss message",
+      "cancel": "Cancel",
+      "download": "Downloads the file",
+      "size": "{kb} KB",
+      "verified": "Verified",
+      "notVerified": "Not verified",
+      "verify": "Mark as verified",
+      "verifyLabel": "Mark {name} as verified against the original",
+      "verifiedDone": "Document marked as verified.",
+      "uploaded": "{name} uploaded.",
+      "delete": "Delete",
+      "deleteLabel": "Delete {name}",
+      "deleteTitle": "Delete {name}?",
+      "deleteBody": "The file is removed for good. This can't be undone.",
+      "deleteConfirm": "Delete document",
+      "deleted": "Document deleted.",
+      "columns": {
+        "type": "Document",
+        "file": "File",
+        "size": "Size",
+        "verified": "Checked",
+        "actions": "Actions"
+      },
+      "type": {
+        "birth_certificate": "Birth certificate",
+        "transfer_certificate_prev": "Transfer certificate (previous school)",
+        "aadhaar": "Aadhaar card",
+        "photo": "Photograph",
+        "report_card_prev": "Previous report card",
+        "medical": "Medical record",
+        "other": "Other"
+      },
+      "upload": {
+        "title": "Add a document",
+        "typePlaceholder": "Choose what this is",
+        "file": "File",
+        "hint": "PDF, JPEG, PNG or WebP, up to 5 MB.",
+        "choose": "Choose file",
+        "drop": "Drop the file here",
+        "remove": "Remove file",
+        "showFewer": "Show fewer files",
+        "showMore": "Show more files",
+        "errorIcon": "Error",
+        "submit": "Upload document"
+      },
+      "empty": {
+        "heading": "No documents yet",
+        "body": "Upload a birth certificate, transfer certificate or other record."
+      },
+      "errors": {
+        "type": "Choose what kind of document this is",
+        "file": "Choose a file to upload",
+        "size": "The file must be 5 MB or smaller",
+        "kind": "The file isn't a PDF, JPEG, PNG or WebP. Scan or save it in one of those formats.",
+        "notFound": "We couldn't find that student or document.",
+        "failed": "The upload didn't finish. Check your connection and try again."
       }
     }
   },
@@ -1021,7 +1097,8 @@
         "upi": "UPI",
         "card": "Card",
         "cheque": "Cheque",
-        "bank_transfer": "Bank transfer"
+        "bank_transfer": "Bank transfer",
+        "online": "Online"
       },
       "chequeNo": "Cheque number",
       "reference": "Reference",
@@ -1132,6 +1209,39 @@
         "confirm": "Send reminders",
         "close": "Close",
         "sent": "{sent, plural, =0 {No new reminders: every family with dues was already reminded today.} one {# reminder sent.} other {# reminders sent.}}"
+      }
+    },
+    "online": {
+      "title": "Pay fees online",
+      "crumb": "Payment",
+      "payAll": "Pay online",
+      "summary": "Payment",
+      "student": "Student",
+      "for": "For",
+      "amount": "Amount",
+      "status": "Status",
+      "statuses": {
+        "created": "Waiting for payment",
+        "paid": "Paid",
+        "failed": "Not completed",
+        "expired": "Expired"
+      },
+      "paidTitle": "Payment of {amount} received",
+      "paidBody": "Receipt number {receiptNo}. The fees due on your home page are updated.",
+      "paidPending": "The receipt is being prepared.",
+      "failedBody": "This payment wasn't completed and no fees were marked as paid. If money left your account, contact the school office. You can start again from your home page.",
+      "expiredBody": "This payment wasn't finished in time. Start again from your home page.",
+      "back": "Back to home",
+      "test": {
+        "title": "Test payment",
+        "body": "No payment service is connected yet, so no money moves. These buttons stand in for the bank's page: one completes the payment, the other fails it.",
+        "pay": "Pay {amount} (test)",
+        "fail": "Simulate a failed payment"
+      },
+      "errors": {
+        "invoices": "Those fees can't be paid: they may already be paid. Reload your home page and try again.",
+        "notFound": "We couldn't find that payment.",
+        "closed": "This payment is already finished or has expired."
       }
     }
   },
@@ -2173,6 +2283,10 @@
     "passwordReset": {
       "subject": "Reset your Vidyawan password",
       "body": "Open this link within 30 minutes to choose a new password: {link}\nIf you didn't ask for this, you can ignore this email."
+    },
+    "invite": {
+      "subject": "Your Vidyawan account is ready",
+      "body": "Hello {name}, your school has created a Vidyawan account for you. Open this link within 3 days to choose your password: {link}"
     }
   },
   "outbox": {
@@ -2193,7 +2307,8 @@
       "absence": "Absence alert",
       "dues": "Fee reminder",
       "otp": "Sign-in code",
-      "passwordReset": "Password reset"
+      "passwordReset": "Password reset",
+      "invite": "Account invitation"
     },
     "statuses": {
       "sent": "Recorded",
