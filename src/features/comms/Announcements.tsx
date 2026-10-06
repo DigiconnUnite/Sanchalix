@@ -24,7 +24,7 @@ import { EmptyState } from '@/components/EmptyState';
 import { svg } from '@/components/icons';
 import { usePathname, useRouter } from '@/i18n/navigation';
 import type { RoleKey } from '@/server/auth/permissions';
-import { previewAudience, publishAnnouncement } from '@/server/modules/comms/actions';
+import { acknowledgeAnnouncement, previewAudience, publishAnnouncement } from '@/server/modules/comms/actions';
 import type { AnnouncementDetail, AnnouncementRow } from '@/server/modules/comms/schemas';
 
 const LIST = '/communication/announcements';
@@ -36,7 +36,11 @@ function useAudienceLabel() {
   const t = useTranslations('comms.audience');
   const tRole = useTranslations('shell.roles');
   return (audience: AnnouncementRow['audience']) =>
-    audience.type === 'school' ? t('school') : t('roles', { roles: audience.roles.map((role) => tRole(role)).join(', ') });
+    audience.type === 'school'
+      ? t('school')
+      : audience.type === 'section'
+        ? t('sections', { sections: audience.sections.join(', ') })
+        : t('roles', { roles: audience.roles.map((role) => tRole(role)).join(', ') });
 }
 
 export function AnnouncementsTable({
@@ -124,6 +128,15 @@ export function AnnouncementView({ announcement }: { announcement: AnnouncementD
   useCrumb(announcement.title);
   const router = useRouter();
   const audienceLabel = useAudienceLabel();
+  const [confirming, setConfirming] = useState(false);
+
+  async function confirm() {
+    setConfirming(true);
+    await acknowledgeAnnouncement(announcement.id);
+    setConfirming(false);
+    router.refresh();
+  }
+
   return (
     <ContentLayout
       header={
@@ -153,6 +166,19 @@ export function AnnouncementView({ announcement }: { announcement: AnnouncementD
             {announcement.recipients !== null && (
               <StatusIndicator type="success">{t('reached', { count: announcement.recipients })}</StatusIndicator>
             )}
+            {announcement.ackCount !== null && (
+              <StatusIndicator type={announcement.ackCount > 0 ? 'info' : 'pending'}>
+                {t('confirmedBy', { count: announcement.ackCount })}
+              </StatusIndicator>
+            )}
+            {announcement.acknowledged === true && <StatusIndicator type="success">{t('youConfirmed')}</StatusIndicator>}
+            {announcement.acknowledged === false && (
+              <Box margin={{ top: 'xs' }}>
+                <Button variant="primary" loading={confirming} onClick={() => void confirm()}>
+                  {t('confirmRead')}
+                </Button>
+              </Box>
+            )}
           </SpaceBetween>
         }
       >
@@ -168,14 +194,18 @@ export function AnnouncementView({ announcement }: { announcement: AnnouncementD
   );
 }
 
-export function AnnouncementForm() {
+export function AnnouncementForm({ sections }: { sections: { id: string; name: string }[] }) {
   const t = useTranslations('comms');
   const tRole = useTranslations('shell.roles');
   const router = useRouter();
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
-  const [audienceType, setAudienceType] = useState<'school' | 'role'>('school');
+  const [audienceType, setAudienceType] = useState<'school' | 'role' | 'section'>('school');
   const [roles, setRoles] = useState<RoleKey[]>([]);
+  const [sectionIds, setSectionIds] = useState<string[]>([]);
+  const [requiresAck, setRequiresAck] = useState(false);
+  const sectionOptions = sections.map(({ id, name }) => ({ value: id, label: name }));
+  const sectionsKey = sectionIds.join(',');
   const [reach, setReach] = useState<number | null>(null);
   const [error, setError] = useState<{ message: string; fieldErrors?: Record<string, string> } | null>(null);
   const [busy, setBusy] = useState(false);
@@ -183,20 +213,32 @@ export function AnnouncementForm() {
 
   const roleOptions = STAFF_ROLES.map((value) => ({ value, label: tRole(value) }));
   const rolesKey = roles.join(',');
-  const needsRoles = audienceType === 'role' && roles.length === 0;
+  const needsRoles =
+    (audienceType === 'role' && roles.length === 0) || (audienceType === 'section' && sectionIds.length === 0);
+  const audience =
+    audienceType === 'school'
+      ? { type: 'school' }
+      : audienceType === 'role'
+        ? { type: 'role', roles }
+        : { type: 'section', sectionIds };
   const shownReach = needsRoles ? 0 : reach;
 
   useEffect(() => {
-    if (audienceType === 'role' && !rolesKey) return;
+    if ((audienceType === 'role' && !rolesKey) || (audienceType === 'section' && !sectionsKey)) return;
     let current = true;
-    const audience = audienceType === 'school' ? { type: 'school' } : { type: 'role', roles: rolesKey.split(',') };
-    void previewAudience(audience).then((result) => {
+    const preview =
+      audienceType === 'school'
+        ? { type: 'school' }
+        : audienceType === 'role'
+          ? { type: 'role', roles: rolesKey.split(',') }
+          : { type: 'section', sectionIds: sectionsKey.split(',') };
+    void previewAudience(preview).then((result) => {
       if (current && result.ok) setReach(result.data.recipients);
     });
     return () => {
       current = false;
     };
-  }, [audienceType, rolesKey]);
+  }, [audienceType, rolesKey, sectionsKey]);
 
   useEffect(() => {
     if (error) formRef.current?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus();
@@ -208,7 +250,8 @@ export function AnnouncementForm() {
     const result = await publishAnnouncement({
       title,
       body,
-      audience: audienceType === 'school' ? { type: 'school' } : { type: 'role', roles },
+      audience,
+      requiresAck,
     });
     if (result.ok) {
       const params = new URLSearchParams({ published: result.data.title, recipients: String(result.data.recipients) });
@@ -266,9 +309,9 @@ export function AnnouncementForm() {
               <SpaceBetween size="m">
                 <Tiles
                   ariaLabel={t('announcements.form.audience')}
-                  columns={2}
+                  columns={3}
                   value={audienceType}
-                  onChange={({ detail }) => setAudienceType(detail.value as 'school' | 'role')}
+                  onChange={({ detail }) => setAudienceType(detail.value as 'school' | 'role' | 'section')}
                   items={[
                     {
                       value: 'school',
@@ -276,8 +319,26 @@ export function AnnouncementForm() {
                       description: t('announcements.form.schoolHint'),
                     },
                     { value: 'role', label: t('announcements.form.role'), description: t('announcements.form.roleHint') },
+                    {
+                      value: 'section',
+                      label: t('announcements.form.section'),
+                      description: t('announcements.form.sectionHint'),
+                    },
                   ]}
                 />
+                {audienceType === 'section' && (
+                  <FormField
+                    label={t('announcements.form.sections')}
+                    errorText={error?.fieldErrors?.['audience.sectionIds']}
+                  >
+                    <Multiselect
+                      selectedOptions={sectionOptions.filter((option) => sectionIds.includes(option.value))}
+                      options={sectionOptions}
+                      placeholder={t('announcements.form.sectionsPlaceholder')}
+                      onChange={({ detail }) => setSectionIds(detail.selectedOptions.map((option) => option.value ?? ''))}
+                    />
+                  </FormField>
+                )}
                 {audienceType === 'role' && (
                   <FormField label={t('announcements.form.roles')} errorText={error?.fieldErrors?.['audience.roles']}>
                     <Multiselect
@@ -290,6 +351,13 @@ export function AnnouncementForm() {
                     />
                   </FormField>
                 )}
+                <Checkbox
+                  checked={requiresAck}
+                  description={t('announcements.form.ackHint')}
+                  onChange={({ detail }) => setRequiresAck(detail.checked)}
+                >
+                  {t('announcements.form.ack')}
+                </Checkbox>
                 <FormField label={t('announcements.form.channels')}>
                   <Checkbox checked disabled description={t('announcements.form.inAppReason')}>
                     {t('announcements.form.inApp')}

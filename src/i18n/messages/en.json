@@ -108,7 +108,8 @@
       "new": "New",
       "empty": "No notifications yet",
       "viewAll": "View all notifications"
-    }
+    },
+    "switchTo": "Switch to {role}"
   },
   "auth": {
     "signIn": {
@@ -274,11 +275,58 @@
       "receipts": "{count, plural, =0 {No receipts today} one {# receipt today} other {# receipts today}} · {month} this month",
       "overdue": "Overdue dues",
       "overdueInvoices": "{count, plural, one {# invoice} other {# invoices}} past the due date",
-      "noDues": "Nothing is overdue",
-      "approvals": "Fee structures",
-      "drafts": "{count, plural, one {# draft} other {# drafts}}",
-      "approveHint": "Waiting for your approval.",
-      "waitingHint": "Waiting for the principal to approve."
+      "noDues": "Nothing is overdue"
+    },
+    "attention": {
+      "title": "Needs your attention",
+      "attendance": "{count, plural, one {# section hasn't} other {# sections haven't}} submitted attendance",
+      "overdue": "{count, plural, one {# invoice is} other {# invoices are}} past the due date · {amount}",
+      "approve": "{count, plural, one {# fee structure is} other {# fee structures are}} waiting for your approval",
+      "waiting": "{count, plural, one {# fee structure is} other {# fee structures are}} waiting for the principal to approve",
+      "clear": {
+        "heading": "All clear",
+        "body": "Nothing needs your attention right now."
+      }
+    },
+    "charts": {
+      "viewTable": "View as table",
+      "viewChart": "View as chart",
+      "emptyHeading": "Nothing to show yet",
+      "attendance": {
+        "title": "Attendance trend",
+        "description": "Students present each day, last 30 days",
+        "link": "Open register",
+        "date": "Date",
+        "percent": "Attendance",
+        "empty": "The trend appears once attendance is taken."
+      },
+      "collection": {
+        "title": "Fee collection",
+        "description": "Collected each day, last 14 days",
+        "link": "Open report",
+        "date": "Date",
+        "amount": "Collected",
+        "empty": "No fees were collected in the last 14 days."
+      },
+      "methods": {
+        "title": "Collection by method",
+        "description": "How fees were paid, last 14 days",
+        "link": "Open report",
+        "method": "Method",
+        "amount": "Collected",
+        "receipts": "Receipts",
+        "total": "collected",
+        "empty": "No fees were collected in the last 14 days."
+      },
+      "ageing": {
+        "title": "Overdue dues by age",
+        "description": "Unpaid balances by days past the due date",
+        "link": "View dues",
+        "band": "Days overdue",
+        "amount": "Overdue",
+        "value": "{amount} · {count, plural, one {# invoice} other {# invoices}}",
+        "empty": "No invoice is past its due date."
+      }
     },
     "announcements": {
       "title": "Latest announcements",
@@ -383,7 +431,8 @@
             "sis_document_create": "Uploaded a document",
             "sis_document_verify": "Verified a document",
             "sis_document_delete": "Deleted a document",
-            "sis_document_read": "Opened a document"
+            "sis_document_read": "Opened a document",
+            "sis_guardian_update": "Edited a parent's details"
           }
         },
         "notFound": {
@@ -486,9 +535,16 @@
         "stale": "Someone else changed this student while you were editing. Reload the page and make your changes again.",
         "notFound": "We couldn't find that student.",
         "notActive": "Only an active student can be withdrawn.",
-        "sameSection": "The student is already in that section."
+        "sameSection": "The student is already in that section.",
+        "phoneTaken": "Another parent in this school already has that mobile number."
       },
-      "import": "Import students"
+      "import": "Import students",
+      "guardianEdit": {
+        "actions": "Actions",
+        "label": "Edit {name}",
+        "title": "Edit {name}",
+        "phoneHint": "10 digits, without +91. A parent who signs in with a phone code will use this number."
+      }
     },
     "import": {
       "title": "Import students",
@@ -1278,7 +1334,8 @@
     "dismiss": "Dismiss message",
     "audience": {
       "school": "Whole school",
-      "roles": "Roles: {roles}"
+      "roles": "Roles: {roles}",
+      "sections": "To the students, parents and class teachers of {sections}"
     },
     "announcements": {
       "title": "Announcements",
@@ -1319,8 +1376,17 @@
         "inAppReason": "Every announcement appears in the app. Email and SMS are not set up yet.",
         "reach": "This will reach {count, plural, =0 {nobody yet} one {# person} other {# people}} in the app.",
         "reachLoading": "Working out who this reaches…",
-        "submit": "Publish announcement"
-      }
+        "submit": "Publish announcement",
+        "section": "Sections",
+        "sectionHint": "The students, parents and class teachers of the sections you choose.",
+        "sections": "Sections",
+        "sectionsPlaceholder": "Choose sections",
+        "ack": "Ask everyone to confirm they have read it",
+        "ackHint": "Each person sees an \"I have read this\" button, and you see how many have pressed it."
+      },
+      "confirmRead": "I have read this",
+      "youConfirmed": "You confirmed that you read this",
+      "confirmedBy": "{count, plural, =0 {Nobody has confirmed reading it yet} one {# person has confirmed reading it} other {# people have confirmed reading it}}"
     },
     "notifications": {
       "title": "Notifications",
@@ -1342,7 +1408,9 @@
       "title": "Enter a title of up to 120 characters",
       "body": "Enter a message of up to 5,000 characters",
       "roles": "Choose at least one role",
-      "notificationNotFound": "We couldn't find that notification."
+      "notificationNotFound": "We couldn't find that notification.",
+      "sections": "Choose at least one section",
+      "notFound": "We couldn't find that announcement."
     }
   },
   "hr": {

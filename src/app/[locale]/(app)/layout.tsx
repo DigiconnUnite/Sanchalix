@@ -3,7 +3,8 @@ import { getTranslations } from 'next-intl/server';
 import type { ReactNode } from 'react';
 import { AppShell, type NavItem } from '@/components/AppShell';
 import { MODE_COOKIE, parseVisualMode } from '@/lib/visualMode';
-import { setVisualMode, signOut } from '@/server/auth/actions';
+import { setVisualMode, signOut, switchRole } from '@/server/auth/actions';
+import { User } from '@/server/models/user';
 import { can, type Permission } from '@/server/auth/permissions';
 import { countUnread, listNotifications } from '@/server/modules/comms/service';
 import { getSchoolBrand } from '@/server/platform/queries';
@@ -92,6 +93,10 @@ const MODULES: (Omit<NavItem, 'text' | 'group'> & { key: ModuleKey; group: Group
 export default async function AppGroupLayout({ children }: { children: ReactNode }) {
   const ctx = await pageContext();
   const [t, school] = await Promise.all([getTranslations('shell'), getSchoolBrand(ctx.schoolId)]);
+  const account = await User.findById(ctx.userId).select('roles').lean();
+  const otherRoles = (account?.roles ?? [])
+    .filter((assignment) => assignment.schoolId?.equals(ctx.schoolId) && assignment.role !== ctx.role)
+    .map((assignment) => ({ role: assignment.role, label: t(`roles.${assignment.role}`) }));
   const nav: NavItem[] = [
     { text: t(`nav.${homeLabel(ctx.role)}`), href: '/', icon: 'dashboard' },
     ...MODULES.filter((item) => can(ctx.role, item.permission)).map(({ key, group, href, icon }) => ({
@@ -110,6 +115,8 @@ export default async function AppGroupLayout({ children }: { children: ReactNode
       userName={ctx.name}
       roleLabel={t(`roles.${ctx.role}`)}
       signOut={signOut}
+      otherRoles={otherRoles}
+      switchRole={switchRole}
       visualMode={parseVisualMode((await cookies()).get(MODE_COOKIE)?.value)}
       setVisualMode={setVisualMode}
       unread={await countUnread(ctx)}

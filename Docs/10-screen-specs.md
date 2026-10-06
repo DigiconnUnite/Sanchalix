@@ -58,6 +58,17 @@ Shared by every screen unless the spec overrides them.
 
 Built with `Board` (staff, rearrangeable in v1) or `Grid` (student, parent). Every KPI links to a filtered list (P5). The first widget is always the role's primary action or its attention list.
 
+### Staff dashboard as built (school admin, principal, accountant; teachers see the parts their role may read)
+- **Row 1, KPI tiles** (`ColumnLayout columns={4}`): Attendance today, Active students, Collected today, Overdue dues. Each value links to its list.
+- **Row 2 onwards** (`ColumnLayout columns={2}`, in this order):
+  1. **Needs your attention**: sections that haven't submitted attendance, invoices past the due date, fee structures waiting for approval. Each row is a `StatusIndicator type="warning"` link to its queue. Empty: "All clear" + "Nothing needs your attention right now." with the `success` icon.
+  2. **Attendance trend**: `LineChart`, attendance % for each of the last 30 days it was taken → the register.
+  3. **Fee collection**: `BarChart`, amount collected on each of the last 14 days → the collection report.
+  4. **Collection by method**: donut `PieChart` for the same 14 days, the total in the centre → the collection report.
+  5. **Overdue dues by age**: `BarChart` over the dues bands (1–15, 16–30, 31–60, over 60 days) → the dues list; each band in the table view opens the list filtered to it.
+  6. **Latest announcements**.
+- **Charts:** every chart card has "View as table" (the same numbers in a `Table variant="embedded"`), an `ariaLabel` and an empty state. The collection charts need `fees.payment.read`; the dues chart and fee tiles need `fees.invoice.read`.
+
 ### S04 · Principal dashboard
 - **Widgets:**
   1. **Needs your attention** (`Container` + list): pending approvals by type with counts ("4 leave requests", "2 refunds"); "3 sections haven't submitted attendance"; "7 marks schedules overdue"; each row links to its filtered queue. Icons: `leave`, `refund`, `attendance`, `marksEntry`.

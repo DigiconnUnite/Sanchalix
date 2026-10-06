@@ -19,6 +19,9 @@ import {
   verifyOtp,
   VerifyOtp,
 } from './recovery';
+import { env } from '@/lib/env';
+import { ROLE_KEYS, TOTP_REQUIRED_ROLES } from './permissions';
+import { z } from 'zod';
 import { ChangePassword, SetDensity, SetVisualMode, SignIn, TotpCode } from './schemas';
 import { hashPassword, verifyCredentials, verifyPassword } from './service';
 import { createSession, destroySession, readSession, setModeCookie } from './session';
@@ -80,6 +83,8 @@ export async function signOut() {
   return withAction('auth.signOut', destroySession);
 }
 
+const SwitchRole = z.enum(ROLE_KEYS);
+
 export async function requestPasswordReset(input: unknown) {
   return withAction('auth.requestPasswordReset', async () => {
     const { email } = RequestReset.parse(input);
@@ -111,6 +116,27 @@ export async function signInWithOtp(input: unknown) {
     await createSession(userId, role, schoolId);
     await setModeCookie(visualMode);
     await audit({ userId, role, schoolId }, 'auth.signIn.otp', { type: USER, id: userId });
+  });
+}
+
+/** Changes which of the user's roles in this school is active. The session is replaced, not edited. */
+export async function switchRole(input: unknown) {
+  return withAction('auth.switchRole', async () => {
+    const ctx = await getContext();
+    if (!ctx) throw new AppError('UNAUTHENTICATED', 'errors.unauthenticated');
+    const role = SwitchRole.parse(input);
+    const user = await User.findById(ctx.userId).select('roles').lean();
+    const held = user?.roles.some((assignment) => assignment.role === role && assignment.schoolId?.equals(ctx.schoolId));
+    if (!held || role === ctx.role) throw new AppError('FORBIDDEN', 'errors.forbidden');
+    // Moving up to a role that needs two-step verification asks for the code again.
+    const needsTotp =
+      env.TWO_FACTOR_ENABLED === 'true' && TOTP_REQUIRED_ROLES.includes(role) && !TOTP_REQUIRED_ROLES.includes(ctx.role);
+    await destroySession();
+    await createSession(ctx.userId, role, ctx.schoolId, needsTotp);
+    await audit({ ...ctx, role }, 'auth.role.switch', { type: USER, id: ctx.userId }, {
+      before: { role: ctx.role },
+      after: { role },
+    });
   });
 }
 

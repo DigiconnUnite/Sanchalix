@@ -7,16 +7,25 @@ import Header from '@cloudscape-design/components/header';
 import SpaceBetween from '@cloudscape-design/components/space-between';
 import StatusIndicator from '@cloudscape-design/components/status-indicator';
 import { getTranslations } from 'next-intl/server';
-import { type ReactNode, Suspense } from 'react';
+import { cache, type ReactNode, Suspense } from 'react';
 import { AppLink } from '@/components/AppLink';
 import { EmptyState } from '@/components/EmptyState';
 import { svg } from '@/components/icons';
 import { KpiTile } from '@/components/KpiTile';
+import { AgeingChart, AttendanceTrendChart, CollectionChart, MethodChart } from '@/features/dashboard/DashboardCharts';
+import { daysBefore } from '@/lib/dates';
 import { formatMoney } from '@/lib/money';
 import type { RequestContext } from '@/server/auth/context';
 import { can } from '@/server/auth/permissions';
 import { listAnnouncements } from '@/server/modules/comms/service';
-import { getAttendanceToday, getFeesSummary } from '@/server/modules/dashboard/queries';
+import { getSchoolCalendar } from '@/server/modules/attendance/queries';
+import {
+  getAttendanceToday,
+  getAttendanceTrend,
+  getDuesAgeing,
+  getFeesSummary,
+} from '@/server/modules/dashboard/queries';
+import { getCollectionReport } from '@/server/modules/fees/reports';
 import { countStudents } from '@/server/modules/sis/queries';
 import { PortalHome } from '@/features/portal/Portal';
 import { getPortalHome } from '@/server/modules/portal/service';
@@ -25,6 +34,15 @@ import { homeLabel, pageContext } from './pageContext';
 
 const ANNOUNCEMENTS = '/communication/announcements';
 const dateFormat = new Intl.DateTimeFormat('en-IN', { dateStyle: 'medium', timeZone: 'Asia/Kolkata' });
+
+const COLLECTION_DAYS = 14;
+const attendanceToday = cache(getAttendanceToday);
+const feesSummary = cache(getFeesSummary);
+const recentCollection = cache(async (ctx: RequestContext) => {
+  const { today } = await getSchoolCalendar(ctx);
+  const dates = Array.from({ length: COLLECTION_DAYS }, (_, index) => daysBefore(today, COLLECTION_DAYS - 1 - index));
+  return { dates, report: await getCollectionReport(ctx, dates[0], today) };
+});
 
 export async function generateMetadata() {
   const ctx = await pageContext();
@@ -75,6 +93,7 @@ export default async function DashboardPage({
     attendance: can(ctx.role, 'attendance.record.read'),
     students: can(ctx.role, 'sis.student.read') && ctx.scope !== 'assigned',
     fees: can(ctx.role, 'fees.invoice.read'),
+    collection: can(ctx.role, 'fees.payment.read'),
   };
 
   return (
@@ -104,21 +123,30 @@ export default async function DashboardPage({
     >
       <SpaceBetween size="l">
         {(sees.attendance || sees.students || sees.fees) && (
-          <ColumnLayout columns={3}>
+          <ColumnLayout columns={4}>
             {sees.attendance && widget(t('attendance.title'), <AttendanceTile ctx={ctx} />)}
             {sees.students && widget(t('students.title'), <StudentsTile ctx={ctx} />)}
-            {sees.fees && widget(t('fees.title'), <FeeTiles ctx={ctx} />)}
+            {sees.fees && widget(t('fees.collectedToday'), <CollectedTile ctx={ctx} />)}
+            {sees.fees && widget(t('fees.overdue'), <OverdueTile ctx={ctx} />)}
           </ColumnLayout>
         )}
         {ctx.staffId && can(ctx.role, 'academics.timetable.read') && widget(t('classes.title'), <TodayClasses ctx={ctx} />)}
-        {widget(t('announcements.title'), <LatestAnnouncements ctx={ctx} />)}
+        <ColumnLayout columns={2}>
+          {(sees.attendance || sees.fees) &&
+            widget(t('attention.title'), <Attention ctx={ctx} attendance={sees.attendance} fees={sees.fees} />)}
+          {sees.attendance && widget(t('charts.attendance.title'), <AttendanceTrend ctx={ctx} />)}
+          {sees.collection && widget(t('charts.collection.title'), <Collection ctx={ctx} />)}
+          {sees.collection && widget(t('charts.methods.title'), <Methods ctx={ctx} />)}
+          {sees.fees && widget(t('charts.ageing.title'), <Ageing ctx={ctx} />)}
+          {widget(t('announcements.title'), <LatestAnnouncements ctx={ctx} />)}
+        </ColumnLayout>
       </SpaceBetween>
     </ContentLayout>
   );
 }
 
 async function AttendanceTile({ ctx }: { ctx: RequestContext }) {
-  const [t, attendance] = await Promise.all([getTranslations('dashboard.attendance'), getAttendanceToday(ctx)]);
+  const [t, attendance] = await Promise.all([getTranslations('dashboard.attendance'), attendanceToday(ctx)]);
   const title = t('title');
   if (attendance.sections === 0) {
     return <KpiTile title={title} value={t('none')} href="/attendance/take" description={t('noSections')} />;
@@ -156,38 +184,111 @@ async function StudentsTile({ ctx }: { ctx: RequestContext }) {
   return <KpiTile title={t('title')} value={t('link', { count })} href="/students" />;
 }
 
-async function FeeTiles({ ctx }: { ctx: RequestContext }) {
-  const [t, fees] = await Promise.all([getTranslations('dashboard.fees'), getFeesSummary(ctx)]);
+async function CollectedTile({ ctx }: { ctx: RequestContext }) {
+  const [t, fees] = await Promise.all([getTranslations('dashboard.fees'), feesSummary(ctx)]);
   return (
-    <SpaceBetween size="l">
-      <KpiTile
-        title={t('collectedToday')}
-        value={formatMoney(fees.collectedTodayMinor)}
-        href="/fees/payments"
-        description={t('receipts', { count: fees.receiptsToday, month: formatMoney(fees.collectedMonthMinor) })}
-      />
-      <KpiTile
-        title={t('overdue')}
-        value={formatMoney(fees.overdueMinor)}
-        href="/fees/dues"
-        description={
-          fees.overdueInvoices > 0 ? (
-            <StatusIndicator type="warning">{t('overdueInvoices', { count: fees.overdueInvoices })}</StatusIndicator>
-          ) : (
-            <StatusIndicator type="success">{t('noDues')}</StatusIndicator>
-          )
-        }
-      />
-      {fees.draftStructures > 0 && can(ctx.role, 'fees.structure.read') && (
-        <KpiTile
-          title={t('approvals')}
-          value={t('drafts', { count: fees.draftStructures })}
-          href="/fees/structures"
-          description={t(can(ctx.role, 'fees.structure.approve') ? 'approveHint' : 'waitingHint')}
-        />
-      )}
-    </SpaceBetween>
+    <KpiTile
+      title={t('collectedToday')}
+      value={formatMoney(fees.collectedTodayMinor)}
+      href="/fees/payments"
+      description={t('receipts', { count: fees.receiptsToday, month: formatMoney(fees.collectedMonthMinor) })}
+    />
   );
+}
+
+async function OverdueTile({ ctx }: { ctx: RequestContext }) {
+  const [t, fees] = await Promise.all([getTranslations('dashboard.fees'), feesSummary(ctx)]);
+  return (
+    <KpiTile
+      title={t('overdue')}
+      value={formatMoney(fees.overdueMinor)}
+      href="/fees/dues"
+      description={
+        fees.overdueInvoices > 0 ? (
+          <StatusIndicator type="warning">{t('overdueInvoices', { count: fees.overdueInvoices })}</StatusIndicator>
+        ) : (
+          <StatusIndicator type="success">{t('noDues')}</StatusIndicator>
+        )
+      }
+    />
+  );
+}
+
+async function Attention({ ctx, attendance, fees }: { ctx: RequestContext; attendance: boolean; fees: boolean }) {
+  const [t, today, summary] = await Promise.all([
+    getTranslations('dashboard.attention'),
+    attendance ? attendanceToday(ctx) : null,
+    fees ? feesSummary(ctx) : null,
+  ]);
+  const pending = today?.state === 'open' ? today.sections - today.submitted : 0;
+  const drafts = can(ctx.role, 'fees.structure.read') ? (summary?.draftStructures ?? 0) : 0;
+  const items = [
+    ...(pending > 0
+      ? [
+          {
+            href: today?.firstPending ? `/attendance/take?section=${today.firstPending.id}` : '/attendance/register',
+            text: t('attendance', { count: pending }),
+          },
+        ]
+      : []),
+    ...(summary && summary.overdueInvoices > 0
+      ? [
+          {
+            href: '/fees/dues',
+            text: t('overdue', { count: summary.overdueInvoices, amount: formatMoney(summary.overdueMinor) }),
+          },
+        ]
+      : []),
+    ...(drafts > 0
+      ? [
+          {
+            href: '/fees/structures',
+            text: t(can(ctx.role, 'fees.structure.approve') ? 'approve' : 'waiting', { count: drafts }),
+          },
+        ]
+      : []),
+  ];
+  return (
+    <Container
+      fitHeight
+      header={
+        <Header variant="h2" counter={items.length > 0 ? `(${items.length})` : undefined}>
+          {t('title')}
+        </Header>
+      }
+    >
+      {items.length === 0 ? (
+        <EmptyState icon="success" heading={t('clear.heading')} body={t('clear.body')} />
+      ) : (
+        <SpaceBetween size="s">
+          {items.map((item) => (
+            <StatusIndicator key={item.href} type="warning">
+              <AppLink href={item.href}>{item.text}</AppLink>
+            </StatusIndicator>
+          ))}
+        </SpaceBetween>
+      )}
+    </Container>
+  );
+}
+
+async function AttendanceTrend({ ctx }: { ctx: RequestContext }) {
+  return <AttendanceTrendChart days={await getAttendanceTrend(ctx)} />;
+}
+
+async function Collection({ ctx }: { ctx: RequestContext }) {
+  const { dates, report } = await recentCollection(ctx);
+  const byDate = new Map(report.byDay.map((entry) => [entry.date, entry.amountMinor]));
+  return <CollectionChart days={dates.map((date) => ({ date, amountMinor: byDate.get(date) ?? 0 }))} />;
+}
+
+async function Methods({ ctx }: { ctx: RequestContext }) {
+  const { report } = await recentCollection(ctx);
+  return <MethodChart methods={report.byMethod} />;
+}
+
+async function Ageing({ ctx }: { ctx: RequestContext }) {
+  return <AgeingChart bands={await getDuesAgeing(ctx)} />;
 }
 
 async function TodayClasses({ ctx }: { ctx: RequestContext }) {

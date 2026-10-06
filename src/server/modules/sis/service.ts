@@ -11,7 +11,8 @@ import { School } from '@/server/models/school';
 import { Section } from '@/server/models/section';
 import { Student } from '@/server/models/student';
 import { todayIn } from '@/lib/dates';
-import type { StudentInput, StudentUpdate } from './schemas';
+import { User } from '@/server/models/user';
+import type { GuardianUpdate, StudentInput, StudentUpdate } from './schemas';
 
 /** Runs in its own transaction, or inside the caller's when a session is passed (accepting an admission). */
 export async function createStudent(ctx: RequestContext, input: StudentInput, outer?: ClientSession) {
@@ -142,6 +143,28 @@ export async function updateStudent(ctx: RequestContext, { id, version, ...chang
     name: `${changes.firstName} ${changes.lastName}`.trim(),
     before: { firstName: before.firstName, lastName: before.lastName, dob: before.dob, gender: before.gender },
   };
+}
+
+/** Corrects a guardian's details. The guardian must belong to this student, and a phone can't be shared by two guardians. */
+export async function updateGuardian(ctx: RequestContext, { studentId, guardianId, email, ...changes }: GuardianUpdate) {
+  const { schoolId } = ctx;
+  const student = await Student.exists({ ...officeScope(ctx), _id: studentId, guardianIds: guardianId });
+  if (!student) throw new AppError('NOT_FOUND', 'sis.students.errors.notFound');
+  if (await Guardian.exists({ schoolId, phone: changes.phone, _id: { $ne: guardianId } })) {
+    throw new AppError('CONFLICT', 'sis.students.errors.phoneTaken');
+  }
+  const before = await Guardian.findOneAndUpdate(
+    { schoolId, _id: guardianId },
+    { ...changes, email: email ?? null, updatedBy: ctx.userId },
+  )
+    .select('name relation phone')
+    .lean();
+  if (!before) throw new AppError('NOT_FOUND', 'sis.students.errors.notFound');
+  // The parent's sign-in follows the phone, so a phone-code sign-in keeps working on the new number.
+  if (before.phone !== changes.phone && !(await User.exists({ phone: changes.phone }))) {
+    await User.updateOne({ guardianId: before._id, roles: { $elemMatch: { schoolId } } }, { phone: changes.phone });
+  }
+  return { studentId: student._id, name: changes.name, before: { name: before.name, relation: before.relation } };
 }
 
 /** Moves an active student to another section of the same academic year and gives them its next roll number. */

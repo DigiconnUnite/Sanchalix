@@ -70,6 +70,9 @@ export type StudentUpdate = z.infer<typeof StudentUpdate>;
 
 export const ImportStudents = z.object({ csv: z.string().max(1_000_000), dryRun: z.boolean() });
 
+export const GuardianUpdate = StudentInput.shape.guardians.element.extend({ studentId: Id, guardianId: Id });
+export type GuardianUpdate = z.infer<typeof GuardianUpdate>;
+
 export const TransferStudent = z.object({ id: Id, sectionId: Id });
 
 export const WithdrawStudent = z.object({ id: Id, reason: required('sis.students.errors.reason', 200) });

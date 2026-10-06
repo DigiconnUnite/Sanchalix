@@ -234,9 +234,9 @@ body {
   border-block-start: var(--border-divider-section-width-dlkb8v, 1px) solid var(--color-border-divider-default-diwd4w);
 }
 
-/* ADR-020: the navigation panel scrolls with a thin scrollbar on a clear track. The operating system's default
-   bar is wide and draws a solid track beside the links. */
-[class*='awsui_navigation-container_'] > [class*='awsui_navigation_'] {
+/* ADR-020: everything that scrolls uses one thin scrollbar on a clear track. The operating system's default
+   bar is wide and draws a solid track beside the content. */
+* {
   scrollbar-width: thin;
   scrollbar-color: color-mix(in srgb, var(--color-text-body-secondary-66ygbb) 20%, transparent) transparent;
 }

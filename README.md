@@ -32,6 +32,7 @@ Then open http://localhost:3000 and sign in. `http://localhost:3000/api/health` 
 | `teacher@greenvalley.example` | Teacher, class teacher of 6-A | The students of 6-A only |
 | `accountant@greenvalley.example` | Accountant | No student list (a 403 page) |
 | `teacher2@greenvalley.example` to `teacher11@…` | Teachers, each class teacher of one section (6-B onwards) | Their section, and the periods they teach |
+| `teacher2@greenvalley.example` (also a parent) | Teacher and parent | Use "Switch to Parent" in the user menu to try the role switcher |
 | `teacher12@greenvalley.example` | Subject teacher with no class of their own | Only the periods they teach |
 | `librarian@greenvalley.example`, `transport@greenvalley.example` | Librarian, transport manager | Announcements, calendar and their own leave |
 | `parent@greenvalley.example` | Parent of two children in 6-A | The parent home, with a child selector and a published report card |
@@ -101,6 +102,7 @@ The roadmap's M0 walking skeleton ([Docs/05-roadmap.md](Docs/05-roadmap.md)):
 - Subjects and a weekly timetable per section, with a hard stop on double-booking a teacher, and "Your classes today" for teachers
 - Homework: teachers set it for the sections they teach; the office sees all of it
 - Move a student to another section from the profile (new roll number, audited)
+- Announcements to chosen sections, notices that ask for a read confirmation, a role switcher, and editing a parent's details
 - Leave balances, attendance corrections by the principal with a reason, and a fee collection report by method and day
 - Student documents: upload, download, verify and delete (kept on the server's disk until file storage is connected)
 - Online fee payment for parents through a stand-in gateway, with a Razorpay webhook ready for keys

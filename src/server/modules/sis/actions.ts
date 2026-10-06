@@ -8,10 +8,11 @@ import { getTranslations } from 'next-intl/server';
 import { z } from 'zod';
 import { removeDocument, verifyDocument } from './documents';
 import { importStudents as importService } from './importService';
-import { ImportStudents, StudentInput, StudentUpdate, TransferStudent, WithdrawStudent } from './schemas';
+import { GuardianUpdate, ImportStudents, StudentInput, StudentUpdate, TransferStudent, WithdrawStudent } from './schemas';
 import {
   createStudent as create,
   transferStudent as transfer,
+  updateGuardian as editGuardian,
   updateStudent as update,
   withdrawStudent as withdraw,
 } from './service';
@@ -60,6 +61,19 @@ export async function updateStudent(input: unknown) {
       after: { firstName: data.firstName, lastName: data.lastName, dob: data.dob, gender: data.gender },
     });
     return { name: student.name };
+  });
+}
+
+export async function updateGuardian(input: unknown) {
+  return withAction('sis.guardian.update', async () => {
+    const ctx = await requirePermission('sis.student.update');
+    const data = GuardianUpdate.parse(input);
+    const guardian = await editGuardian(ctx, data);
+    await audit(ctx, 'sis.guardian.update', { type: 'student', id: guardian.studentId }, {
+      before: guardian.before,
+      after: { name: data.name, relation: data.relation },
+    });
+    return { name: guardian.name };
   });
 }
 

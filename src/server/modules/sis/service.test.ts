@@ -9,8 +9,8 @@ import { School } from '@/server/models/school';
 import { Section } from '@/server/models/section';
 import { Student } from '@/server/models/student';
 import { getStudent } from './queries';
-import { StudentInput, StudentUpdate } from './schemas';
-import { createStudent, transferStudent, updateStudent, withdrawStudent } from './service';
+import { GuardianUpdate, StudentInput, StudentUpdate } from './schemas';
+import { createStudent, transferStudent, updateGuardian, updateStudent, withdrawStudent } from './service';
 
 const ADDRESS = { line1: '12 School Road', city: 'Bhopal', state: 'Madhya Pradesh', pincode: '462001' };
 let ctx: RequestContext;
@@ -172,4 +172,24 @@ it('moves a student to another section of the same year with its next roll numbe
   await expect(transferStudent(otherSchool, id, String(target._id))).rejects.toMatchObject({ code: 'BUSINESS_RULE' });
   expect(await transferStudent(ctx, id, String(target._id))).toMatchObject({ section: '7-C', rollNo: 1 });
   expect(await getStudent(ctx, id)).toMatchObject({ classSection: '7-C', rollNo: 1 });
+});
+
+it('corrects a guardian of this student, without taking another parent’s number', async () => {
+  const student = await Student.findOne({ schoolId: ctx.schoolId, firstName: 'Aarav' }).lean();
+  const kabir = await Student.findOne({ schoolId: ctx.schoolId, firstName: 'Kabir' }).lean();
+  const studentId = String(student?._id);
+  const guardianId = String(student?.guardianIds[0]);
+  const change = (overrides: Record<string, unknown> = {}) =>
+    GuardianUpdate.parse({ studentId, guardianId, name: 'Sunita S. Sharma', relation: 'mother', phone: '9876500000', email: '', ...overrides });
+
+  await expect(updateGuardian(otherSchool, change())).rejects.toMatchObject({ code: 'NOT_FOUND' });
+  await expect(updateGuardian(ctx, change({ studentId: String(kabir?._id), guardianId: String(new Types.ObjectId()) }))).rejects.toMatchObject({
+    code: 'NOT_FOUND',
+  });
+  await Guardian.collection.insertOne({ schoolId: ctx.schoolId, name: 'Another Parent', phone: '+919811100000', deletedAt: null });
+  const taken = '+919811100000';
+  await expect(updateGuardian(ctx, change({ phone: taken.replace('+91', '') }))).rejects.toMatchObject({ code: 'CONFLICT' });
+
+  expect(await updateGuardian(ctx, change())).toMatchObject({ name: 'Sunita S. Sharma', before: { name: 'Sunita Sharma' } });
+  expect((await getStudent(ctx, studentId))?.guardians[0]).toMatchObject({ name: 'Sunita S. Sharma', phone: '+919876500000' });
 });

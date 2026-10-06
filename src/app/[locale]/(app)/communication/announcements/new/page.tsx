@@ -1,5 +1,6 @@
 import { getTranslations } from 'next-intl/server';
 import { AnnouncementForm } from '@/features/comms/Announcements';
+import { listCurrentSections } from '@/server/modules/academics/queries';
 import { pageContext } from '../../../pageContext';
 
 export async function generateMetadata() {
@@ -8,6 +9,6 @@ export async function generateMetadata() {
 }
 
 export default async function NewAnnouncementPage() {
-  await pageContext('comms.announcement.create');
-  return <AnnouncementForm />;
+  const ctx = await pageContext('comms.announcement.create');
+  return <AnnouncementForm sections={await listCurrentSections(ctx)} />;
 }

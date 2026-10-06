@@ -449,6 +449,16 @@ export async function seedGreenValleyDemo(schoolId: Types.ObjectId, domain: stri
     await account(`${student.firstName} ${student.lastName ?? ''}`.trim(), 'student', 'student', 'self', { studentId: student._id });
   }
 
+  // One person with two roles, to try the role switcher: teacher2 is also the parent of a child in 7-A.
+  const ward = sections[2] && rosterOf(sections[2]._id)[0];
+  const wardGuardian = ward && (await Guardian.findOne({ schoolId, studentIds: ward.studentId }).lean());
+  if (wardGuardian) {
+    await User.updateOne(
+      { email: email('teacher2') },
+      { $push: { roles: { role: 'parent', schoolId, scope: 'ward' } }, guardianId: wardGuardian._id },
+    );
+  }
+
   // Announcements last, so every account above gets its notification.
   for (const [title, body, audience] of [
     ['Half-yearly examination schedule', 'The half-yearly examinations begin next week. The date sheet is on the calendar. Students must carry their ID cards.', { type: 'school' }],

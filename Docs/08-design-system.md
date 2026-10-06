@@ -61,7 +61,7 @@ Vidyawan's UI is built entirely from the **AWS Cloudscape Design System** (`@clo
 | Progress | `ProgressBar` (known progress), `Spinner` (short unknown), `StatusIndicator type="loading"` | Imports and report card generation use a `ProgressBar` with a per-row count |
 | Loading a region | `Table loading` / `Cards loading` + `loadingText`; `Container` with `Box` + `Spinner` | Never a blank area |
 | Empty collection | `Table empty` slot → `Box` with a 48px icon, a heading, one sentence and a primary action | See [10-screen-specs.md](10-screen-specs.md#state-patterns) |
-| Charts | chart-components: `CartesianChart` (bar, line), `PieChart` (donut, ≤ 5 slices) | Always a data table alternative ("View as table") and an `ariaLabel` |
+| Charts | The charts in `@cloudscape-design/components`: `LineChart`, `BarChart`, `PieChart` (donut, ≤ 5 slices). `chart-components` is not installed: it needs Highcharts, a separately licensed dependency | Always a data table alternative ("View as table") and an `ariaLabel` |
 | KPI tiles | `Container` + `Box variant="awsui-value-large"` + a trend `Icon` + text | Each drills down to a filtered table |
 | Steps within a record | `Steps` | The admission status timeline, refund status |
 | Expandable detail | `ExpandableSection` | Advanced settings, the audit diff |

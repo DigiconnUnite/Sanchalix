@@ -8,7 +8,7 @@ import { Invoice } from '@/server/models/invoice';
 import { Student } from '@/server/models/student';
 import { getCurrentYearId } from '@/server/modules/academics/queries';
 import { Types } from 'mongoose';
-import { todayIn } from '@/lib/dates';
+import { daysBefore, todayIn } from '@/lib/dates';
 import { Enrollment } from '@/server/models/enrollment';
 import { Guardian } from '@/server/models/guardian';
 import { Payment } from '@/server/models/payment';
@@ -255,8 +255,6 @@ export async function listPayments(ctx: RequestContext, query: ListPayments) {
 }
 
 const DAY_MS = 86_400_000;
-const daysBefore = (date: string, days: number) =>
-  new Date(Date.parse(`${date}T00:00:00Z`) - days * DAY_MS).toISOString().slice(0, 10);
 
 /** Unpaid balances past their due date, oldest first, optionally limited to an ageing band of days overdue. */
 export async function listDues(ctx: RequestContext, query: ListDues) {

@@ -30,6 +30,8 @@ export function AppShell({
   userName,
   roleLabel,
   signOut,
+  otherRoles,
+  switchRole,
   visualMode,
   setVisualMode,
   unread,
@@ -46,6 +48,8 @@ export function AppShell({
   userName: string;
   roleLabel: string;
   signOut: () => Promise<unknown>;
+  otherRoles: { role: string; label: string }[];
+  switchRole: (role: string) => Promise<unknown>;
   children: ReactNode;
 }) {
   const t = useTranslations('shell');
@@ -185,12 +189,21 @@ export function AppShell({
               iconSvg: svg('profile'),
               items: [
                 { id: 'profile', text: t('profile'), iconSvg: svg('profile') },
+                ...otherRoles.map(({ role, label }) => ({
+                  id: `role:${role}`,
+                  text: t('switchTo', { role: label }),
+                  iconSvg: svg('switchRole'),
+                })),
                 { id: 'signOut', text: t('signOut'), iconSvg: svg('signOut') },
               ],
-              onItemClick: ({ detail }) =>
-                detail.id === 'profile'
-                  ? router.push('/profile')
-                  : void signOut().then(() => router.replace('/signin')),
+              onItemClick: ({ detail }) => {
+                if (detail.id === 'profile') return router.push('/profile');
+                // A different role means a different menu and home page, so the app is loaded afresh.
+                if (detail.id.startsWith('role:')) {
+                  return void switchRole(detail.id.slice(5)).then(() => window.location.assign('/'));
+                }
+                void signOut().then(() => router.replace('/signin'));
+              },
             },
           ]}
         />

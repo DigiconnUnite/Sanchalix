@@ -35,6 +35,7 @@ import type { PortalAccountRow } from '@/server/modules/portal/service';
 import type { DocumentRow } from '@/server/modules/sis/documents';
 import { transferStudent, withdrawStudent } from '@/server/modules/sis/actions';
 import type { HistoryEntry, StudentAttendance, StudentFees, StudentProfile } from '@/server/modules/sis/schemas';
+import { GuardianEdit } from './GuardianEdit';
 import { StudentDocuments } from './StudentDocuments';
 import { STATUS_TYPE } from './studentStatus';
 
@@ -259,6 +260,17 @@ export function StudentProfileView({
                       cell: (g) => <Link href={`tel:${g.phone}`}>{formatPhone(g.phone)}</Link>,
                     },
                     { id: 'email', header: t('profile.email'), cell: (g) => g.email ?? NONE },
+                    ...(canEdit
+                      ? [
+                          {
+                            id: 'actions',
+                            header: t('guardianEdit.actions'),
+                            cell: (g: StudentProfile['guardians'][number]) => (
+                              <GuardianEdit studentId={student.id} guardian={g} />
+                            ),
+                          },
+                        ]
+                      : []),
                   ]}
                 />
               ),

@@ -12,7 +12,7 @@ import { School } from '@/server/models/school';
 import { Section } from '@/server/models/section';
 import { submitAttendance } from '@/server/modules/attendance/service';
 import { collectPayment } from '@/server/modules/fees/paymentService';
-import { getAttendanceToday, getFeesSummary } from './queries';
+import { getAttendanceToday, getAttendanceTrend, getDuesAgeing, getFeesSummary } from './queries';
 
 const ADDRESS = { line1: '12 School Road', city: 'Bhopal', state: 'Madhya Pradesh', pincode: '462001', country: 'IN' };
 const TODAY = todayIn('Asia/Kolkata');
@@ -124,6 +124,8 @@ it('reports nothing taken, then the percentage and the sections still pending', 
   const after = await getAttendanceToday(admin);
   expect(after).toMatchObject({ sections: 2, submitted: 1, absent: 1, percent: 25 });
   expect(after.firstPending?.name).toBe('7-B');
+  expect(await getAttendanceTrend(admin)).toEqual([{ date: TODAY, percent: 25 }]);
+  expect(await getAttendanceTrend(other)).toEqual([]);
 });
 
 it('limits a teacher to their own section and shows other schools nothing', async () => {
@@ -154,4 +156,13 @@ it('sums today’s collection, what is overdue and the drafts waiting for approv
     draftStructures: 1,
   });
   expect(await getFeesSummary(other)).toMatchObject({ collectedTodayMinor: 0, overdueMinor: 0, draftStructures: 0 });
+
+  await addInvoice(todayIn('Asia/Kolkata', new Date(Date.now() - 40 * 86_400_000)), 100_000);
+  expect(await getDuesAgeing(admin)).toEqual([
+    { band: '1-15', amountMinor: 300_000, invoices: 1 },
+    { band: '16-30', amountMinor: 0, invoices: 0 },
+    { band: '31-60', amountMinor: 100_000, invoices: 1 },
+    { band: '60+', amountMinor: 0, invoices: 0 },
+  ]);
+  expect((await getDuesAgeing(other)).every((band) => band.invoices === 0)).toBe(true);
 });
