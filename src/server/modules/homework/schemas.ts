@@ -32,4 +32,5 @@ export type HomeworkRow = {
   dueOn: string;
   isPastDue: boolean;
   isMine: boolean;
+  attachments: { id: string; fileName: string }[];
 };

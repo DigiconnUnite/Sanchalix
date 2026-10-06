@@ -110,6 +110,27 @@ body {
   background: var(--color-background-layout-main-y4565g);
 }
 
+/* The home page footer carries awsui-context-top-navigation, so it takes the header's palette and the page
+   closes with the same band that opens it. Its content lines up with the 1040px page column above. */
+.vw-public-footer {
+  background: var(--color-background-container-content-mjfil9);
+  border-block-start: var(--border-divider-section-width-dlkb8v, 1px) solid var(--color-border-divider-default-diwd4w);
+}
+
+.vw-public-footer-inner {
+  max-inline-size: 1040px;
+  margin-inline: auto;
+}
+
+.vw-public-footer-legal {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--space-xs-m9b7jf, 8px) var(--space-m-dsumyt, 16px);
+  padding-block-start: var(--space-m-dsumyt, 16px);
+  border-block-start: var(--border-divider-section-width-dlkb8v, 1px) solid var(--color-border-divider-default-diwd4w);
+}
+
 .vw-auth-page {
   display: grid;
   align-content: center;

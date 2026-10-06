@@ -4,7 +4,7 @@ import { Types } from 'mongoose';
 import { AppError } from '@/lib/appError';
 import type { RequestContext } from '@/server/auth/context';
 import { Student } from '@/server/models/student';
-import { getFile, putFile, removeFile } from '@/server/storage/store';
+import { detectFileKind, getFile, MAX_FILE_BYTES, putFile, removeFile, safeFileName } from '@/server/storage/store';
 
 const E = 'sis.documents.errors';
 export const DOCUMENT_TYPES = [
@@ -17,19 +17,8 @@ export const DOCUMENT_TYPES = [
   'other',
 ] as const;
 export type DocumentType = (typeof DOCUMENT_TYPES)[number];
-export const MAX_BYTES = 5 * 1024 * 1024;
+export const MAX_BYTES = MAX_FILE_BYTES;
 
-// What the file really is, read from its first bytes. The browser's stated type and the file name are not trusted.
-const KINDS = [
-  { mime: 'application/pdf', ext: 'pdf', matches: (b: Uint8Array) => b[0] === 0x25 && b[1] === 0x50 && b[2] === 0x44 && b[3] === 0x46 },
-  { mime: 'image/jpeg', ext: 'jpg', matches: (b: Uint8Array) => b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff },
-  { mime: 'image/png', ext: 'png', matches: (b: Uint8Array) => b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4e && b[3] === 0x47 },
-  {
-    mime: 'image/webp',
-    ext: 'webp',
-    matches: (b: Uint8Array) => b[0] === 0x52 && b[1] === 0x49 && b[8] === 0x57 && b[9] === 0x45 && b[10] === 0x42 && b[11] === 0x50,
-  },
-] as const;
 
 export type DocumentRow = {
   id: string;
@@ -65,7 +54,7 @@ export async function addDocument(
 ) {
   if (!DOCUMENT_TYPES.includes(input.type as DocumentType)) throw new AppError('VALIDATION', `${E}.type`);
   if (input.bytes.length === 0 || input.bytes.length > MAX_BYTES) throw new AppError('VALIDATION', `${E}.size`);
-  const kind = KINDS.find((candidate) => candidate.matches(input.bytes));
+  const kind = detectFileKind(input.bytes);
   if (!kind) throw new AppError('VALIDATION', `${E}.kind`);
   if (!valid(studentId) || !(await Student.exists({ ...scopeOf(ctx), _id: studentId }))) {
     throw new AppError('NOT_FOUND', `${E}.notFound`);
@@ -74,8 +63,7 @@ export async function addDocument(
   const id = new Types.ObjectId();
   const key = `${ctx.schoolId.toString()}/${studentId}/${randomUUID()}.${kind.ext}`;
   await putFile(key, input.bytes);
-  // The name is shown and offered on download, so it is cut down to something harmless.
-  const fileName = input.fileName.replace(/[^\w.\- ]+/g, '_').slice(-100) || `document.${kind.ext}`;
+  const fileName = safeFileName(input.fileName, kind.ext);
   await Student.updateOne(
     { ...scopeOf(ctx), _id: studentId },
     {

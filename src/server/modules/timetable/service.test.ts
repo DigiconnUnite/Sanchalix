@@ -9,7 +9,15 @@ import { Section } from '@/server/models/section';
 import { Staff } from '@/server/models/staff';
 import { Subject } from '@/server/models/subject';
 import { TimetableSlot } from '@/server/models/timetableSlot';
-import { createHomework, deleteHomework, listHomework } from '@/server/modules/homework/service';
+import { Enrollment } from '@/server/models/enrollment';
+import { Guardian } from '@/server/models/guardian';
+import {
+  addAttachment,
+  createHomework,
+  deleteHomework,
+  listHomework,
+  readAttachment,
+} from '@/server/modules/homework/service';
 import { clearSlot, createSubject, getTimetable, setSlot } from './service';
 
 const ADDRESS = { line1: '12 School Road', city: 'Bhopal', state: 'Madhya Pradesh', pincode: '462001', country: 'IN' };
@@ -126,4 +134,49 @@ it('lets a teacher set homework only for sections they teach, and delete only th
   await expect(deleteHomework(otherTeacher, String(homework.id))).rejects.toMatchObject({ code: 'NOT_FOUND' });
   await deleteHomework(teacher, String(homework.id));
   expect((await listHomework(admin, {})).rows).toHaveLength(0);
+});
+
+it('keeps homework files to the teacher who set it, the office, and that section’s families', async () => {
+  const pdf = new Uint8Array([0x25, 0x50, 0x44, 0x46, 0x2d, 0x31]);
+  const homework = await createHomework(teacher, {
+    title: 'Worksheet',
+    instructions: '',
+    subjectId: maths,
+    sectionIds: [sections[1] ?? ''],
+    dueOn: '2099-02-01',
+  });
+  const id = String(homework.id);
+  const attach = (ctx: RequestContext, bytes = pdf) => addAttachment(ctx, id, { fileName: 'sheet one.pdf', bytes });
+
+  await expect(attach(otherTeacher)).rejects.toMatchObject({ code: 'NOT_FOUND' });
+  await expect(attach(admin)).rejects.toMatchObject({ code: 'NOT_FOUND' });
+  await expect(attach(teacher, new Uint8Array([0x4d, 0x5a]))).rejects.toMatchObject({ code: 'VALIDATION' });
+  for (let count = 0; count < 3; count += 1) await attach(teacher);
+  await expect(attach(teacher)).rejects.toMatchObject({ code: 'BUSINESS_RULE' });
+
+  const [row] = (await listHomework(teacher, {})).rows;
+  expect(row?.attachments).toHaveLength(3);
+  const fileId = row?.attachments[0]?.id ?? '';
+
+  // A child in the section the homework was set for, and a parent of nobody in it.
+  const studentId = new Types.ObjectId();
+  const guardianId = new Types.ObjectId();
+  await Enrollment.collection.insertOne({
+    schoolId: admin.schoolId,
+    studentId,
+    sectionId: new Types.ObjectId(sections[1]),
+    academicYearId: new Types.ObjectId(),
+    rollNo: 99,
+    status: 'active',
+    deletedAt: null,
+  });
+  await Guardian.collection.insertOne({ _id: guardianId, schoolId: admin.schoolId, name: 'Parent', studentIds: [studentId], deletedAt: null });
+  const parent = (guardian: Types.ObjectId): RequestContext => ({ ...admin, role: 'parent', scope: 'ward', guardianId: guardian });
+
+  expect(new Uint8Array((await readAttachment(teacher, id, fileId)).bytes)).toEqual(pdf);
+  await expect(readAttachment(admin, id, fileId)).resolves.toMatchObject({ mime: 'application/pdf' });
+  await expect(readAttachment(parent(guardianId), id, fileId)).resolves.toMatchObject({ fileName: 'sheet one.pdf' });
+  await expect(readAttachment(parent(new Types.ObjectId()), id, fileId)).rejects.toMatchObject({ code: 'NOT_FOUND' });
+  await expect(readAttachment(otherTeacher, id, fileId)).rejects.toMatchObject({ code: 'NOT_FOUND' });
+  await expect(readAttachment(otherSchool, id, fileId)).rejects.toMatchObject({ code: 'NOT_FOUND' });
 });

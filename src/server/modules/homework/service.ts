@@ -1,7 +1,13 @@
 import 'server-only';
 import { AppError } from '@/lib/appError';
 import { todayIn } from '@/lib/dates';
+import { randomUUID } from 'node:crypto';
+import { Types } from 'mongoose';
 import type { RequestContext } from '@/server/auth/context';
+import { can } from '@/server/auth/permissions';
+import { Enrollment } from '@/server/models/enrollment';
+import { ownStudentIds } from '@/server/modules/portal/own';
+import { detectFileKind, getFile, putFile, safeFileName } from '@/server/storage/store';
 import { paginate } from '@/server/db/paginate';
 import { Homework } from '@/server/models/homework';
 import { School } from '@/server/models/school';
@@ -63,7 +69,7 @@ export async function listHomework(ctx: RequestContext, query: ListHomework) {
     { schoolId, ...(ctx.scope === 'assigned' && { teacherId: ctx.staffId ?? null }) },
     {
       sortField: 'dueOn',
-      select: ['title', 'instructions', 'subjectId', 'sectionIds', 'teacherId', 'assignedOn', 'dueOn'],
+      select: ['title', 'instructions', 'subjectId', 'sectionIds', 'teacherId', 'assignedOn', 'dueOn', 'attachments'],
       limit: 25,
       cursor: query.cursor,
       descending: true,
@@ -99,8 +105,69 @@ export async function listHomework(ctx: RequestContext, query: ListHomework) {
     dueOn: row.dueOn,
     isPastDue: row.dueOn < now,
     isMine: Boolean(ctx.staffId) && String(row.teacherId) === String(ctx.staffId),
+    attachments: (row.attachments ?? []).map((file) => ({ id: String(file._id), fileName: file.fileName })),
   }));
   return { rows: homework, ...page };
+}
+
+const MAX_ATTACHMENTS = 3;
+
+/** A teacher attaches a worksheet (PDF or image, up to 5 MB) to their own homework. */
+export async function addAttachment(ctx: RequestContext, homeworkId: string, input: { fileName: string; bytes: Uint8Array }) {
+  const { schoolId } = ctx;
+  const kind = detectFileKind(input.bytes);
+  if (!kind) throw new AppError('VALIDATION', 'homework.errors.file');
+  const homework =
+    ctx.staffId && Types.ObjectId.isValid(homeworkId)
+      ? await Homework.findOne({ schoolId, _id: homeworkId, teacherId: ctx.staffId }).select('attachments').lean()
+      : null;
+  if (!homework) throw new AppError('NOT_FOUND', 'homework.errors.notFound');
+  if ((homework.attachments ?? []).length >= MAX_ATTACHMENTS) {
+    throw new AppError('BUSINESS_RULE', 'homework.errors.tooManyFiles', { max: MAX_ATTACHMENTS });
+  }
+  const key = `${schoolId.toString()}/${homeworkId}/${randomUUID()}.${kind.ext}`;
+  await putFile(key, input.bytes);
+  const fileName = safeFileName(input.fileName, kind.ext);
+  await Homework.updateOne(
+    { schoolId, _id: homework._id },
+    { $push: { attachments: { key, fileName, mime: kind.mime, size: input.bytes.length } }, updatedBy: ctx.userId },
+  );
+  return { id: homework._id, fileName };
+}
+
+/**
+ * A homework file, for whoever can see the homework: its teacher, the office and principal, and a student or parent
+ * whose section it was set for.
+ */
+export async function readAttachment(ctx: RequestContext, homeworkId: string, attachmentId: string) {
+  const { schoolId } = ctx;
+  if (!Types.ObjectId.isValid(homeworkId) || !Types.ObjectId.isValid(attachmentId)) {
+    throw new AppError('NOT_FOUND', 'homework.errors.notFound');
+  }
+  const homework = await Homework.findOne({ schoolId, _id: homeworkId, 'attachments._id': attachmentId })
+    .select('teacherId sectionIds attachments')
+    .lean();
+  const file = homework?.attachments.find((candidate) => String(candidate._id) === attachmentId);
+  if (!homework || !file) throw new AppError('NOT_FOUND', 'homework.errors.notFound');
+
+  let allowed = false;
+  if (can(ctx.role, 'homework.assignment.read')) {
+    allowed = ctx.scope !== 'assigned' || String(homework.teacherId) === String(ctx.staffId);
+  } else {
+    const students = await ownStudentIds(ctx);
+    allowed =
+      students.length > 0 &&
+      Boolean(
+        await Enrollment.exists({
+          schoolId,
+          studentId: { $in: students },
+          sectionId: { $in: homework.sectionIds },
+          status: 'active',
+        }),
+      );
+  }
+  if (!allowed) throw new AppError('NOT_FOUND', 'homework.errors.notFound');
+  return { fileName: file.fileName, mime: file.mime, bytes: await getFile(file.key) };
 }
 
 /** A teacher removes their own homework. Nobody else's. */

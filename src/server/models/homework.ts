@@ -11,6 +11,14 @@ const schema = new Schema(
     teacherId: { type: ObjectId, ref: 'Staff', required: true },
     title: { type: String, required: true, maxlength: 120 },
     instructions: { type: String, default: '' },
+    attachments: [
+      {
+        key: { type: String, required: true },
+        fileName: { type: String, required: true },
+        mime: { type: String, required: true },
+        size: { type: Number, required: true },
+      },
+    ],
     assignedOn: { type: String, required: true, match: DATE_STR },
     dueOn: { type: String, required: true, match: DATE_STR },
     graded: { type: Boolean, default: false },

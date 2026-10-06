@@ -970,7 +970,12 @@
         "end": "Choose the end date",
         "endBeforeStart": "The end date can't be before the start date",
         "notFound": "We couldn't find that event."
-      }
+      },
+      "edit": "Edit",
+      "editLabel": "Edit event {title}",
+      "editTitle": "Edit event",
+      "saveChanges": "Save changes",
+      "updated": "{title} updated."
     }
   },
   "fees": {
@@ -1658,7 +1663,27 @@
       "dueOn": "Choose the due date",
       "dueOnPast": "The due date can't be before today.",
       "notTeacher": "Only a teacher with a staff record can set homework.",
-      "notFound": "We couldn't find that homework. Only the teacher who set it can delete it."
+      "notFound": "We couldn't find that homework. Only the teacher who set it can delete it.",
+      "file": "Choose a PDF, JPEG, PNG or WebP file of up to 5 MB",
+      "tooManyFiles": "A homework can have up to {max} files."
+    },
+    "files": {
+      "attach": "Attach file",
+      "attachLabel": "Attach a file to {title}",
+      "attachTitle": "Attach a file to {title}",
+      "file": "File",
+      "hint": "PDF, JPEG, PNG or WebP, up to 5 MB. Up to 3 files per homework.",
+      "choose": "Choose file",
+      "drop": "Drop the file here",
+      "remove": "Remove file",
+      "showFewer": "Show fewer files",
+      "showMore": "Show more files",
+      "errorIcon": "Error",
+      "upload": "Attach",
+      "cancel": "Cancel",
+      "download": "Downloads the file",
+      "tooBig": "The file must be 5 MB or smaller",
+      "failed": "The upload didn't finish. Check your connection and try again."
     }
   },
   "admissions": {
@@ -2373,7 +2398,17 @@
       "title": "Ready to open your school?",
       "body": "Sign in with the account your school gave you."
     },
-    "footer": "© {year} Vidyawan by Digiconn Unite"
+    "footer": {
+      "tagline": "One system for admissions, attendance, fees, exams and parent communication.",
+      "product": "Product",
+      "features": "Features",
+      "roles": "Who it's for",
+      "steps": "Getting started",
+      "account": "Account",
+      "forgotPassword": "Forgot password",
+      "copyright": "© {year} Vidyawan. All rights reserved.",
+      "credit": "Designed and developed by Digiconn Unite"
+    }
   },
   "outbound": {
     "absence": "{school}: {student} was marked absent on {date}. Please contact the school office if this is a mistake.",

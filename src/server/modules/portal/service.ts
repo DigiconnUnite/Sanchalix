@@ -100,7 +100,14 @@ export type PortalHome = {
   children: { id: string; name: string; classSection: string | null }[];
   selected: { id: string; name: string; classSection: string | null; admissionNo: string };
   periods: { number: number; time: string; subject: string; teacher: string }[];
-  homework: { id: string; title: string; subject: string; instructions: string; dueOn: string }[];
+  homework: {
+    id: string;
+    title: string;
+    subject: string;
+    instructions: string;
+    dueOn: string;
+    attachments: { id: string; fileName: string }[];
+  }[];
   attendance: Awaited<ReturnType<typeof getStudentAttendance>>;
   fees: Awaited<ReturnType<typeof getStudentFees>>;
   upcoming: Awaited<ReturnType<typeof listUpcoming>>;
@@ -147,7 +154,7 @@ export async function getPortalHome(ctx: RequestContext, requestedId?: string): 
       ? Homework.find({ schoolId, sectionIds: sectionId, status: 'published', dueOn: { $gte: today } })
           .sort({ dueOn: 1 })
           .limit(10)
-          .select('title subjectId instructions dueOn')
+          .select('title subjectId instructions dueOn attachments')
           .lean()
       : [],
     getStudentAttendance(ctx, id),
@@ -176,6 +183,7 @@ export async function getPortalHome(ctx: RequestContext, requestedId?: string): 
       subject: subjectOf.get(String(item.subjectId)) ?? '',
       instructions: item.instructions,
       dueOn: item.dueOn,
+      attachments: (item.attachments ?? []).map((file) => ({ id: String(file._id), fileName: file.fileName })),
     })),
     attendance,
     fees,

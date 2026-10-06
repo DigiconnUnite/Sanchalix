@@ -19,6 +19,7 @@ import { useState } from 'react';
 import { EmptyState } from '@/components/EmptyState';
 import { Results } from '@/features/exams/Results';
 import { PayOnlineButton } from '@/features/fees/OnlinePayment';
+import { AttachmentLinks } from '@/features/homework/Attachments';
 import { TemporaryPassword } from '@/features/users/Users';
 import { usePathname, useRouter } from '@/i18n/navigation';
 import { formatMoney } from '@/lib/money';
@@ -141,6 +142,7 @@ export function PortalHome({
                 <>
                   <Box fontWeight="bold">{item.title}</Box>
                   {item.instructions && <Box color="text-body-secondary">{item.instructions}</Box>}
+                  <AttachmentLinks homeworkId={item.id} files={item.attachments} />
                 </>
               ),
             },

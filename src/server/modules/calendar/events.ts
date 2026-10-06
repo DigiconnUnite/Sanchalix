@@ -123,6 +123,18 @@ export async function addEvent(ctx: RequestContext, input: EventInput) {
   return { id: event._id, title: event.title };
 }
 
+export async function updateEvent(ctx: RequestContext, id: string, input: EventInput) {
+  const before = await Event.findOneAndUpdate({ schoolId: ctx.schoolId, _id: id }, { ...input, updatedBy: ctx.userId })
+    .select('title type start end')
+    .lean();
+  if (!before) throw new AppError('NOT_FOUND', `${E}.notFound`);
+  return {
+    id: before._id,
+    title: input.title,
+    before: { title: before.title, type: before.type, start: before.start, end: before.end },
+  };
+}
+
 export async function removeEvent(ctx: RequestContext, id: string) {
   const event = await Event.findOneAndUpdate(
     { schoolId: ctx.schoolId, _id: id },

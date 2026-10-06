@@ -44,6 +44,7 @@ export function EventsCalendar({
   const router = useRouter();
   const pathname = usePathname();
   const [adding, setAdding] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [removing, setRemoving] = useState<CalendarItem | null>(null);
   const [values, setValues] = useState(BLANK);
   const [busy, setBusy] = useState(false);
@@ -56,6 +57,8 @@ export function EventsCalendar({
       {...(primary && { variant: 'primary' as const })}
       onClick={() => {
         setError(null);
+        setEditingId(null);
+        setValues(BLANK);
         setAdding(true);
       }}
     >
@@ -66,12 +69,12 @@ export function EventsCalendar({
   async function save() {
     setBusy(true);
     setError(null);
-    const response = await upsertEvent({ ...values, end: values.end || values.start });
+    const response = await upsertEvent({ ...values, end: values.end || values.start, ...(editingId && { id: editingId }) });
     setBusy(false);
     if (!response.ok) return setError(response.error);
     setAdding(false);
     setValues(BLANK);
-    setResult({ type: 'success', text: t('added', { title: response.data.title }) });
+    setResult({ type: 'success', text: t(response.data.updated ? 'updated' : 'added', { title: response.data.title }) });
     router.refresh();
   }
 
@@ -160,13 +163,27 @@ export function EventsCalendar({
                   header: t('columns.actions'),
                   cell: (item: CalendarItem) =>
                     item.id && (
-                      <Button
-                        variant="inline-link"
-                        ariaLabel={t('deleteLabel', { title: item.title })}
-                        onClick={() => setRemoving(item)}
-                      >
-                        {t('delete')}
-                      </Button>
+                      <SpaceBetween direction="horizontal" size="s">
+                        <Button
+                          variant="inline-link"
+                          ariaLabel={t('editLabel', { title: item.title })}
+                          onClick={() => {
+                            setError(null);
+                            setEditingId(item.id);
+                            setValues({ title: item.title, type: item.type, start: item.start, end: item.end });
+                            setAdding(true);
+                          }}
+                        >
+                          {t('edit')}
+                        </Button>
+                        <Button
+                          variant="inline-link"
+                          ariaLabel={t('deleteLabel', { title: item.title })}
+                          onClick={() => setRemoving(item)}
+                        >
+                          {t('delete')}
+                        </Button>
+                      </SpaceBetween>
                     ),
                 },
               ]
@@ -175,7 +192,7 @@ export function EventsCalendar({
       />
       <Modal
         visible={adding}
-        header={t('add')}
+        header={t(editingId ? 'editTitle' : 'add')}
         closeAriaLabel={t('cancel')}
         onDismiss={() => setAdding(false)}
         footer={
@@ -185,7 +202,7 @@ export function EventsCalendar({
                 {t('cancel')}
               </Button>
               <Button variant="primary" loading={busy} onClick={() => void save()}>
-                {t('save')}
+                {t(editingId ? 'saveChanges' : 'save')}
               </Button>
             </SpaceBetween>
           </Box>

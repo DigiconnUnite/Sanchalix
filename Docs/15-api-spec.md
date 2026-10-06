@@ -237,6 +237,8 @@ Server rules: `entries` must cover exactly the active enrollments of the section
 
 ## 7. Homework
 
+**Attachments, built on 2026-10-06:** `POST /api/v1/homework/{id}/attachments` (multipart `file`; needs `homework.assignment.create`) adds a PDF or image of up to 5 MB to the teacher's own homework, at most 3 per homework, with the same content check and server-made key as student documents. `GET /api/v1/homework/{id}/attachments/{attachmentId}` downloads it for the teacher who set it, the office and principal, and a student or parent whose section the homework was set for. `homework.attachments` holds `{ key, fileName, mime, size }`. Removing a single attachment is not built.
+
 **Built on 2026-10-05:** `createHomework({ title, instructions?, subjectId, sectionIds, dueOn })` needs `homework.assignment.create` and a staff record; the sections must be ones the teacher is class teacher of or teaches on the timetable (`FORBIDDEN` otherwise); it is published at once. `deleteHomework(id)` soft-deletes the teacher's own homework only. `/homework` lists newest due date first with cursor pagination: a teacher sees their own, the office and principal see all (`homework.assignment.read`). Attachments, grading, submissions and the student and parent views are not built.
 
 | Name | Type | Permission | Input | Output |
@@ -336,7 +338,7 @@ Server rules: each allocation ≤ the invoice balance; everything runs in one tr
 
 ## 11. Calendar
 
-**Events, built on 2026-10-05:** `upsertEvent({ title, type, start, end })` creates an all-day, whole-school event (dates are `YYYY-MM-DD`; type cannot be `holiday`) and `deleteEvent(id)` soft-deletes it; both need `calendar.event.update` (school admin, principal). Everyone can read (`calendar.event.read`). `/calendar/events?month=YYYY-MM` lists the month's events and holidays together. Not built: timed events, audiences, editing, the `GET /api/v1/calendar` route.
+**Events, built on 2026-10-05:** `upsertEvent({ id?, title, type, start, end })` changes the event when `id` is given and otherwise creates an all-day, whole-school event (dates are `YYYY-MM-DD`; type cannot be `holiday`) and `deleteEvent(id)` soft-deletes it; both need `calendar.event.update` (school admin, principal). Everyone can read (`calendar.event.read`). `/calendar/events?month=YYYY-MM` lists the month's events and holidays together. Not built: timed events, audiences, editing, the `GET /api/v1/calendar` route.
 
 | Name | Type | Permission | Input | Output |
 |---|---|---|---|---|

@@ -24,6 +24,7 @@ import { EmptyState } from '@/components/EmptyState';
 import { usePathname, useRouter } from '@/i18n/navigation';
 import { createHomework, deleteHomework } from '@/server/modules/homework/actions';
 import type { HomeworkRow } from '@/server/modules/homework/schemas';
+import { AttachFile, AttachmentLinks } from './Attachments';
 
 const LIST = '/homework';
 const NEW = '/homework/new';
@@ -137,6 +138,7 @@ export function HomeworkTable({
               <>
                 <Box fontWeight="bold">{row.title}</Box>
                 {row.instructions && <Box color="text-body-secondary">{row.instructions}</Box>}
+                <AttachmentLinks homeworkId={row.id} files={row.attachments} />
               </>
             ),
           },
@@ -157,13 +159,16 @@ export function HomeworkTable({
             header: t('columns.actions'),
             cell: (row) =>
               row.isMine && (
-                <Button
-                  variant="inline-link"
-                  ariaLabel={t('deleteLabel', { title: row.title })}
-                  onClick={() => setRemoving(row)}
-                >
-                  {t('delete')}
-                </Button>
+                <SpaceBetween direction="horizontal" size="s">
+                  {row.attachments.length < 3 && <AttachFile homeworkId={row.id} title={row.title} />}
+                  <Button
+                    variant="inline-link"
+                    ariaLabel={t('deleteLabel', { title: row.title })}
+                    onClick={() => setRemoving(row)}
+                  >
+                    {t('delete')}
+                  </Button>
+                </SpaceBetween>
               ),
           },
         ]}

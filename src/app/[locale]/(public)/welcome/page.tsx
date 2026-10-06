@@ -5,6 +5,7 @@ import Container from '@cloudscape-design/components/container';
 import ContentLayout from '@cloudscape-design/components/content-layout';
 import Header from '@cloudscape-design/components/header';
 import Icon from '@cloudscape-design/components/icon';
+import Link from '@cloudscape-design/components/link';
 import SpaceBetween from '@cloudscape-design/components/space-between';
 import { cookies } from 'next/headers';
 import { getTranslations } from 'next-intl/server';
@@ -91,7 +92,7 @@ export default async function WelcomePage() {
               </SpaceBetween>
             </section>
 
-            <section aria-labelledby="roles-heading">
+            <section id="roles" aria-labelledby="roles-heading">
               <SpaceBetween size="l">
                 <Header variant="h2" description={t('roles.description')}>
                   <span id="roles-heading">{t('roles.title')}</span>
@@ -110,7 +111,7 @@ export default async function WelcomePage() {
               </SpaceBetween>
             </section>
 
-            <section aria-labelledby="steps-heading">
+            <section id="steps" aria-labelledby="steps-heading">
               <Container
                 header={
                   <Header variant="h2">
@@ -143,13 +144,49 @@ export default async function WelcomePage() {
                 </Button>
               </SpaceBetween>
             </Container>
-
-            <Box textAlign="center" color="text-body-secondary" fontSize="body-s">
-              {t('footer', { year: new Date().getFullYear() })}
-            </Box>
           </SpaceBetween>
         </Box>
       </ContentLayout>
+
+      <footer className="vw-public-footer awsui-context-top-navigation">
+        <div className="vw-public-footer-inner">
+          <Box padding={{ vertical: 'xxl', horizontal: 'xl' }}>
+            <SpaceBetween size="xl">
+              <ColumnLayout columns={3} minColumnWidth={200}>
+                <SpaceBetween size="xs">
+                  <Box fontSize="heading-l" fontWeight="bold">
+                    {t('brand')}
+                  </Box>
+                  <Box color="text-body-secondary">{t('footer.tagline')}</Box>
+                </SpaceBetween>
+                <nav aria-label={t('footer.product')}>
+                  <SpaceBetween size="xs">
+                    <Box variant="awsui-key-label">{t('footer.product')}</Box>
+                    <Link href="#features">{t('footer.features')}</Link>
+                    <Link href="#roles">{t('footer.roles')}</Link>
+                    <Link href="#steps">{t('footer.steps')}</Link>
+                  </SpaceBetween>
+                </nav>
+                <nav aria-label={t('footer.account')}>
+                  <SpaceBetween size="xs">
+                    <Box variant="awsui-key-label">{t('footer.account')}</Box>
+                    <Link href={enter.href}>{enter.text}</Link>
+                    {!ctx && <Link href="/forgot-password">{t('footer.forgotPassword')}</Link>}
+                  </SpaceBetween>
+                </nav>
+              </ColumnLayout>
+              <div className="vw-public-footer-legal">
+                <Box color="text-body-secondary" fontSize="body-s">
+                  {t('footer.copyright', { year: new Date().getFullYear() })}
+                </Box>
+                <Box color="text-body-secondary" fontSize="body-s">
+                  {t('footer.credit')}
+                </Box>
+              </div>
+            </SpaceBetween>
+          </Box>
+        </div>
+      </footer>
     </>
   );
 }
