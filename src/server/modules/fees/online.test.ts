@@ -10,6 +10,7 @@ import { Payment } from '@/server/models/payment';
 import { PaymentOrder, WebhookEvent } from '@/server/models/paymentOrder';
 import { School } from '@/server/models/school';
 import { createCheckout, getOrder, handleGatewayEvent, payWithDevGateway, verifyRazorpaySignature } from './online';
+import { getCollectionReport } from './reports';
 
 const ADDRESS = { line1: '12 School Road', city: 'Bhopal', state: 'Madhya Pradesh', pincode: '462001', country: 'IN' };
 const studentId = new Types.ObjectId();
@@ -143,4 +144,17 @@ it('accepts only a correctly signed Razorpay body', () => {
   expect(verifyRazorpaySignature(`${body} `, signature, 'whsec_test')).toBe(false);
   expect(verifyRazorpaySignature(body, signature, 'another_secret')).toBe(false);
   expect(verifyRazorpaySignature(body, '', 'whsec_test')).toBe(false);
+});
+
+it('reports what was collected by method and day, for this school only', async () => {
+  const report = await getCollectionReport(parent, undefined, undefined);
+  expect(report).toMatchObject({ totalMinor: 200000, receipts: 1, outstandingMinor: 40000 });
+  expect(report.byMethod).toEqual([{ method: 'online', amountMinor: 200000, receipts: 1 }]);
+  expect(report.byDay).toHaveLength(1);
+  expect(report.from).toBe(`${report.to.slice(0, 7)}-01`);
+
+  expect(await getCollectionReport(parent, '2020-01-01', '2020-01-31')).toMatchObject({ totalMinor: 0, byDay: [] });
+  expect(await getCollectionReport(parent, '2026-12-31', '2026-01-01')).toMatchObject({ from: '2026-01-01', to: '2026-01-01' });
+  const elsewhere = await getCollectionReport({ ...parent, schoolId: new Types.ObjectId() }, undefined, undefined);
+  expect(elsewhere).toMatchObject({ totalMinor: 0, outstandingMinor: 0 });
 });

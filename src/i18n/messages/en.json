@@ -30,7 +30,8 @@
       "staffAttendance": "Staff attendance",
       "exams": "Exams",
       "reportCards": "Report cards",
-      "outbox": "Sent messages"
+      "outbox": "Sent messages",
+      "feeReports": "Fee reports"
     },
     "breadcrumbs": "Breadcrumbs",
     "signOut": "Sign out",
@@ -97,7 +98,8 @@
       "otp": "Phone code",
       "forgot-password": "Forgot password",
       "reset-password": "Reset password",
-      "pay": "Pay fees"
+      "pay": "Pay fees",
+      "reports": "Reports"
     },
     "logoAlt": "{school} logo",
     "platformLogoAlt": "Vidyawan",
@@ -785,7 +787,11 @@
       "openRegister": "Open register",
       "period": "Period",
       "wholeDay": "Whole day",
-      "periodOption": "Period {number} · {time} · {subject}"
+      "periodOption": "Period {number} · {time} · {subject}",
+      "correct": "Save correction",
+      "reason": "Reason for the correction",
+      "reasonHint": "This day was already submitted. The reason is kept with the change in the audit log.",
+      "correctingNote": "You are correcting a day that was already submitted. Change the marks, give a reason and save."
     },
     "errors": {
       "section": "We couldn't find that section, or you aren't its class teacher.",
@@ -796,7 +802,9 @@
       "nonWorking": "This isn't a working day. Attendance isn't needed.",
       "holiday": "This day is a holiday. Attendance isn't needed.",
       "locked": "Attendance for this day was submitted and can no longer be changed here. Ask the principal to correct it.",
-      "noPeriod": "That period isn't on this section's timetable for this day."
+      "noPeriod": "That period isn't on this section's timetable for this day.",
+      "reason": "Enter a reason of 5 to 200 characters",
+      "nothingToCorrect": "Attendance wasn't taken on this day, so there is nothing to correct."
     },
     "register": {
       "title": "Attendance register",
@@ -1243,6 +1251,26 @@
         "notFound": "We couldn't find that payment.",
         "closed": "This payment is already finished or has expired."
       }
+    },
+    "reports": {
+      "title": "Fee collection",
+      "description": "What was collected between two dates, by payment method and by day.",
+      "from": "From",
+      "to": "To",
+      "collected": "Collected",
+      "range": "{from} to {to}",
+      "receipts": "Receipts",
+      "outstanding": "Outstanding now",
+      "outstandingNote": "All unpaid balances, whatever the dates above.",
+      "byMethod": "By payment method",
+      "byDay": "By day",
+      "method": "Method",
+      "date": "Date",
+      "amount": "Amount",
+      "empty": {
+        "heading": "Nothing collected",
+        "body": "No payments were received between these dates."
+      }
     }
   },
   "comms": {
@@ -1473,9 +1501,12 @@
         "overlap": "You already have a leave request for some of these dates.",
         "notFound": "We couldn't find that leave request.",
         "cannotDecide": "This request has already been decided or cancelled, or it is your own.",
-        "cannotCancel": "Only your own request that is still waiting for approval can be cancelled."
+        "cannotCancel": "Only your own request that is still waiting for approval can be cancelled.",
+        "insufficient": "You have {left} days of this leave left this year, and this request is for {asked}. Shorten it or choose another leave type."
       },
-      "halfDay": "Half day"
+      "halfDay": "Half day",
+      "balance": "{left} of {quota} days left",
+      "pendingDays": "{count} waiting"
     },
     "attendance": {
       "title": "Staff attendance",

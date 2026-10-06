@@ -28,6 +28,7 @@ type ModuleKey =
   | 'invoices'
   | 'payments'
   | 'dues'
+  | 'feeReports'
   | 'announcements'
   | 'calendarEvents'
   | 'promotion'
@@ -73,6 +74,7 @@ const MODULES: (Omit<NavItem, 'text' | 'group'> & { key: ModuleKey; group: Group
   { key: 'invoices', group: 'fees', href: '/fees/invoices', icon: 'invoice', permission: 'fees.invoice.read' },
   { key: 'payments', group: 'fees', href: '/fees/payments', icon: 'receipt', permission: 'fees.payment.read' },
   { key: 'dues', group: 'fees', href: '/fees/dues', icon: 'dues', permission: 'fees.invoice.read' },
+  { key: 'feeReports', group: 'fees', href: '/fees/reports', icon: 'financeReports', permission: 'fees.payment.read' },
   {
     key: 'announcements',
     group: 'communication',

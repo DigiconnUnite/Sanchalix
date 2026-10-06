@@ -14,7 +14,7 @@ function summarise(entries: { status: string }[]): AttendanceSummary {
   return summary;
 }
 
-export async function submitAttendance(ctx: RequestContext, input: SubmitAttendance) {
+export async function submitAttendance(ctx: RequestContext, input: SubmitAttendance, correction = false) {
   const { schoolId } = ctx;
   const section = await findAttendanceSection(ctx, input.sectionId, input.mode === 'period' ? 'any' : 'daily');
   if (!section) throw new AppError('NOT_FOUND', 'attendance.errors.section');
@@ -50,7 +50,9 @@ export async function submitAttendance(ctx: RequestContext, input: SubmitAttenda
   });
   // A retried request (double click, flaky network) returns the first result instead of writing again.
   if (existing?.idempotencyKey === input.idempotencyKey) return result(existing, null);
-  if (existing && input.date !== day.today) throw new AppError('BUSINESS_RULE', 'attendance.errors.locked');
+  // A submitted day belongs to the register. Its teacher can fix it the same day; after that only a correction can.
+  if (existing && input.date !== day.today && !correction) throw new AppError('BUSINESS_RULE', 'attendance.errors.locked');
+  if (correction && !existing) throw new AppError('BUSINESS_RULE', 'attendance.errors.nothingToCorrect');
 
   const enrollments = await Enrollment.find({ schoolId, sectionId: section._id, status: 'active' })
     .select('studentId')

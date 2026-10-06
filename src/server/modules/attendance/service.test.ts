@@ -224,3 +224,21 @@ it('takes period attendance only for a period on the timetable, by the teacher w
   expect(daily).toMatchObject({ period: null, canDaily: true, periods: [] });
   expect(await AttendanceRecord.countDocuments({ schoolId: admin.schoolId, sectionId, date: TODAY, mode: 'period' })).toBe(1);
 });
+
+it('lets a past day be corrected only as a correction, and only if it was taken', async () => {
+  const past = daysAgo(5);
+  const principal = context(admin.schoolId, { role: 'principal' });
+  await expect(submitAttendance(admin, sheet(['absent'], { date: past }))).rejects.toMatchObject({ code: 'BUSINESS_RULE' });
+  expect(await getAttendanceSheet(admin, sectionId, past)).toMatchObject({ state: 'locked', correcting: false });
+  expect(await getAttendanceSheet(principal, sectionId, past)).toMatchObject({ state: 'open', correcting: true });
+
+  await expect(submitAttendance(principal, sheet(['absent', 'absent'], { date: past }), true)).resolves.toMatchObject({
+    summary: { absent: 2, present: 1 },
+    before: { present: 3 },
+  });
+  const record = await AttendanceRecord.findOne({ schoolId: admin.schoolId, sectionId, date: past, mode: 'daily' }).lean();
+  expect(record?.editedAfterSubmit).toBe(true);
+  await expect(submitAttendance(principal, sheet([], { date: daysAgo(40) }), true)).rejects.toMatchObject({
+    code: 'BUSINESS_RULE',
+  });
+});

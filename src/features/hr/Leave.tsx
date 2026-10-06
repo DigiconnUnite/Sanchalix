@@ -1,6 +1,7 @@
 'use client';
 
 import Alert from '@cloudscape-design/components/alert';
+import Badge from '@cloudscape-design/components/badge';
 import Box from '@cloudscape-design/components/box';
 import Button from '@cloudscape-design/components/button';
 import Checkbox from '@cloudscape-design/components/checkbox';
@@ -10,6 +11,7 @@ import DatePicker from '@cloudscape-design/components/date-picker';
 import Form from '@cloudscape-design/components/form';
 import FormField from '@cloudscape-design/components/form-field';
 import Header from '@cloudscape-design/components/header';
+import KeyValuePairs from '@cloudscape-design/components/key-value-pairs';
 import Modal from '@cloudscape-design/components/modal';
 import Pagination from '@cloudscape-design/components/pagination';
 import Select from '@cloudscape-design/components/select';
@@ -22,7 +24,7 @@ import { useEffect, useRef, useState } from 'react';
 import { EmptyState } from '@/components/EmptyState';
 import { usePathname, useRouter } from '@/i18n/navigation';
 import { applyLeave, cancelLeave, decideLeave } from '@/server/modules/hr/actions';
-import type { LeaveRow } from '@/server/modules/hr/leave';
+import type { LeaveBalance, LeaveRow } from '@/server/modules/hr/leave';
 
 const LIST = '/leave';
 const NEW = '/leave/new';
@@ -45,8 +47,10 @@ export function LeaveTable({
   canApply,
   canApprove,
   applied,
+  balances,
   data,
 }: {
+  balances: LeaveBalance[];
   status: string;
   canApply: boolean;
   canApprove: boolean;
@@ -122,6 +126,16 @@ export function LeaveTable({
             <Header variant="h1" description={t(canApprove ? 'descriptionApprover' : 'description')} actions={canApply && applyButton(true)}>
               {t('title')}
             </Header>
+            {balances.length > 0 && (
+              <KeyValuePairs
+                columns={3}
+                items={balances.map((balance) => ({
+                  label: t(`type.${balance.type}`),
+                  value: t('balance', { left: balance.left, quota: balance.quota }),
+                  ...(balance.pending > 0 && { info: <Badge color="blue">{t('pendingDays', { count: balance.pending })}</Badge> }),
+                }))}
+              />
+            )}
             {feedback && (
               <Alert
                 type={feedback.type}

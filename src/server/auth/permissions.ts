@@ -34,6 +34,7 @@ export type Permission =
   | 'sis.document.read'
   | 'attendance.record.read'
   | 'attendance.record.create'
+  | 'attendance.record.update'
   | 'calendar.holiday.read'
   | 'calendar.holiday.update'
   | 'fees.structure.read'
@@ -143,6 +144,7 @@ const ROLE_PERMISSIONS: Record<RoleKey, readonly Permission[]> = {
     'academics.timetable.read',
     'homework.assignment.read',
     'attendance.record.read',
+    'attendance.record.update',
     'calendar.holiday.read',
     'calendar.holiday.update',
     'fees.structure.read',

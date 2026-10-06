@@ -2,6 +2,7 @@ import 'server-only';
 import { Types } from 'mongoose';
 import { todayIn, weekdayOf } from '@/lib/dates';
 import type { RequestContext } from '@/server/auth/context';
+import { can } from '@/server/auth/permissions';
 import { AttendanceRecord } from '@/server/models/attendanceRecord';
 import { Enrollment } from '@/server/models/enrollment';
 import { Holiday } from '@/server/models/holiday';
@@ -135,6 +136,8 @@ export async function getAttendanceSheet(
     .select('firstName lastName')
     .lean();
   const nameById = new Map(students.map((s) => [String(s._id), `${s.firstName} ${s.lastName}`.trim()]));
+  const correcting =
+    Boolean(record) && date !== day.today && day.state === 'open' && can(ctx.role, 'attendance.record.update');
   const statusById = new Map(record?.entries.map((entry) => [String(entry.studentId), entry.status]));
 
   return {
@@ -142,7 +145,8 @@ export async function getAttendanceSheet(
     date,
     today: day.today,
     // A submitted day can be changed by its teacher only on that same day.
-    state: noPeriod ? 'noPeriod' : day.state === 'open' && record && date !== day.today ? 'locked' : day.state,
+    state: noPeriod ? 'noPeriod' : day.state === 'open' && record && date !== day.today && !correcting ? 'locked' : day.state,
+    correcting,
     period,
     periods,
     canDaily,

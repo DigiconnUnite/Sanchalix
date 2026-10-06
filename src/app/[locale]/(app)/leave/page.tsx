@@ -3,7 +3,7 @@ import { Suspense } from 'react';
 import { LeaveTable } from '@/features/hr/Leave';
 import type { RequestContext } from '@/server/auth/context';
 import { can } from '@/server/auth/permissions';
-import { ListLeave, listLeave } from '@/server/modules/hr/leave';
+import { getLeaveBalances, type LeaveBalance, ListLeave, listLeave } from '@/server/modules/hr/leave';
 import { pageContext } from '../pageContext';
 
 export async function generateMetadata() {
@@ -11,7 +11,7 @@ export async function generateMetadata() {
   return { title: t('title') };
 }
 
-type Shared = { status: string; canApply: boolean; canApprove: boolean; applied: boolean };
+type Shared = { status: string; canApply: boolean; canApprove: boolean; applied: boolean; balances: LeaveBalance[] };
 
 export default async function LeavePage({
   searchParams,
@@ -26,6 +26,7 @@ export default async function LeavePage({
     canApply: can(ctx.role, 'hr.leave.create') && Boolean(ctx.staffId),
     canApprove: can(ctx.role, 'hr.leave.approve'),
     applied: params.applied === '1',
+    balances: await getLeaveBalances(ctx),
   };
   return (
     <Suspense key={JSON.stringify(query)} fallback={<LeaveTable {...shared} data={null} />}>

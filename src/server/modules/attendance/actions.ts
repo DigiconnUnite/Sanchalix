@@ -9,8 +9,22 @@ import { requirePermission } from '@/server/auth/context';
 import { logger } from '@/server/logger';
 import { sendAbsenceAlerts } from '@/server/messaging/alerts';
 import { getSchoolBrand } from '@/server/platform/queries';
-import { SubmitAttendance } from './schemas';
+import { CorrectAttendance, SubmitAttendance } from './schemas';
 import { submitAttendance as submit } from './service';
+
+export async function correctAttendance(input: unknown) {
+  return withAction('attendance.record.update', async () => {
+    const ctx = await requirePermission('attendance.record.update');
+    const { reason, ...data } = CorrectAttendance.parse(input);
+    const { recordId, sectionName, summary, before } = await submit(ctx, data, true);
+    await audit(ctx, 'attendance.record.correct', { type: 'attendanceRecord', id: new Types.ObjectId(String(recordId)) }, {
+      ...(before && { before }),
+      after: { date: data.date, ...(data.period && { period: data.period }), ...summary },
+      reason,
+    });
+    return { sectionName, summary, edited: true };
+  });
+}
 
 export async function submitAttendance(input: unknown) {
   return withAction('attendance.record.create', async () => {

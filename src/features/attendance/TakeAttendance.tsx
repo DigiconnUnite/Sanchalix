@@ -10,12 +10,13 @@ import SegmentedControl from '@cloudscape-design/components/segmented-control';
 import Select from '@cloudscape-design/components/select';
 import SpaceBetween from '@cloudscape-design/components/space-between';
 import Table from '@cloudscape-design/components/table';
+import Textarea from '@cloudscape-design/components/textarea';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { EmptyState } from '@/components/EmptyState';
 import { svg } from '@/components/icons';
 import { usePathname, useRouter } from '@/i18n/navigation';
-import { submitAttendance } from '@/server/modules/attendance/actions';
+import { correctAttendance, submitAttendance } from '@/server/modules/attendance/actions';
 import type { AttendanceSheet, AttendanceSummary, MarkableStatus } from '@/server/modules/attendance/schemas';
 
 const STATUSES: MarkableStatus[] = ['present', 'absent', 'late', 'half_day', 'leave'];
@@ -39,7 +40,8 @@ export function TakeAttendance({
   const [busy, setBusy] = useState(false);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
 
-  const editable = canSubmit && sheet.state === 'open';
+  const editable = sheet.state === 'open' && (sheet.correcting || canSubmit);
+  const [reason, setReason] = useState('');
   const summary = Object.fromEntries(STATUSES.map((status) => [status, 0])) as AttendanceSummary;
   for (const status of marks.values()) summary[status] += 1;
   const registerHref = `/attendance/register?section=${sheet.section.id}&month=${sheet.date.slice(0, 7)}`;
@@ -56,7 +58,9 @@ export function TakeAttendance({
   async function submit() {
     setBusy(true);
     setFeedback(null);
-    const result = await submitAttendance({
+    const save = sheet.correcting ? correctAttendance : submitAttendance;
+    const result = await save({
+      ...(sheet.correcting && { reason }),
       sectionId: sheet.section.id,
       date: sheet.date,
       mode: sheet.period ? 'period' : 'daily',
@@ -79,7 +83,9 @@ export function TakeAttendance({
   const notice =
     sheet.state !== 'open'
       ? t(`state.${sheet.state}`, { name: sheet.holidayName ?? '' })
-      : !canSubmit
+      : sheet.correcting
+        ? t('correctingNote')
+        : !canSubmit
         ? t(sheet.submitted ? 'readOnly' : 'notSubmitted', { section: sheet.section.name })
         : sheet.submitted
           ? t('alreadySubmitted', { section: sheet.section.name })
@@ -116,8 +122,14 @@ export function TakeAttendance({
                     <Button onClick={() => setMarks(new Map(sheet.students.map(({ id }) => [id, 'present'])))}>
                       {t('markAllPresent')}
                     </Button>
-                    <Button variant="primary" iconSvg={svg('attendance')} loading={busy} onClick={() => void submit()}>
-                      {t(sheet.submitted ? 'update' : 'submit')}
+                    <Button
+                      variant="primary"
+                      iconSvg={svg('attendance')}
+                      loading={busy}
+                      disabled={sheet.correcting && reason.trim().length < 5}
+                      onClick={() => void submit()}
+                    >
+                      {t(sheet.correcting ? 'correct' : sheet.submitted ? 'update' : 'submit')}
                     </Button>
                   </>
                 )}
@@ -156,6 +168,11 @@ export function TakeAttendance({
               />
             </FormField>
           </SpaceBetween>
+          {sheet.correcting && (
+            <FormField label={t('reason')} description={t('reasonHint')}>
+              <Textarea value={reason} rows={2} onChange={({ detail }) => setReason(detail.value)} />
+            </FormField>
+          )}
           {feedback && (
             <Alert
               type={feedback.type}

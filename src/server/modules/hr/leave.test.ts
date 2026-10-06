@@ -6,7 +6,7 @@ import { LeaveRequest } from '@/server/models/leaveRequest';
 import { todayIn, weekdayOf } from '@/lib/dates';
 import { Staff } from '@/server/models/staff';
 import { StaffAttendance } from '@/server/models/staffAttendance';
-import { applyLeave, cancelLeave, decideLeave, LeaveInput, listLeave } from './leave';
+import { applyLeave, cancelLeave, decideLeave, getLeaveBalances, LeaveInput, listLeave } from './leave';
 import { getStaffSheet, saveStaffAttendance } from './staffAttendance';
 
 const schoolId = new Types.ObjectId();
@@ -128,4 +128,26 @@ it('starts staff on approved leave as on leave, and saves one mark per person pe
 
   expect(await StaffAttendance.countDocuments({ schoolId, date })).toBe(2);
   expect((await getStaffSheet(principal, date)).staff.map(({ status }) => status)).toEqual(['present', 'leave']);
+});
+
+it('counts approved and waiting days against the yearly allowance', async () => {
+  const fresh = person('teacher');
+  expect(await getLeaveBalances(person('teacher', schoolId, false))).toEqual([]);
+  await applyLeave(fresh, request('2026-12-01', '2026-12-10'));
+  expect((await getLeaveBalances(fresh)).find(({ type }) => type === 'CL')).toEqual({
+    type: 'CL',
+    quota: 12,
+    used: 0,
+    pending: 10,
+    left: 2,
+  });
+  await expect(applyLeave(fresh, request('2026-12-15', '2026-12-17'))).rejects.toMatchObject({
+    code: 'BUSINESS_RULE',
+    details: { left: 2, asked: 3 },
+  });
+  await expect(applyLeave(fresh, request('2026-12-15', '2026-12-16'))).resolves.toBeDefined();
+  // Leave without pay has no allowance to run out of.
+  await expect(
+    applyLeave(fresh, LeaveInput.parse({ leaveTypeCode: 'LOP', from: '2027-01-05', to: '2027-02-20', reason: 'Long leave' })),
+  ).resolves.toBeDefined();
 });

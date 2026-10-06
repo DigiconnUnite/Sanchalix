@@ -4,6 +4,7 @@ import { AppError } from '@/lib/appError';
 import type { RequestContext } from '@/server/auth/context';
 import { can } from '@/server/auth/permissions';
 import { paginate } from '@/server/db/paginate';
+import { AcademicYear } from '@/server/models/academicYear';
 import { LEAVE_STATUSES, LEAVE_TYPES, LeaveRequest } from '@/server/models/leaveRequest';
 import { Staff } from '@/server/models/staff';
 
@@ -55,6 +56,34 @@ export type LeaveRow = {
   isMine: boolean;
 };
 
+// ponytail: the same yearly allowance at every school. Leave without pay has no limit. Read these from leaveTypes
+// once the school can set its own in Settings.
+export const LEAVE_QUOTAS: Partial<Record<(typeof LEAVE_TYPES)[number], number>> = { CL: 12, SL: 10, EL: 15 };
+
+export type LeaveBalance = { type: (typeof LEAVE_TYPES)[number]; quota: number; used: number; pending: number; left: number };
+
+/** Days taken and still waiting for a decision in the current academic year, against each leave type's allowance. */
+export async function getLeaveBalances(ctx: RequestContext): Promise<LeaveBalance[]> {
+  if (!ctx.staffId) return [];
+  const year = await AcademicYear.findOne({ schoolId: ctx.schoolId, status: 'current' }).select('startDate endDate').lean();
+  const requests = await LeaveRequest.find({
+    schoolId: ctx.schoolId,
+    requesterId: ctx.staffId,
+    status: { $in: ['pending', 'approved'] },
+    ...(year && { from: { $gte: year.startDate, $lte: year.endDate } }),
+  })
+    .select('leaveTypeCode from to halfDay status')
+    .lean();
+  return Object.entries(LEAVE_QUOTAS).map(([type, quota]) => {
+    const days = (status: string) =>
+      requests
+        .filter((request) => request.leaveTypeCode === type && request.status === status)
+        .reduce((sum, request) => sum + (request.halfDay ? 0.5 : daysBetween(request.from, request.to)), 0);
+    const [used, pending] = [days('approved'), days('pending')];
+    return { type: type as LeaveBalance['type'], quota, used, pending, left: quota - used - pending };
+  });
+}
+
 const daysBetween = (from: string, to: string) => Math.round((Date.parse(to) - Date.parse(from)) / 86_400_000) + 1;
 
 export async function applyLeave(ctx: RequestContext, input: LeaveInput) {
@@ -68,8 +97,12 @@ export async function applyLeave(ctx: RequestContext, input: LeaveInput) {
     to: { $gte: input.from },
   });
   if (overlapping) throw new AppError('BUSINESS_RULE', `${E}.overlap`);
-  // ponytail: no leave balances yet, so a request is never refused for quota. Add leaveTypes and
-  // Staff.leaveBalances checks here when quotas are set up.
+  // Requests still waiting count against the balance too, so two pending requests can't both use the last days.
+  const balance = (await getLeaveBalances(ctx)).find(({ type }) => type === input.leaveTypeCode);
+  const asked = input.halfDay ? 0.5 : daysBetween(input.from, input.to);
+  if (balance && asked > balance.left) {
+    throw new AppError('BUSINESS_RULE', `${E}.insufficient`, { left: Math.max(balance.left, 0), asked });
+  }
   const request = await LeaveRequest.create({
     schoolId,
     requesterType: 'staff',

@@ -268,13 +268,23 @@ body {
    border itself but fixes it at 0px and transparent, with no option. A header with nothing under it gets no line.
    The padding on both sides of the line is evened out, so the title is not pressed against it. */
 [class*='awsui_content-wrapper_']
-  > [class*='awsui_header_']:not(:empty):not([class*='awsui_with-hidden-content_']):not(:has([class*='awsui_tools_'])) {
+  > [class*='awsui_header_']:not(:empty):not([class*='awsui_with-hidden-content_']):not(:has([class*='awsui_tools_'])):not(:has([class*='awsui_header-controls_'] > [class*='awsui_vertical_'] > [class*='awsui_child_'] + [class*='awsui_child_'])) {
   border-block-end: var(--border-divider-section-width-dlkb8v, 1px) solid var(--color-border-divider-default-diwd4w) !important;
 }
 
-/* A table keeps its filter and pagination in the same header, under the title. There the line goes between the
-   title and that row. The negative margin carries it across the header's side padding to the card's edges. */
-[class*='awsui_header-controls_'] > [class*='awsui_tools_']:not(:first-child) {
+/* A table header often holds more than the title: a date or class picker and alerts stacked under it, and a
+   filter and pagination row. There the line goes straight under the title, the first item of the stack. The
+   negative margin carries it across the header's side padding to the card's edges. */
+[class*='awsui_header-controls_'] > [class*='awsui_vertical_'] > [class*='awsui_child_']:first-child:not(:only-child) {
+  margin-inline: calc(-1 * var(--space-table-horizontal-o0ypm8, 20px));
+  padding-inline: var(--space-table-horizontal-o0ypm8, 20px);
+  padding-block-end: var(--space-container-header-top-3txhx4, 12px);
+  border-block-end: var(--border-divider-section-width-dlkb8v, 1px) solid var(--color-border-divider-default-diwd4w);
+}
+
+/* With only a title above it, the filter and pagination row carries the line on its top edge. */
+[class*='awsui_header-controls_']:not(:has(> [class*='awsui_vertical_'] > [class*='awsui_child_'] + [class*='awsui_child_']))
+  > [class*='awsui_tools_']:not(:first-child) {
   margin-block-start: var(--space-container-header-top-3txhx4, 12px);
   margin-inline: calc(-1 * var(--space-table-horizontal-o0ypm8, 20px));
   padding-inline: var(--space-table-horizontal-o0ypm8, 20px) !important;

@@ -29,6 +29,11 @@ export const SubmitAttendance = z
   });
 export type SubmitAttendance = z.infer<typeof SubmitAttendance>;
 
+/** A change to a day that was already submitted, by someone allowed to correct the register, with the reason. */
+export const CorrectAttendance = SubmitAttendance.and(
+  z.object({ reason: z.string().trim().min(5, 'attendance.errors.reason').max(200, 'attendance.errors.reason') }),
+);
+
 export type AttendanceSummary = Record<MarkableStatus, number>;
 
 export type AttendanceSheet = {
@@ -42,6 +47,8 @@ export type AttendanceSheet = {
   /** Periods of this section on this date that the user may take attendance for. */
   periods: { number: number; time: string; subject: string }[];
   canDaily: boolean;
+  /** True when this user is correcting a day that would otherwise be locked. A reason is then required. */
+  correcting: boolean;
   holidayName: string | null;
   submitted: boolean;
   edited: boolean;
