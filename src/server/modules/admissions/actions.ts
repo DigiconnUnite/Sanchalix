@@ -4,7 +4,8 @@ import 'server-only';
 import { withAction } from '@/server/action';
 import { audit } from '@/server/audit';
 import { requirePermission } from '@/server/auth/context';
-import { AcceptAdmission, AdmissionInput, MoveAdmission } from './schemas';
+import { removeDocument, verifyDocument } from '@/server/modules/sis/documents';
+import { AcceptAdmission, AdmissionDocument, AdmissionInput, MoveAdmission } from './schemas';
 import { acceptAdmission as accept, createAdmission as create, moveAdmission as move } from './service';
 
 export async function createAdmission(input: unknown) {
@@ -30,6 +31,30 @@ export async function moveAdmission(input: unknown) {
       ...(data.note && { reason: data.note }),
     });
     return { applicationNo: admission.applicationNo };
+  });
+}
+
+export async function verifyAdmissionDocument(input: unknown) {
+  return withAction('sis.document.verify', async () => {
+    const ctx = await requirePermission('sis.admission.update');
+    const { admissionId, documentId } = AdmissionDocument.parse(input);
+    const document = await verifyDocument(ctx, admissionId, documentId, 'admission');
+    await audit(ctx, 'sis.document.verify', { type: 'admission', id: document.ownerId }, {
+      after: { documentId: String(document.id), type: document.type },
+    });
+    return { verified: true };
+  });
+}
+
+export async function deleteAdmissionDocument(input: unknown) {
+  return withAction('sis.document.delete', async () => {
+    const ctx = await requirePermission('sis.admission.update');
+    const { admissionId, documentId } = AdmissionDocument.parse(input);
+    const document = await removeDocument(ctx, admissionId, documentId, 'admission');
+    await audit(ctx, 'sis.document.delete', { type: 'admission', id: document.ownerId }, {
+      before: { documentId: String(document.id), type: document.type, fileName: document.fileName },
+    });
+    return { deleted: true };
   });
 }
 

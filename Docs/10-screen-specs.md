@@ -277,6 +277,7 @@ Built with `Board` (staff, rearrangeable in v1) or `Grid` (student, parent). Eve
 - **Student profile:** Edit and Withdraw student in the header (school admin); tabs Overview, Parents, Attendance, Fees, History. `/students/[id]/edit` reuses the Add student form without the section and guardian parts.
 - **Import students** (`/students/import`): download the template, choose a CSV, Check file, then Import. Row errors are listed with row, column and problem.
 - **Admissions** (`/admissions`, `/admissions/new`, `/admissions/[id]`): a list filtered by stage in the URL, a detail page whose primary button is the next stage, and a dialog that asks for the section and address when admitting.
+- **Admission documents:** the detail page has the same Documents table and upload form as the student profile. While a required document is unverified an info alert lists what is missing and the admit button is disabled with the reason "Verify all required documents first (2 remaining)".
 - **Subjects** (`/academics/subjects`) and **Timetable** (`/academics/timetable?section=`): a periods-by-days grid per section; the office sets or clears a period in a dialog.
 - **Homework** (`/homework`, `/homework/new`).
 - **Leave** (`/leave`, `/leave/new`): staff see their own requests; the principal and school admin see all and decide in a dialog with an optional comment.

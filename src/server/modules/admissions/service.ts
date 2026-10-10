@@ -8,6 +8,8 @@ import { Admission } from '@/server/models/admission';
 import { Class } from '@/server/models/class';
 import { Counter } from '@/server/models/counter';
 import { Section } from '@/server/models/section';
+import { Student } from '@/server/models/student';
+import { toDocumentRows } from '@/server/modules/sis/documents';
 import { createStudent } from '@/server/modules/sis/service';
 import {
   type AcceptAdmission,
@@ -19,6 +21,7 @@ import {
   type ListAdmissions,
   type MoveAdmission,
   NEXT,
+  REQUIRED_DOCUMENTS,
 } from './schemas';
 
 const scopeOf = (ctx: RequestContext) => ({
@@ -54,6 +57,7 @@ export async function createAdmission(ctx: RequestContext, input: AdmissionInput
     status: 'enquiry',
     applicant: { ...applicant, previousSchool: previousSchool || null, classSought: classId },
     guardians: [{ ...guardian, email: guardian.email ?? null }],
+    requiredDocuments: REQUIRED_DOCUMENTS,
     source,
     history: [{ at: new Date(), by: ctx.userId, from: null, to: 'enquiry', note: null }],
     createdBy: ctx.userId,
@@ -65,6 +69,11 @@ export async function createAdmission(ctx: RequestContext, input: AdmissionInput
     name: `${applicant.firstName} ${applicant.lastName}`.trim(),
   };
 }
+
+const missingDocuments = (admission: { requiredDocuments: string[]; documents: { type: string; verifiedAt?: Date | null }[] }) =>
+  admission.requiredDocuments.filter(
+    (type) => !admission.documents.some((document) => document.type === type && document.verifiedAt),
+  );
 
 type Lean = {
   _id: unknown;
@@ -137,6 +146,8 @@ export async function getAdmission(ctx: RequestContext, id: string): Promise<Adm
     studentId: admission.studentId ? String(admission.studentId) : null,
     next: NEXT[admission.status],
     sections: sections.map((section) => ({ id: String(section._id), name: section.displayName })),
+    documents: toDocumentRows(admission.documents),
+    missingDocuments: missingDocuments(admission),
     history: admission.history
       .map((entry) => ({
         at: (entry.at ?? admission.createdAt).toISOString(),
@@ -178,6 +189,8 @@ export async function acceptAdmission(ctx: RequestContext, { id, sectionId, addr
   return withTransaction(async (session) => {
     const admission = await Admission.findOne({ ...scopeOf(ctx), _id: id, status: 'offered' }).session(session).lean();
     if (!admission) throw new AppError('BUSINESS_RULE', 'admissions.errors.notOffered');
+    const missing = missingDocuments(admission).length;
+    if (missing > 0) throw new AppError('BUSINESS_RULE', 'admissions.errors.documents', { count: missing });
     const section = await Section.findOne({ schoolId, _id: sectionId, classId: admission.applicant.classSought })
       .select('_id')
       .session(session)
@@ -204,6 +217,9 @@ export async function acceptAdmission(ctx: RequestContext, { id, sectionId, addr
       },
       session,
     );
+    if (admission.documents.length > 0) {
+      await Student.updateOne({ schoolId, _id: student.id }, { documents: admission.documents }, { session });
+    }
     await Admission.updateOne(
       { schoolId, _id: admission._id },
       {

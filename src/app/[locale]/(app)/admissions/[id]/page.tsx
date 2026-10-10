@@ -14,5 +14,5 @@ export default async function AdmissionPage({ params }: { params: Promise<{ id: 
   const ctx = await pageContext('sis.admission.read');
   const admission = await getAdmission(ctx, (await params).id);
   if (!admission) notFound();
-  return <AdmissionView key={admission.status} admission={admission} canEdit={can(ctx.role, 'sis.admission.update')} />;
+  return <AdmissionView key={admission.status} admission={admission} canEdit={can(ctx.role, 'sis.admission.update')} canReadDocuments={can(ctx.role, 'sis.document.read')} />;
 }

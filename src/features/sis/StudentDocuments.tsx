@@ -18,6 +18,7 @@ import { useState } from 'react';
 import { EmptyState } from '@/components/EmptyState';
 import { svg } from '@/components/icons';
 import { useRouter } from '@/i18n/navigation';
+import { deleteAdmissionDocument, verifyAdmissionDocument } from '@/server/modules/admissions/actions';
 import { deleteStudentDocument, verifyStudentDocument } from '@/server/modules/sis/actions';
 import type { DocumentRow } from '@/server/modules/sis/documents';
 
@@ -27,10 +28,13 @@ type Feedback = { type: 'success' | 'error'; text: string };
 
 export function StudentDocuments({
   studentId,
+  admission = false,
   documents,
   canEdit,
 }: {
+  /** The student's id, or with `admission` the application's. */
   studentId: string;
+  admission?: boolean;
   documents: DocumentRow[];
   canEdit: boolean;
 }) {
@@ -44,7 +48,15 @@ export function StudentDocuments({
   const typeOptions = TYPES.map((value) => ({ value, label: t(`type.${value}`) }));
   const file = files[0];
   const tooBig = Boolean(file && file.size > MAX_BYTES);
-  const base = `/api/v1/students/${studentId}/documents`;
+  const base = `/api/v1/${admission ? 'admissions' : 'students'}/${studentId}/documents`;
+  const verify = (documentId: string) =>
+    admission
+      ? verifyAdmissionDocument({ admissionId: studentId, documentId })
+      : verifyStudentDocument({ studentId, documentId });
+  const remove = (documentId: string) =>
+    admission
+      ? deleteAdmissionDocument({ admissionId: studentId, documentId })
+      : deleteStudentDocument({ studentId, documentId });
 
   async function upload() {
     if (!file) return;
@@ -130,9 +142,7 @@ export function StudentDocuments({
                         <Button
                           variant="inline-link"
                           ariaLabel={t('verifyLabel', { name: row.fileName })}
-                          onClick={() =>
-                            void act(() => verifyStudentDocument({ studentId, documentId: row.id }), t('verifiedDone'))
-                          }
+                          onClick={() => void act(() => verify(row.id), t('verifiedDone'))}
                         >
                           {t('verify')}
                         </Button>
@@ -204,10 +214,7 @@ export function StudentDocuments({
               <Button
                 variant="primary"
                 loading={busy}
-                onClick={() =>
-                  removing &&
-                  void act(() => deleteStudentDocument({ studentId, documentId: removing.id }), t('deleted'))
-                }
+                onClick={() => removing && void act(() => remove(removing.id), t('deleted'))}
               >
                 {t('deleteConfirm')}
               </Button>

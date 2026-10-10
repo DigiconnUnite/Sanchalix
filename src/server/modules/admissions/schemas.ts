@@ -1,6 +1,7 @@
 import 'server-only';
 import { z } from 'zod';
 import { ADMISSION_SOURCES, ADMISSION_STATUSES } from '@/server/models/admission';
+import type { DocumentRow } from '@/server/modules/sis/documents';
 import { StudentInput } from '@/server/modules/sis/schemas';
 
 const E = 'admissions.errors';
@@ -49,6 +50,10 @@ export const ListAdmissions = z.object({
 });
 export type ListAdmissions = z.infer<typeof ListAdmissions>;
 
+// ponytail: one list for every school and class; move it to school settings when a school needs its own.
+export const REQUIRED_DOCUMENTS = ['birth_certificate', 'photo'];
+export const AdmissionDocument = z.object({ admissionId: Id('notFound'), documentId: Id('notFound') });
+
 export type AdmissionRow = {
   id: string;
   applicationNo: string;
@@ -70,5 +75,8 @@ export type AdmissionDetail = AdmissionRow & {
   studentId: string | null;
   next: AdmissionStatus[];
   sections: { id: string; name: string }[];
+  documents: DocumentRow[];
+  /** Required document types with no verified file yet. The applicant can't be admitted until this is empty. */
+  missingDocuments: string[];
   history: { at: string; from: string | null; to: string; note: string | null }[];
 };

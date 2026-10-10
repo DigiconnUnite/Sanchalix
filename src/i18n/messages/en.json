@@ -1854,7 +1854,13 @@
       "notFound": "We couldn't find that application.",
       "section": "Choose a section of the class the applicant asked for",
       "cannotMove": "This application has already moved on. Reload the page to see where it is now.",
-      "notOffered": "Only an application with an offered seat can be admitted."
+      "notOffered": "Only an application with an offered seat can be admitted.",
+      "documents": "Verify all required documents first ({count} remaining)."
+    },
+    "documents": {
+      "verifyFirst": "Verify all required documents first ({count} remaining)",
+      "missingTitle": "{count, plural, one {# required document is} other {# required documents are}} not verified yet",
+      "missingBody": "Upload and verify these before admitting the applicant: {list}."
     }
   },
   "users": {

@@ -82,7 +82,7 @@ export async function verifyStudentDocument(input: unknown) {
     const ctx = await requirePermission('sis.student.update');
     const { studentId, documentId } = DocumentRef.parse(input);
     const document = await verifyDocument(ctx, studentId, documentId);
-    await audit(ctx, 'sis.document.verify', { type: 'student', id: document.studentId }, {
+    await audit(ctx, 'sis.document.verify', { type: 'student', id: document.ownerId }, {
       after: { documentId: String(document.id), type: document.type },
     });
     return { verified: true };
@@ -94,7 +94,7 @@ export async function deleteStudentDocument(input: unknown) {
     const ctx = await requirePermission('sis.student.update');
     const { studentId, documentId } = DocumentRef.parse(input);
     const document = await removeDocument(ctx, studentId, documentId);
-    await audit(ctx, 'sis.document.delete', { type: 'student', id: document.studentId }, {
+    await audit(ctx, 'sis.document.delete', { type: 'student', id: document.ownerId }, {
       before: { documentId: String(document.id), type: document.type, fileName: document.fileName },
     });
     return { deleted: true };

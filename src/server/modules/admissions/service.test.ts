@@ -95,6 +95,14 @@ it('admits an offered applicant once, into a section of the class sought, or wri
   const admission = await Admission.findOne({ schoolId: ctx.schoolId, applicationNo: 'APP-2026-00001' }).lean();
   const id = String(admission?._id);
 
+  expect((await getAdmission(ctx, id))?.missingDocuments).toEqual(['birth_certificate', 'photo']);
+  await expect(acceptAdmission(ctx, { id, sectionId, address: ADDRESS })).rejects.toMatchObject({ code: 'BUSINESS_RULE' });
+  const file = { key: 'k', fileName: 'scan.pdf', mime: 'application/pdf', size: 10, verifiedAt: new Date() };
+  await Admission.updateOne(
+    { schoolId: ctx.schoolId, _id: id },
+    { documents: [{ ...file, type: 'birth_certificate' }, { ...file, type: 'photo' }] },
+  );
+
   await expect(acceptAdmission(ctx, { id, sectionId: otherClassSectionId, address: ADDRESS })).rejects.toMatchObject({
     code: 'NOT_FOUND',
   });
@@ -105,6 +113,7 @@ it('admits an offered applicant once, into a section of the class sought, or wri
 
   const accepted = await acceptAdmission(ctx, { id, sectionId, address: ADDRESS });
   expect(accepted.student.name).toBe('Ishaan Verma');
+  expect((await Student.findOne({ schoolId: ctx.schoolId, _id: accepted.student.id }).lean())?.documents).toHaveLength(2);
   expect(await getAdmission(ctx, id)).toMatchObject({ status: 'accepted', studentId: String(accepted.student.id) });
   await expect(acceptAdmission(ctx, { id, sectionId, address: ADDRESS })).rejects.toMatchObject({
     code: 'BUSINESS_RULE',

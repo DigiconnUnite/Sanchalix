@@ -24,12 +24,14 @@ import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { AppLink } from '@/components/AppLink';
 import { useCrumb } from '@/components/Crumb';
 import { EmptyState } from '@/components/EmptyState';
+import { StudentDocuments } from '@/features/sis/StudentDocuments';
 import { usePathname, useRouter } from '@/i18n/navigation';
 import { formatPhone } from '@/lib/phone';
 import { acceptAdmission, createAdmission, moveAdmission } from '@/server/modules/admissions/actions';
 import type { AdmissionDetail, AdmissionRow, AdmissionStatus } from '@/server/modules/admissions/schemas';
 
 const LIST = '/admissions';
+const FINAL = ['accepted', 'rejected', 'withdrawn'];
 const NEW = '/admissions/new';
 const NONE = '—';
 const FILTERS = ['open', 'enquiry', 'applied', 'documents_pending', 'assessment', 'offered', 'accepted', 'rejected', 'withdrawn'];
@@ -319,8 +321,19 @@ export function AdmissionForm({ classes }: { classes: Option[] }) {
 
 const ADDRESS = { line1: '', city: '', state: '', pincode: '' };
 
-export function AdmissionView({ admission, canEdit }: { admission: AdmissionDetail; canEdit: boolean }) {
+export function AdmissionView({
+  admission,
+  canEdit,
+  canReadDocuments,
+}: {
+  admission: AdmissionDetail;
+  canEdit: boolean;
+  canReadDocuments: boolean;
+}) {
   const t = useTranslations('admissions');
+  const tDocument = useTranslations('sis.documents.type');
+  const missing = admission.missingDocuments;
+  const inProgress = !FINAL.includes(admission.status);
   useCrumb(admission.name);
   const tStudent = useTranslations('sis.students');
   const router = useRouter();
@@ -383,7 +396,12 @@ export function AdmissionView({ admission, canEdit }: { admission: AdmissionDeta
                   </Button>
                 ))}
                 {admission.status === 'offered' ? (
-                  <Button variant="primary" onClick={() => open('accepted')}>
+                  <Button
+                    variant="primary"
+                    disabled={missing.length > 0}
+                    disabledReason={t('documents.verifyFirst', { count: missing.length })}
+                    onClick={() => open('accepted')}
+                  >
                     {t('move.accepted')}
                   </Button>
                 ) : (
@@ -439,6 +457,19 @@ export function AdmissionView({ admission, canEdit }: { admission: AdmissionDeta
             ]}
           />
         </Container>
+        {inProgress && missing.length > 0 && (
+          <Alert type="info" header={t('documents.missingTitle', { count: missing.length })}>
+            {t('documents.missingBody', { list: missing.map((type) => tDocument(type)).join(', ') })}
+          </Alert>
+        )}
+        {canReadDocuments && (inProgress || admission.documents.length > 0) && (
+          <StudentDocuments
+            admission
+            studentId={admission.id}
+            documents={admission.documents}
+            canEdit={canEdit && inProgress}
+          />
+        )}
         <Table
           variant="container"
           trackBy="at"

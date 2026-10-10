@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { Types } from 'mongoose';
 import { AppError } from '@/lib/appError';
 import type { RequestContext } from '@/server/auth/context';
+import { Admission } from '@/server/models/admission';
 import { Student } from '@/server/models/student';
 import { detectFileKind, getFile, MAX_FILE_BYTES, putFile, removeFile, safeFileName } from '@/server/storage/store';
 
@@ -19,6 +20,20 @@ export const DOCUMENT_TYPES = [
 export type DocumentType = (typeof DOCUMENT_TYPES)[number];
 export const MAX_BYTES = MAX_FILE_BYTES;
 
+/** An applicant's documents are kept on the application until they are admitted, then move to the student. */
+export type DocumentOwner = 'student' | 'admission';
+// Both models keep the same `documents`, `branchId` and `updatedBy` fields, which is all that is touched here.
+const modelOf = (owner: DocumentOwner) => (owner === 'admission' ? Admission : Student) as unknown as typeof Student;
+
+type Stored = { _id: unknown; type: string; fileName: string; size: number; verifiedAt?: Date | null };
+export const toDocumentRows = (documents: Stored[]): DocumentRow[] =>
+  documents.map((document) => ({
+    id: String(document._id),
+    type: document.type as DocumentType,
+    fileName: document.fileName,
+    size: document.size,
+    verified: Boolean(document.verifiedAt),
+  }));
 
 export type DocumentRow = {
   id: string;
@@ -38,25 +53,21 @@ export async function listDocuments(ctx: RequestContext, studentId: string): Pro
   const student = valid(studentId)
     ? await Student.findOne({ ...scopeOf(ctx), _id: studentId }).select('documents').lean()
     : null;
-  return (student?.documents ?? []).map((document) => ({
-    id: String(document._id),
-    type: document.type as DocumentType,
-    fileName: document.fileName,
-    size: document.size,
-    verified: Boolean(document.verifiedAt),
-  }));
+  return toDocumentRows(student?.documents ?? []);
 }
 
 export async function addDocument(
   ctx: RequestContext,
   studentId: string,
   input: { type: string; fileName: string; bytes: Uint8Array },
+  owner: DocumentOwner = 'student',
 ) {
+  const Owner = modelOf(owner);
   if (!DOCUMENT_TYPES.includes(input.type as DocumentType)) throw new AppError('VALIDATION', `${E}.type`);
   if (input.bytes.length === 0 || input.bytes.length > MAX_BYTES) throw new AppError('VALIDATION', `${E}.size`);
   const kind = detectFileKind(input.bytes);
   if (!kind) throw new AppError('VALIDATION', `${E}.kind`);
-  if (!valid(studentId) || !(await Student.exists({ ...scopeOf(ctx), _id: studentId }))) {
+  if (!valid(studentId) || !(await Owner.exists({ ...scopeOf(ctx), _id: studentId }))) {
     throw new AppError('NOT_FOUND', `${E}.notFound`);
   }
 
@@ -64,32 +75,37 @@ export async function addDocument(
   const key = `${ctx.schoolId.toString()}/${studentId}/${randomUUID()}.${kind.ext}`;
   await putFile(key, input.bytes);
   const fileName = safeFileName(input.fileName, kind.ext);
-  await Student.updateOne(
+  await Owner.updateOne(
     { ...scopeOf(ctx), _id: studentId },
     {
       $push: { documents: { _id: id, type: input.type, key, fileName, mime: kind.mime, size: input.bytes.length } },
       updatedBy: ctx.userId,
     },
   );
-  return { id, studentId: new Types.ObjectId(studentId), type: input.type, fileName };
+  return { id, ownerId: new Types.ObjectId(studentId), type: input.type, fileName };
 }
 
-async function find(ctx: RequestContext, studentId: string, documentId: string) {
+async function find(ctx: RequestContext, studentId: string, documentId: string, owner: DocumentOwner) {
   const student =
     valid(studentId) && valid(documentId)
-      ? await Student.findOne({ ...scopeOf(ctx), _id: studentId, 'documents._id': documentId })
+      ? await modelOf(owner).findOne({ ...scopeOf(ctx), _id: studentId, 'documents._id': documentId })
           .select('documents')
           .lean()
       : null;
   const document = student?.documents.find((candidate) => String(candidate._id) === documentId);
   if (!student || !document) throw new AppError('NOT_FOUND', `${E}.notFound`);
-  return { studentId: student._id, document };
+  return { ownerId: student._id, document };
 }
 
-export async function readDocument(ctx: RequestContext, studentId: string, documentId: string) {
-  const { studentId: id, document } = await find(ctx, studentId, documentId);
+export async function readDocument(
+  ctx: RequestContext,
+  studentId: string,
+  documentId: string,
+  owner: DocumentOwner = 'student',
+) {
+  const { ownerId: id, document } = await find(ctx, studentId, documentId, owner);
   return {
-    studentId: id,
+    ownerId: id,
     id: document._id,
     type: document.type,
     fileName: document.fileName,
@@ -98,21 +114,31 @@ export async function readDocument(ctx: RequestContext, studentId: string, docum
   };
 }
 
-export async function verifyDocument(ctx: RequestContext, studentId: string, documentId: string) {
-  const { studentId: id, document } = await find(ctx, studentId, documentId);
-  await Student.updateOne(
+export async function verifyDocument(
+  ctx: RequestContext,
+  studentId: string,
+  documentId: string,
+  owner: DocumentOwner = 'student',
+) {
+  const { ownerId: id, document } = await find(ctx, studentId, documentId, owner);
+  await modelOf(owner).updateOne(
     { ...scopeOf(ctx), _id: id, 'documents._id': document._id },
     { $set: { 'documents.$.verifiedBy': ctx.userId, 'documents.$.verifiedAt': new Date() } },
   );
-  return { id: document._id, studentId: id, type: document.type };
+  return { id: document._id, ownerId: id, type: document.type };
 }
 
-export async function removeDocument(ctx: RequestContext, studentId: string, documentId: string) {
-  const { studentId: id, document } = await find(ctx, studentId, documentId);
-  await Student.updateOne(
+export async function removeDocument(
+  ctx: RequestContext,
+  studentId: string,
+  documentId: string,
+  owner: DocumentOwner = 'student',
+) {
+  const { ownerId: id, document } = await find(ctx, studentId, documentId, owner);
+  await modelOf(owner).updateOne(
     { ...scopeOf(ctx), _id: id },
     { $pull: { documents: { _id: document._id } }, updatedBy: ctx.userId },
   );
   await removeFile(document.key);
-  return { id: document._id, studentId: id, type: document.type, fileName: document.fileName };
+  return { id: document._id, ownerId: id, type: document.type, fileName: document.fileName };
 }
