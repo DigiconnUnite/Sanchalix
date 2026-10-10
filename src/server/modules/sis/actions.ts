@@ -114,6 +114,20 @@ export async function transferStudent(input: unknown) {
   });
 }
 
+export async function transferOutStudent(input: unknown) {
+  return withAction('sis.student.transferOut', async () => {
+    const ctx = await requirePermission('sis.certificate.create');
+    const { id, reason } = WithdrawStudent.parse(input);
+    const student = await withdraw(ctx, id, reason, true);
+    await audit(ctx, 'sis.student.transferOut', { type: 'student', id: student.id }, {
+      before: { status: 'active' },
+      after: { status: 'transferred', leftOn: student.leftOn, tcNo: student.tcNo },
+      reason,
+    });
+    return { name: student.name, tcNo: student.tcNo };
+  });
+}
+
 export async function withdrawStudent(input: unknown) {
   return withAction('sis.student.withdraw', async () => {
     const ctx = await requirePermission('sis.student.update');

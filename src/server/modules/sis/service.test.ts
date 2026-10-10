@@ -8,7 +8,8 @@ import { Guardian } from '@/server/models/guardian';
 import { School } from '@/server/models/school';
 import { Section } from '@/server/models/section';
 import { Student } from '@/server/models/student';
-import { getStudent } from './queries';
+import { Invoice } from '@/server/models/invoice';
+import { getStudent, getTransferCertificate } from './queries';
 import { GuardianUpdate, StudentInput, StudentUpdate } from './schemas';
 import { createStudent, transferStudent, updateGuardian, updateStudent, withdrawStudent } from './service';
 
@@ -192,4 +193,26 @@ it('corrects a guardian of this student, without taking another parent’s numbe
 
   expect(await updateGuardian(ctx, change())).toMatchObject({ name: 'Sunita S. Sharma', before: { name: 'Sunita Sharma' } });
   expect((await getStudent(ctx, studentId))?.guardians[0]).toMatchObject({ name: 'Sunita S. Sharma', phone: '+919876500000' });
+});
+
+it('transfers a student out with a certificate number, and leaves unpaid fees to the principal', async () => {
+  const student = await Student.findOne({ schoolId: ctx.schoolId, firstName: 'Kabir' }).orFail().lean();
+  const id = String(student._id);
+  await Invoice.collection.insertOne({
+    schoolId: ctx.schoolId,
+    studentId: student._id,
+    invoiceNo: 'INV-TC-1',
+    installmentId: new Types.ObjectId(),
+    status: 'issued',
+    balanceMinor: 50_000,
+    deletedAt: null,
+  });
+  expect(await getTransferCertificate(ctx, id)).toBeNull();
+  await expect(withdrawStudent(ctx, id, 'Moved city', true)).rejects.toMatchObject({ code: 'BUSINESS_RULE' });
+
+  const year = new Date().getFullYear();
+  expect(await withdrawStudent({ ...ctx, role: 'principal' }, id, 'Moved city', true)).toMatchObject({ tcNo: `TC/${year}/0001` });
+  expect(await getStudent(ctx, id)).toMatchObject({ status: 'transferred', tcNo: `TC/${year}/0001` });
+  expect(await getTransferCertificate(ctx, id)).toMatchObject({ reason: 'Moved city', duesCleared: false });
+  expect(await getTransferCertificate(otherSchool, id)).toBeNull();
 });

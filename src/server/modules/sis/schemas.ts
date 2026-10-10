@@ -77,6 +77,24 @@ export const TransferStudent = z.object({ id: Id, sectionId: Id });
 
 export const WithdrawStudent = z.object({ id: Id, reason: required('sis.students.errors.reason', 200) });
 
+export type TransferCertificate = {
+  studentId: string;
+  tcNo: string;
+  schoolName: string;
+  schoolAddress: string;
+  affiliationNo: string | null;
+  name: string;
+  admissionNo: string;
+  dob: string;
+  gender: (typeof GENDERS)[number];
+  guardians: string;
+  classSection: string | null;
+  academicYear: string | null;
+  leftOn: string;
+  reason: string;
+  duesCleared: boolean;
+};
+
 export type StudentRow = {
   id: string;
   name: string;
@@ -98,6 +116,7 @@ export type StudentProfile = {
   status: StudentStatus;
   classSection: string | null;
   rollNo: number | null;
+  tcNo: string | null;
   address: string | null;
   /** The raw values the edit form starts from, and the version that guards against overwriting someone else's change. */
   editable: {

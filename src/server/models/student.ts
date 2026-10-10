@@ -47,6 +47,7 @@ const schema = new Schema(
     ],
     leftOn: { type: String, match: DATE_STR },
     leavingReason: String,
+    tcNo: String,
     ...audit,
   },
   { timestamps: true },

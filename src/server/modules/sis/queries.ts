@@ -4,7 +4,9 @@ import { AppError } from '@/lib/appError';
 import type { RequestContext } from '@/server/auth/context';
 import { paginate } from '@/server/db/paginate';
 import { Enrollment } from '@/server/models/enrollment';
+import { AcademicYear } from '@/server/models/academicYear';
 import { Guardian } from '@/server/models/guardian';
+import { School } from '@/server/models/school';
 import { Section } from '@/server/models/section';
 import { Student } from '@/server/models/student';
 import { AuditLog } from '@/server/models/auditLog';
@@ -21,6 +23,7 @@ import type {
   StudentProfile,
   StudentRow,
   StudentStatus,
+  TransferCertificate,
 } from './schemas';
 
 const COUNT_CAP = 10_001;
@@ -98,7 +101,7 @@ export async function getStudent(ctx: RequestContext, id: string): Promise<Stude
   const student = await Student.findOne(await scopeFilter(ctx))
     .and([{ _id: id }])
     .select(
-      'firstName lastName admissionNo dob gender bloodGroup status address guardianIds primaryGuardianId currentEnrollmentId updatedAt',
+      'firstName lastName admissionNo dob gender bloodGroup status address guardianIds primaryGuardianId currentEnrollmentId tcNo updatedAt',
     )
     .lean();
   if (!student) return null;
@@ -122,6 +125,7 @@ export async function getStudent(ctx: RequestContext, id: string): Promise<Stude
     status: student.status,
     classSection: section?.displayName ?? null,
     rollNo: enrollment?.rollNo ?? null,
+    tcNo: student.tcNo ?? null,
     address: address
       ? [address.line1, address.line2, address.city, address.state, address.pincode].filter(Boolean).join(', ')
       : null,
@@ -210,6 +214,47 @@ export async function getStudentAttendance(ctx: RequestContext, studentId: strin
 }
 
 /** Every invoice and receipt of the student. Call only after getStudent has confirmed access. */
+/** Everything printed on a transfer certificate. Null until the student has been transferred out. */
+export async function getTransferCertificate(ctx: RequestContext, id: string): Promise<TransferCertificate | null> {
+  if (!Types.ObjectId.isValid(id)) return null;
+  const { schoolId } = ctx;
+  const student = await Student.findOne(await scopeFilter(ctx))
+    .and([{ _id: id, tcNo: { $ne: null } }])
+    .select('firstName lastName admissionNo dob gender guardianIds currentEnrollmentId tcNo leftOn leavingReason')
+    .lean();
+  if (!student?.tcNo || !student.leftOn) return null;
+
+  const [school, enrollment, guardians, unpaid] = await Promise.all([
+    School.findById(schoolId).select('name address affiliationNo').lean(),
+    Enrollment.findOne({ schoolId, _id: student.currentEnrollmentId }).select('sectionId academicYearId').lean(),
+    Guardian.find({ schoolId, _id: { $in: student.guardianIds } }).select('name').lean(),
+    Invoice.exists({ schoolId, studentId: student._id, status: { $ne: 'void' }, balanceMinor: { $gt: 0 } }),
+  ]);
+  const [section, year] = await Promise.all([
+    enrollment ? Section.findOne({ schoolId, _id: enrollment.sectionId }).select('displayName').lean() : null,
+    enrollment ? AcademicYear.findOne({ schoolId, _id: enrollment.academicYearId }).select('label').lean() : null,
+  ]);
+  const address = school?.address;
+
+  return {
+    studentId: String(student._id),
+    tcNo: student.tcNo,
+    schoolName: school?.name ?? '',
+    schoolAddress: address ? [address.line1, address.line2, address.city, address.state, address.pincode].filter(Boolean).join(', ') : '',
+    affiliationNo: school?.affiliationNo ?? null,
+    name: `${student.firstName} ${student.lastName ?? ''}`.trim(),
+    admissionNo: student.admissionNo,
+    dob: student.dob,
+    gender: student.gender,
+    guardians: guardians.map((guardian) => guardian.name).join(', '),
+    classSection: section?.displayName ?? null,
+    academicYear: year?.label ?? null,
+    leftOn: student.leftOn,
+    reason: student.leavingReason ?? '',
+    duesCleared: !unpaid,
+  };
+}
+
 export async function getStudentFees(ctx: RequestContext, studentId: string): Promise<StudentFees> {
   const { schoolId } = ctx;
   const [invoices, payments] = await Promise.all([

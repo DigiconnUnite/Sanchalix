@@ -33,7 +33,7 @@ import { formatPhone } from '@/lib/phone';
 import type { StudentResult } from '@/server/modules/exams/service';
 import type { PortalAccountRow } from '@/server/modules/portal/service';
 import type { DocumentRow } from '@/server/modules/sis/documents';
-import { transferStudent, withdrawStudent } from '@/server/modules/sis/actions';
+import { transferOutStudent, transferStudent, withdrawStudent } from '@/server/modules/sis/actions';
 import type { HistoryEntry, StudentAttendance, StudentFees, StudentProfile } from '@/server/modules/sis/schemas';
 import { GuardianEdit } from './GuardianEdit';
 import { StudentDocuments } from './StudentDocuments';
@@ -67,6 +67,7 @@ export function StudentProfileView({
   tab,
   notice,
   canEdit,
+  canCertify,
   sections,
   accounts,
   results,
@@ -83,6 +84,7 @@ export function StudentProfileView({
   tab: string;
   notice: 'added' | 'updated' | 'withdrawn' | 'transferred' | null;
   canEdit: boolean;
+  canCertify: boolean;
 }) {
   const t = useTranslations('sis.students');
   useCrumb(student.name);
@@ -92,7 +94,8 @@ export function StudentProfileView({
   const tMethod = useTranslations('fees.counter.methods');
   const router = useRouter();
   const pathname = usePathname();
-  const [withdrawing, setWithdrawing] = useState(false);
+  const [leaving, setLeaving] = useState<'withdraw' | 'transferOut' | null>(null);
+  const leave = leaving ?? 'withdraw';
   const [moving, setMoving] = useState(false);
   const [sectionId, setSectionId] = useState('');
   const sectionOptions = sections.map(({ id, name }) => ({ value: id, label: name }));
@@ -113,14 +116,17 @@ export function StudentProfileView({
   const label = (translate: { has: (key: string) => boolean; (key: string): string }, key: string) =>
     translate.has(key) ? translate(key) : key;
   const editHref = `${pathname}/edit`;
+  const certificateHref = `${pathname}/transfer-certificate`;
 
   async function withdraw() {
     setBusy(true);
     setError(null);
-    const result = await withdrawStudent({ id: student.id, reason });
+    const transferOut = leaving === 'transferOut';
+    const result = await (transferOut ? transferOutStudent : withdrawStudent)({ id: student.id, reason });
     setBusy(false);
     if (!result.ok) return setError(result.error.fieldErrors?.reason ?? result.error.message);
-    setWithdrawing(false);
+    setLeaving(null);
+    if (transferOut) return router.push(certificateHref);
     router.replace(`${pathname}?notice=withdrawn`);
     router.refresh();
   }
@@ -146,33 +152,52 @@ export function StudentProfileView({
             t('profile.description', { classSection: student.classSection, rollNo: student.rollNo ?? NONE })
           }
           actions={
-            canEdit && (
+            (canEdit || canCertify) && (
               <SpaceBetween direction="horizontal" size="xs">
+                {canCertify && student.tcNo && (
+                  <Button
+                    iconSvg={svg('certificate')}
+                    href={certificateHref}
+                    onFollow={(event) => {
+                      event.preventDefault();
+                      router.push(certificateHref);
+                    }}
+                  >
+                    {t('profile.transferOut.certificate')}
+                  </Button>
+                )}
                 {student.status === 'active' && (
                   <ButtonDropdown
                     items={[
-                      { id: 'transfer', text: t('profile.transfer.action'), iconSvg: svg('transfer') },
-                      { id: 'withdraw', text: t('profile.withdraw.action') },
+                      ...(canEdit
+                        ? [{ id: 'transfer', text: t('profile.transfer.action'), iconSvg: svg('transfer') }]
+                        : []),
+                      ...(canCertify
+                        ? [{ id: 'transferOut', text: t('profile.transferOut.action'), iconSvg: svg('certificate') }]
+                        : []),
+                      ...(canEdit ? [{ id: 'withdraw', text: t('profile.withdraw.action') }] : []),
                     ]}
                     onItemClick={({ detail }) => {
                       setError(null);
                       if (detail.id === 'transfer') setMoving(true);
-                      else setWithdrawing(true);
+                      else setLeaving(detail.id === 'transferOut' ? 'transferOut' : 'withdraw');
                     }}
                   >
                     {t('profile.actions')}
                   </ButtonDropdown>
                 )}
-                <Button
-                  iconSvg={svg('edit')}
-                  href={editHref}
-                  onFollow={(event) => {
-                    event.preventDefault();
-                    router.push(editHref);
-                  }}
-                >
-                  {t('profile.edit')}
-                </Button>
+                {canEdit && (
+                  <Button
+                    iconSvg={svg('edit')}
+                    href={editHref}
+                    onFollow={(event) => {
+                      event.preventDefault();
+                      router.push(editHref);
+                    }}
+                  >
+                    {t('profile.edit')}
+                  </Button>
+                )}
               </SpaceBetween>
             )
           }
@@ -528,25 +553,31 @@ export function StudentProfileView({
         </SpaceBetween>
       </Modal>
       <Modal
-        visible={withdrawing}
-        onDismiss={() => setWithdrawing(false)}
-        header={t('profile.withdraw.title', { name: student.name })}
+        visible={leaving !== null}
+        onDismiss={() => setLeaving(null)}
+        header={t(`profile.${leave}.title`, { name: student.name })}
         closeAriaLabel={t('profile.withdraw.cancel')}
         footer={
           <Box float="right">
             <SpaceBetween direction="horizontal" size="xs">
-              <Button variant="link" onClick={() => setWithdrawing(false)}>
+              <Button variant="link" onClick={() => setLeaving(null)}>
                 {t('profile.withdraw.cancel')}
               </Button>
               <Button variant="primary" loading={busy} onClick={() => void withdraw()}>
-                {t('profile.withdraw.confirm')}
+                {t(`profile.${leave}.confirm`)}
               </Button>
             </SpaceBetween>
           </Box>
         }
       >
         <SpaceBetween size="m">
-          <Box>{t('profile.withdraw.body')}</Box>
+          <Box>{t(`profile.${leave}.body`)}</Box>
+          {leaving === 'transferOut' && fees && fees.dueMinor > 0 && (
+            <Alert type="warning">
+              {t('profile.transferOut.dues', { amount: formatMoney(fees.dueMinor) })}{' '}
+              <AppLink href={`/fees/counter?student=${student.id}`}>{t('profile.transferOut.collect')}</AppLink>
+            </Alert>
+          )}
           <FormField label={t('profile.withdraw.reason')} errorText={error}>
             <Textarea value={reason} rows={3} onChange={({ detail }) => setReason(detail.value)} />
           </FormField>

@@ -2,11 +2,13 @@ import 'server-only';
 import { type ClientSession, Types } from 'mongoose';
 import { AppError } from '@/lib/appError';
 import type { RequestContext } from '@/server/auth/context';
+import { can } from '@/server/auth/permissions';
 import { withTransaction } from '@/server/db/transaction';
 import { AcademicYear } from '@/server/models/academicYear';
 import { Counter } from '@/server/models/counter';
 import { Enrollment } from '@/server/models/enrollment';
 import { Guardian } from '@/server/models/guardian';
+import { Invoice } from '@/server/models/invoice';
 import { School } from '@/server/models/school';
 import { Section } from '@/server/models/section';
 import { Student } from '@/server/models/student';
@@ -212,15 +214,38 @@ export async function transferStudent(ctx: RequestContext, id: string, sectionId
 }
 
 /** Marks an active student as withdrawn and closes their enrollment. The record and its history stay. */
-export async function withdrawStudent(ctx: RequestContext, id: string, reason: string) {
+/**
+ * Ends a student's time at the school. A transfer out also gives their transfer certificate its serial number, and
+ * with fees unpaid it is the principal's call (US-2.4), so only a role that approves certificates may go ahead.
+ */
+export async function withdrawStudent(ctx: RequestContext, id: string, reason: string, transferOut = false) {
   const scope = officeScope(ctx);
+  if (transferOut && !can(ctx.role, 'sis.certificate.approve')) {
+    const unpaid = { schoolId: ctx.schoolId, studentId: id, status: { $ne: 'void' as const }, balanceMinor: { $gt: 0 } };
+    if (await Invoice.exists(unpaid)) throw new AppError('BUSINESS_RULE', 'sis.students.errors.duesUnpaid');
+  }
   const school = await School.findById(ctx.schoolId).select('timezone').lean();
   const leftOn = todayIn(school?.timezone ?? 'Asia/Kolkata');
 
   return withTransaction(async (session) => {
+    // Taken inside the transaction, so a transfer that fails doesn't leave a gap in the certificate register.
+    const counter = transferOut
+      ? await Counter.findOneAndUpdate(
+          { _id: `${ctx.schoolId.toString()}:tc:${leftOn.slice(0, 4)}` },
+          { $inc: { seq: 1 } },
+          { upsert: true, returnDocument: 'after', session },
+        ).lean()
+      : null;
+    const tcNo = counter ? `TC/${leftOn.slice(0, 4)}/${String(counter.seq).padStart(4, '0')}` : null;
     const student = await Student.findOneAndUpdate(
       { ...scope, _id: id, status: 'active' },
-      { status: 'withdrawn', leftOn, leavingReason: reason, updatedBy: ctx.userId },
+      {
+        status: transferOut ? 'transferred' : 'withdrawn',
+        leftOn,
+        leavingReason: reason,
+        ...(tcNo && { tcNo }),
+        updatedBy: ctx.userId,
+      },
       { session },
     )
       .select('firstName lastName currentEnrollmentId')
@@ -231,6 +256,6 @@ export async function withdrawStudent(ctx: RequestContext, id: string, reason: s
       { status: 'transferred', updatedBy: ctx.userId },
       { session },
     );
-    return { id: student._id, name: `${student.firstName} ${student.lastName ?? ''}`.trim(), leftOn };
+    return { id: student._id, name: `${student.firstName} ${student.lastName ?? ''}`.trim(), leftOn, tcNo };
   });
 }

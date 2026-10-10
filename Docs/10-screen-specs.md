@@ -280,7 +280,8 @@ Built with `Board` (staff, rearrangeable in v1) or `Grid` (student, parent). Eve
 - **Subjects** (`/academics/subjects`) and **Timetable** (`/academics/timetable?section=`): a periods-by-days grid per section; the office sets or clears a period in a dialog.
 - **Homework** (`/homework`, `/homework/new`).
 - **Leave** (`/leave`, `/leave/new`): staff see their own requests; the principal and school admin see all and decide in a dialog with an optional comment.
-- **Student profile actions:** an Actions menu with Change section and Withdraw student, next to Edit.
+- **Student profile actions:** an Actions menu with Change section, Transfer out and Withdraw student, next to Edit. Transfer out asks for the reason, warns with the unpaid amount and a link to the fee counter when fees are due, and opens the certificate. A transferred student's profile has a Transfer certificate button.
+- **Transfer certificate** (`/students/[id]/transfer-certificate`): certificate no., date of issue, student and parent names, admission no., date of birth, class last studied, academic year, date of and reason for leaving, whether dues are paid, and three signature lines. Print is the primary action; the shell is hidden on paper.
 - **Report cards** (`/report-cards?section=`, `/report-cards/[id]`): a section's students with card status and remarks; Generate cards (school admin), Remarks per row, Publish (principal); the card page prints without the app shell.
 - **Exams** (`/exams`, `/exams/[id]`, `/exams/[id]/marks?paper=&section=`): the exam list, an exam's papers with Lock, Unlock and Publish results, and a marks sheet with a number field and an Absent checkbox per student and one Save marks button.
 - **Staff attendance** (`/staff/attendance?date=`): one row per staff member with a segmented control; approved leave is pre-filled and badged.

@@ -99,7 +99,8 @@
       "forgot-password": "Forgot password",
       "reset-password": "Reset password",
       "pay": "Pay fees",
-      "reports": "Reports"
+      "reports": "Reports",
+      "transfer-certificate": "Transfer certificate"
     },
     "logoAlt": "{school} logo",
     "platformLogoAlt": "Sanchalix",
@@ -456,7 +457,8 @@
             "sis_document_verify": "Verified a document",
             "sis_document_delete": "Deleted a document",
             "sis_document_read": "Opened a document",
-            "sis_guardian_update": "Edited a parent's details"
+            "sis_guardian_update": "Edited a parent's details",
+            "sis_student_transferOut": "Transferred the student out"
           }
         },
         "notFound": {
@@ -507,6 +509,15 @@
           "body": "The student gets the next roll number in the new section. Attendance already taken stays with the old section.",
           "section": "New section",
           "confirm": "Move student"
+        },
+        "transferOut": {
+          "action": "Transfer out",
+          "title": "Transfer {name} out?",
+          "body": "The student leaves the school and a transfer certificate is issued with the next serial number. Their record, invoices and receipts are kept. This can't be undone here.",
+          "confirm": "Transfer out",
+          "dues": "{amount} in fees is unpaid. Collect it first, or ask the principal to transfer the student out.",
+          "collect": "Open the fee counter",
+          "certificate": "Transfer certificate"
         }
       },
       "form": {
@@ -560,7 +571,8 @@
         "notFound": "We couldn't find that student.",
         "notActive": "Only an active student can be withdrawn.",
         "sameSection": "The student is already in that section.",
-        "phoneTaken": "Another parent in this school already has that mobile number."
+        "phoneTaken": "Another parent in this school already has that mobile number.",
+        "duesUnpaid": "This student has unpaid fees. Collect them at the fee counter, or ask the principal to transfer the student out."
       },
       "import": "Import students",
       "guardianEdit": {
@@ -568,6 +580,29 @@
         "label": "Edit {name}",
         "title": "Edit {name}",
         "phoneHint": "10 digits, without +91. A parent who signs in with a phone code will use this number."
+      },
+      "certificate": {
+        "title": "Transfer certificate",
+        "print": "Print",
+        "printLabel": "Print the transfer certificate of {name}",
+        "tcNo": "Certificate no.",
+        "issuedOn": "Date of issue",
+        "affiliationNo": "Affiliation no.",
+        "name": "Name of the student",
+        "admissionNo": "Admission no.",
+        "guardians": "Parents or guardians",
+        "dob": "Date of birth",
+        "gender": "Gender",
+        "class": "Class last studied",
+        "academicYear": "Academic year",
+        "leftOn": "Date of leaving",
+        "dues": "School dues",
+        "duesCleared": "Paid in full",
+        "duesPending": "Not paid in full",
+        "reason": "Reason for leaving",
+        "preparedBy": "Prepared by",
+        "classTeacher": "Class teacher",
+        "principal": "Principal, with school seal"
       }
     },
     "import": {

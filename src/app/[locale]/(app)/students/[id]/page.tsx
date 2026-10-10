@@ -50,6 +50,7 @@ export default async function StudentPage({
         notice === 'added' || notice === 'updated' || notice === 'withdrawn' || notice === 'transferred' ? notice : null
       }
       canEdit={canEdit}
+      canCertify={can(ctx.role, 'sis.certificate.create')}
       sections={sections.filter((section) => section.name !== student.classSection)}
     />
   );

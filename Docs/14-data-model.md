@@ -219,6 +219,7 @@ Indexes: `{ schoolId: 1, date: 1, substituteTeacherId: 1 }`.
 | documents | DocumentRef[] | see below |
 | consents | `{ purpose: 'core' \| 'photos_public' \| 'ai_insights', noticeVersion, givenByGuardianId, phone, at, ip, withdrawnAt? }[]` | `core` is required before activation ([16-auth-and-security.md](16-auth-and-security.md#data-privacy-dpdp-act-2023)) |
 | leftOn, leavingReason | | set on transfer or withdrawal |
+| tcNo | string | serial number of the transfer certificate (`TC/2026/0001`, from `counters` per school and calendar year); set on transfer out |
 
 `DocumentRef = { _id, type: 'birth_certificate' | 'transfer_certificate_prev' | 'aadhaar' | 'photo' | 'report_card_prev' | 'medical' | 'tc' | 'bonafide' | 'other', key, fileName, mime, size, verifiedBy?, verifiedAt? }`. Allowed MIME types are PDF, JPEG, PNG and WEBP, up to 5 MB each.
 
