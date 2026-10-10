@@ -13,7 +13,7 @@ sequenceDiagram
   actor Pr as Principal
   actor Ac as Accountant
   actor T as Class Teacher
-  participant V as Vidyawan
+  participant V as Sanchalix
   P->>V: Online admission form /apply/VWN (or walk-in enquiry)
   V-->>P: "Application APP-2026-00219 received" (SMS + email)
   A->>V: Review application, request missing documents
@@ -91,7 +91,7 @@ UX moments: marks entry never loses data (autosave per cell); the teacher sees t
 ```mermaid
 sequenceDiagram
   participant W as Worker
-  participant V as Vidyawan
+  participant V as Sanchalix
   actor P as Parent
   participant R as Razorpay
   actor Ac as Accountant

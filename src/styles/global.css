@@ -110,6 +110,41 @@ body {
   background: var(--color-background-layout-main-y4565g);
 }
 
+/* The home page header opens with the maker's logo in the logo box, then the product's own logo and name.
+   Cloudscape's identity offers one plain image, so the product logo is drawn on the title, as the school's is. */
+.vw-public-nav .vw-platform-logo {
+  inline-size: 56px;
+  padding-inline: 0;
+  background-image: url('/logo/dcu-white-logo.svg');
+  background-size: 36px;
+}
+
+.vw-public-nav [class*='awsui_identity_'] [class*='awsui_title_']::before {
+  content: '';
+  display: inline-block;
+  inline-size: 140px;
+  block-size: 54px;
+  vertical-align: middle;
+  background: url('/logo/sanchalix-white.svg') center / contain no-repeat;
+}
+
+/* The logo already spells the name, so the title's text is not drawn. It stays in the page for screen readers
+   and as the link's name. */
+.vw-public-nav [class*='awsui_identity_'] [class*='awsui_title_'] {
+  font-size: 0 !important;
+}
+
+/* A section reached by an in-page link stops below the sticky header (56px) instead of sliding under it. */
+:target {
+  scroll-margin-block-start: calc(var(--space-xxxl-pjngik, 40px) + var(--space-scaled-m-lfeh3i, 16px) + var(--space-m-dsumyt, 16px));
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
 /* The home page footer carries awsui-context-top-navigation, so it takes the header's palette and the page
    closes with the same band that opens it. Its content lines up with the 1040px page column above. */
 .vw-public-footer {
@@ -203,6 +238,30 @@ body {
   margin-inline: auto;
 }
 
+/* The product logo above the sign-in card: the dark artwork on a light page, the white one in dark mode. */
+.vw-auth-logo {
+  block-size: 72px;
+  background: url('/logo/sanchalix-dark.svg') center / contain no-repeat;
+}
+
+.awsui-dark-mode .vw-auth-logo {
+  background-image: url('/logo/sanchalix-white.svg');
+}
+
+/* "or" with a line either side. */
+.vw-auth-divider {
+  display: flex;
+  align-items: center;
+  gap: var(--space-s-kll7oj, 12px);
+}
+
+.vw-auth-divider::before,
+.vw-auth-divider::after {
+  content: '';
+  flex: 1;
+  border-block-start: var(--border-divider-section-width-dlkb8v, 1px) solid var(--color-border-divider-default-diwd4w);
+}
+
 .vw-auth-card-wide {
   max-inline-size: 720px;
 }
@@ -220,11 +279,20 @@ body {
 }
 
 /* The platform's logo has its own box beside the header, as tall as the header and divided from it by a line.
-   The image is /public/favicon.ico; replace that file to change the logo. */
+   The image is /public/logo/sanchalix-white.svg: the white version, because the header is dark in both themes. */
 .vw-platform-logo {
   flex: none;
-  inline-size: 56px;
-  background: var(--color-background-container-content-mjfil9) url('/favicon.ico') center / 28px no-repeat;
+  /* The Sanchalix logo is a wide wordmark (about 5:1). It is fitted inside the box's padding, whatever the file's
+     own proportions, so a re-exported logo can never spill out of the box. */
+  box-sizing: border-box;
+  inline-size: 176px;
+  padding-inline: 14px;
+  background-color: var(--color-background-container-content-mjfil9);
+  background-image: url('/logo/sanchalix-white.svg');
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  background-origin: content-box;
   border-inline-end: var(--border-divider-section-width-dlkb8v, 1px) solid var(--color-border-divider-default-diwd4w);
   border-block-end: var(--border-divider-section-width-dlkb8v, 1px) solid var(--color-border-divider-default-diwd4w);
 }

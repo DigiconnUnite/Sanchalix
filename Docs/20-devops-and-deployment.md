@@ -1,6 +1,6 @@
 # 20 · DevOps and Deployment
 
-Environments, the CI/CD pipeline, configuration, monitoring, backups and incident response for Vidyawan. Architecture: [13-architecture.md](13-architecture.md). Security operations: [16-auth-and-security.md](16-auth-and-security.md#security-operations). Tests run in CI: [18-testing-strategy.md](18-testing-strategy.md#ci-gates-every-pr).
+Environments, the CI/CD pipeline, configuration, monitoring, backups and incident response for Sanchalix. Architecture: [13-architecture.md](13-architecture.md). Security operations: [16-auth-and-security.md](16-auth-and-security.md#security-operations). Tests run in CI: [18-testing-strategy.md](18-testing-strategy.md#ci-gates-every-pr).
 
 ## Environments
 
@@ -61,7 +61,7 @@ All secrets come from AWS Secrets Manager, injected as ECS secrets. Non-secrets 
 | Variable | Secret | Used by | Example / notes |
 |---|---|---|---|
 | `NODE_ENV` | no | both | `production` |
-| `APP_URL` | no | both | `https://app.vidyawan.app` |
+| `APP_URL` | no | both | `https://app.sanchalix.app` |
 | `MONGODB_URI` | yes | both | Atlas SRV string, TLS |
 | `MONGODB_CSFLE_KMS_KEY_ARN` | no | both | The KMS key for field-level encryption |
 | `REDIS_URL` | yes | both | `rediss://…` |
@@ -76,7 +76,7 @@ All secrets come from AWS Secrets Manager, injected as ECS secrets. Non-secrets 
 | `RAZORPAY_KEY_SECRET` / `RAZORPAY_WEBHOOK_SECRET` | yes | both | |
 | `STRIPE_SECRET_KEY` / `STRIPE_WEBHOOK_SECRET` | yes | both | v2 |
 | `MSG91_AUTH_KEY` / `MSG91_SENDER_ID` / `MSG91_WEBHOOK_SECRET` | yes / no / yes | worker, web | DLT entity and template IDs are in the template files |
-| `SES_FROM_ADDRESS` | no | worker | `no-reply@mail.vidyawan.app` |
+| `SES_FROM_ADDRESS` | no | worker | `no-reply@mail.sanchalix.app` |
 | `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` | no / yes | web / worker | |
 | `ANTHROPIC_API_KEY` | yes | worker | v2, used only when a school enables LLM features |
 | `SENTRY_DSN` | no | both | |
@@ -126,6 +126,6 @@ Dashboards: "School day" (07:00–10:00 attendance flow), "Fees", "Queues", "Pla
 
 ## Status and communication
 
-- A status page (`status.vidyawan.app`) with components: Web app, Attendance, Fees and payments, Notifications (SMS/email/push), Reports.
+- A status page (`status.sanchalix.app`) with components: Web app, Attendance, Fees and payments, Notifications (SMS/email/push), Reports.
 - In-app: a platform notice (`Flashbar` info, from `super_admin` platform notices) for maintenance and incidents, in en + hi.
 - Planned maintenance happens only on Sundays, 00:00–04:00 IST, with 72 h notice.

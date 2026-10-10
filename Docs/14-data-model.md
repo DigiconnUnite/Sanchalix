@@ -1,6 +1,6 @@
 # 14 · Data Model
 
-Every MongoDB collection in Vidyawan, with its fields, validation, indexes and relationships. Mongoose schemas in `src/server/models/*.ts` must match this document exactly. Change this document in the same PR as any schema change. Terms are defined in [22-glossary.md](22-glossary.md). Access rules are in [02-personas-and-roles.md](02-personas-and-roles.md#rbac-matrix).
+Every MongoDB collection in Sanchalix, with its fields, validation, indexes and relationships. Mongoose schemas in `src/server/models/*.ts` must match this document exactly. Change this document in the same PR as any schema change. Terms are defined in [22-glossary.md](22-glossary.md). Access rules are in [02-personas-and-roles.md](02-personas-and-roles.md#rbac-matrix).
 
 ## Conventions
 

@@ -1,6 +1,6 @@
 # 16 · Authentication and Security
 
-How Vidyawan authenticates users, authorises every action, protects children's data, and mitigates the OWASP Top 10. Vidyawan holds minors' personal data, so security and privacy rank first in the UX tie-breakers ([06-ux-principles.md](06-ux-principles.md#how-ux-decisions-get-made)). Target: **OWASP ASVS Level 2**. Roles and scopes: [02-personas-and-roles.md](02-personas-and-roles.md). Endpoints: [15-api-spec.md](15-api-spec.md).
+How Sanchalix authenticates users, authorises every action, protects children's data, and mitigates the OWASP Top 10. Sanchalix holds minors' personal data, so security and privacy rank first in the UX tie-breakers ([06-ux-principles.md](06-ux-principles.md#how-ux-decisions-get-made)). Target: **OWASP ASVS Level 2**. Roles and scopes: [02-personas-and-roles.md](02-personas-and-roles.md). Endpoints: [15-api-spec.md](15-api-spec.md).
 
 ## Authentication
 
@@ -66,7 +66,7 @@ An ID from another school returns `NOT_FOUND` (not `FORBIDDEN`), so IDs can't be
 
 ## OWASP Top 10 (2021) mitigations
 
-| Risk | Vidyawan mitigation |
+| Risk | Sanchalix mitigation |
 |---|---|
 | **A01 Broken Access Control** | `requirePermission` first in every action and handler (lint-enforced); the tenant plugin; resource scope checks; 404 for cross-tenant IDs; field projection by role; an E2E permission matrix test per role ([18-testing-strategy.md](18-testing-strategy.md#security-tests)) |
 | **A02 Cryptographic Failures** | TLS everywhere; KMS; CSFLE for sensitive fields; argon2id; no custom crypto; secrets in Secrets Manager |
@@ -83,7 +83,7 @@ Additional: **CSRF**: Server Actions check the `Origin` header (Next.js built-in
 
 ## Data privacy (DPDP Act 2023)
 
-Vidyawan is a **Data Processor**, and each school is the **Data Fiduciary**. Children's data (under 18) gets the Act's heightened protections.
+Sanchalix is a **Data Processor**, and each school is the **Data Fiduciary**. Children's data (under 18) gets the Act's heightened protections.
 
 | Obligation | Implementation |
 |---|---|
@@ -98,7 +98,7 @@ Vidyawan is a **Data Processor**, and each school is the **Data Fiduciary**. Chi
 | **Processors** | A DPA with each sub-processor (MongoDB, AWS, Razorpay, MSG91); listed in the school contract |
 
 ### AI and privacy (v2)
-- Risk scoring runs inside Vidyawan's infrastructure. It is rule-based, so no data leaves.
+- Risk scoring runs inside Sanchalix's infrastructure. It is rule-based, so no data leaves.
 - LLM features (narrative summaries, remark drafts) are **off by default**, enabled per school by the school_admin, with a notice. Requests contain only pseudonymised IDs and numeric or aggregated performance data. Names, photos, contact details, health and category data are never sent. Output is shown to staff for editing and never sent to parents automatically. The Claude API is used under a zero-data-retention agreement. Without one in place, the LLM features stay disabled.
 
 ## Audit logging
@@ -121,4 +121,4 @@ Vidyawan is a **Data Processor**, and each school is the **Data Fiduciary**. Chi
 | Secrets rotation | 90 days (automated where supported) |
 | Restore drill | Quarterly ([20-devops-and-deployment.md](20-devops-and-deployment.md#backups-and-disaster-recovery)) |
 | Security training for the team | Yearly + onboarding |
-| Responsible disclosure | `security@vidyawan.app`, `/.well-known/security.txt` |
+| Responsible disclosure | `security@sanchalix.app`, `/.well-known/security.txt` |

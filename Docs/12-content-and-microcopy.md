@@ -1,6 +1,6 @@
 # 12 · Content and Microcopy
 
-How Vidyawan speaks. Every string in the UI, notifications, SMS, emails and PDFs follows these rules, in English and Hindi. Defined terms are in [22-glossary.md](22-glossary.md). Screen-specific copy is in [10-screen-specs.md](10-screen-specs.md).
+How Sanchalix speaks. Every string in the UI, notifications, SMS, emails and PDFs follows these rules, in English and Hindi. Defined terms are in [22-glossary.md](22-glossary.md). Screen-specific copy is in [10-screen-specs.md](10-screen-specs.md).
 
 ## Voice and tone
 
@@ -132,12 +132,12 @@ Templates are keyed and versioned in `src/server/notifications/templates/{key}.{
 
 | Key | Channel | English | Hindi |
 |---|---|---|---|
-| `attendance.absent` | SMS | "{school}: {studentFirst} was marked absent today ({date}). If this is wrong, contact the class teacher. -Vidyawan" | "{school}: {studentFirst} आज ({date}) अनुपस्थित दर्ज हुए। गलत हो तो कक्षा अध्यापक से संपर्क करें। -Vidyawan" |
-| `fees.due_soon` | SMS | "{school}: {amount} fees for {studentFirst} due on {dueDate}. Pay: {link} -Vidyawan" | "{school}: {studentFirst} की फीस {amount} {dueDate} तक देय। भुगतान: {link} -Vidyawan" |
+| `attendance.absent` | SMS | "{school}: {studentFirst} was marked absent today ({date}). If this is wrong, contact the class teacher. -Sanchalix" | "{school}: {studentFirst} आज ({date}) अनुपस्थित दर्ज हुए। गलत हो तो कक्षा अध्यापक से संपर्क करें। -Sanchalix" |
+| `fees.due_soon` | SMS | "{school}: {amount} fees for {studentFirst} due on {dueDate}. Pay: {link} -Sanchalix" | "{school}: {studentFirst} की फीस {amount} {dueDate} तक देय। भुगतान: {link} -Sanchalix" |
 | `fees.receipt` | Email subject | "Receipt {receiptNo} for {amount}" | "रसीद {receiptNo}: {amount}" |
 | `exams.results_published` | Push | "{examName} results for {studentFirst} are out" | "{studentFirst} का {examName} परिणाम जारी" |
 | `homework.due_tomorrow` | Push | "Due tomorrow: {subject} – {title}" | "कल जमा करें: {subject} – {title}" |
-| `transport.delay` | SMS | "{school}: Bus on {route} is running about {minutes} min late. -Vidyawan" | "{school}: {route} की बस लगभग {minutes} मिनट देर से है। -Vidyawan" |
+| `transport.delay` | SMS | "{school}: Bus on {route} is running about {minutes} min late. -Sanchalix" | "{school}: {route} की बस लगभग {minutes} मिनट देर से है। -Sanchalix" |
 
 ## Hindi localisation notes
 

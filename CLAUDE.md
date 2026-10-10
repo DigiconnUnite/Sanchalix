@@ -1,8 +1,8 @@
-# CLAUDE.md: Vidyawan
+# CLAUDE.md: Sanchalix
 
 Rules for every Claude session working on this repository. These rules override default behaviour. When a rule and a request conflict, say so before acting.
 
-Vidyawan is a multi-school School Management System: Next.js (App Router, TypeScript) + MongoDB/Mongoose + AWS Cloudscape + Reicon icons. **UX is the top priority.** Every change must make a real user's task (school admin, principal, teacher, student, parent, accountant, librarian, transport manager) easier, faster or safer.
+Sanchalix is a multi-school School Management System: Next.js (App Router, TypeScript) + MongoDB/Mongoose + AWS Cloudscape + Reicon icons. **UX is the top priority.** Every change must make a real user's task (school admin, principal, teacher, student, parent, accountant, librarian, transport manager) easier, faster or safer.
 
 ## Non-negotiable rules
 
@@ -48,7 +48,7 @@ Vidyawan is a multi-school School Management System: Next.js (App Router, TypeSc
 - Don't add a dependency when the platform, Cloudscape or a few lines will do.
 - Never cut corners on validation at trust boundaries, authorization, tenant isolation, money handling, data-loss prevention or accessibility.
 
-## Safety rails specific to Vidyawan
+## Safety rails specific to Sanchalix
 - **Tenant isolation:** never write a query without `schoolId`, and never take `schoolId` from client input. It comes from `ctx`.
 - **Children's data:** don't log PII; project away `medical`, `aadhaarNo`, `bank` and `salary` unless the role needs them; sensitive reads go through `revealSensitive` (audited).
 - **Money:** receipts are immutable; use transactions for payment writes; idempotency keys on every money-creating action; webhooks are the source of truth.

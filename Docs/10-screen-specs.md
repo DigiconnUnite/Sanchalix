@@ -1,6 +1,6 @@
 # 10 · Screen Specifications
 
-Specifications for every key Vidyawan screen: purpose, roles, URL, Cloudscape components, icons (keys from [09-iconography.md](09-iconography.md#5-complete-icon-map)), the four states, validation and microcopy. URLs follow [07-information-architecture.md](07-information-architecture.md#url-structure). Principles: [06-ux-principles.md](06-ux-principles.md). Words: [12-content-and-microcopy.md](12-content-and-microcopy.md). Data: [14-data-model.md](14-data-model.md). Endpoints: [15-api-spec.md](15-api-spec.md).
+Specifications for every key Sanchalix screen: purpose, roles, URL, Cloudscape components, icons (keys from [09-iconography.md](09-iconography.md#5-complete-icon-map)), the four states, validation and microcopy. URLs follow [07-information-architecture.md](07-information-architecture.md#url-structure). Principles: [06-ux-principles.md](06-ux-principles.md). Words: [12-content-and-microcopy.md](12-content-and-microcopy.md). Data: [14-data-model.md](14-data-model.md). Endpoints: [15-api-spec.md](15-api-spec.md).
 
 ## State patterns
 
@@ -88,7 +88,7 @@ Built with `Board` (staff, rearrangeable in v1) or `Grid` (student, parent). Eve
 - **Header:** child switcher (`SegmentedControl` for ≤ 3 children, `Select` above that) with each child's photo and class.
 - **Cards:** **Today** ("Kabir is at school · marked present at 8:04" / "Absent today" / "Attendance not yet taken"); **Fees** ("₹12,500 due by 10 Oct" + primary "Pay now"; or "No dues" with `success`); **Homework due** (3); **Latest announcement**; **Next event**.
 - **Icons:** `students`, `attendance`, `fees`, `homework`, `announcements`, `calendar`.
-- **Empty:** a new parent sees "Welcome to Vidyawan" + "Your child's attendance, fees and homework will appear here."
+- **Empty:** a new parent sees "Welcome to Sanchalix" + "Your child's attendance, fees and homework will appear here."
 
 ### S07 · Accountant dashboard
 - **Widgets:** "Collected today ₹3,42,000 · 57 receipts" (split by method in a `PieChart`); "Pending reconciliation: 2 payments" (→ reconciliation); dues ageing (0–15, 16–30, 31–60, 60+) as a bar chart with click-through; primary action `collectPayment` "Open fee counter".

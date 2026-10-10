@@ -1,6 +1,6 @@
 # 17 · Coding Standards
 
-How Vidyawan code is written. These rules are enforced by TypeScript, ESLint, Prettier and review. They apply to every contributor, human or AI ([CLAUDE.md](../CLAUDE.md)). Architecture: [13-architecture.md](13-architecture.md). Data: [14-data-model.md](14-data-model.md). Tests: [18-testing-strategy.md](18-testing-strategy.md).
+How Sanchalix code is written. These rules are enforced by TypeScript, ESLint, Prettier and review. They apply to every contributor, human or AI ([CLAUDE.md](../CLAUDE.md)). Architecture: [13-architecture.md](13-architecture.md). Data: [14-data-model.md](14-data-model.md). Tests: [18-testing-strategy.md](18-testing-strategy.md).
 
 ## Guiding rules
 

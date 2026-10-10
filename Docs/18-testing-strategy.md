@@ -1,6 +1,6 @@
 # 18 · Testing Strategy
 
-How Vidyawan is tested: what each layer covers, which tools, the coverage goals and the CI gates. Conventions: [17-coding-standards.md](17-coding-standards.md#testing-conventions). Accessibility requirements: [11-accessibility.md](11-accessibility.md). Security requirements: [16-auth-and-security.md](16-auth-and-security.md).
+How Sanchalix is tested: what each layer covers, which tools, the coverage goals and the CI gates. Conventions: [17-coding-standards.md](17-coding-standards.md#testing-conventions). Accessibility requirements: [11-accessibility.md](11-accessibility.md). Security requirements: [16-auth-and-security.md](16-auth-and-security.md).
 
 ## Test pyramid
 

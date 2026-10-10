@@ -11,10 +11,14 @@ import { setVisualMode } from '@/server/auth/actions';
 
 export function PublicHeader({
   brand,
+  builtBy,
+  links,
   enter,
   visualMode,
 }: {
   brand: string;
+  builtBy: string;
+  links: { href: string; text: string }[];
   enter: { href: string; text: string };
   visualMode: VisualMode;
 }) {
@@ -33,22 +37,31 @@ export function PublicHeader({
   }
 
   return (
-    <TopNavigation
-      identity={{ href: '/welcome', title: brand }}
-      utilities={[
-        {
-          type: 'button',
-          iconSvg: (
-            <span className="vw-icon vw-theme-toggle" data-dark={isDark}>
-              {svg('themeToggle')}
-            </span>
-          ),
-          ariaLabel: label,
-          title: label,
-          onClick: toggle,
-        },
-        { type: 'button', variant: 'primary-button', text: enter.text, href: enter.href },
-      ]}
-    />
+    <div className="vw-top-nav vw-public-nav">
+      <span
+        className="vw-platform-logo awsui-context-top-navigation"
+        role="img"
+        aria-label={builtBy}
+        title={builtBy}
+      />
+      <TopNavigation
+        identity={{ href: '/welcome', title: brand }}
+        utilities={[
+          ...links.map((link) => ({ type: 'button' as const, ...link })),
+          {
+            type: 'button',
+            iconSvg: (
+              <span className="vw-icon vw-theme-toggle" data-dark={isDark}>
+                {svg('themeToggle')}
+              </span>
+            ),
+            ariaLabel: label,
+            title: label,
+            onClick: toggle,
+          },
+          { type: 'button', variant: 'primary-button', text: enter.text, href: enter.href },
+        ]}
+      />
+    </div>
   );
 }

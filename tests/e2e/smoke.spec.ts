@@ -52,7 +52,7 @@ async function expectAccessible(page: Page) {
 test('a school admin signs in, opens the student list, pages and filters it', async ({ page }) => {
   await page.goto('/students');
   await expect(page).toHaveURL(/\/signin\?next=%2Fstudents$/);
-  await expect(page.getByRole('heading', { level: 1, name: 'Sign in to Vidyawan' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: 'Sign in' })).toBeVisible();
   await expectAccessible(page);
 
   await signIn(page, 'admin@greenvalley.example');

@@ -1,6 +1,6 @@
 # 21 · Notifications and Integrations
 
-How Vidyawan delivers notifications (in-app, email, SMS, web push, and WhatsApp in v2), and how it integrates with payment gateways, devices and other external systems. Templates and wording: [12-content-and-microcopy.md](12-content-and-microcopy.md#notification-and-sms-templates). Data: [14-data-model.md](14-data-model.md#notifications). Endpoints: [15-api-spec.md](15-api-spec.md). Operations: [20-devops-and-deployment.md](20-devops-and-deployment.md).
+How Sanchalix delivers notifications (in-app, email, SMS, web push, and WhatsApp in v2), and how it integrates with payment gateways, devices and other external systems. Templates and wording: [12-content-and-microcopy.md](12-content-and-microcopy.md#notification-and-sms-templates). Data: [14-data-model.md](14-data-model.md#notifications). Endpoints: [15-api-spec.md](15-api-spec.md). Operations: [20-devops-and-deployment.md](20-devops-and-deployment.md).
 
 ## Notification pipeline
 
@@ -56,7 +56,7 @@ Defaults per category. ✓ = on by default, ○ = available but off by default, 
 - Each notification has a `link` deep link ([07-information-architecture.md](07-information-architecture.md#notification-deep-links)).
 
 ### Email (Amazon SES)
-- The sender domain `mail.vidyawan.app` with SPF, DKIM and DMARC (`p=quarantine`). Per-school custom domains are optional in v2.
+- The sender domain `mail.sanchalix.app` with SPF, DKIM and DMARC (`p=quarantine`). Per-school custom domains are optional in v2.
 - Templates are React Email components rendered in the worker, localised, with a plain-text alternative. Receipts and report cards are attached as PDFs, or linked if over 5 MB.
 - Bounces and complaints come via SNS → `/api/webhooks/ses`. A hard bounce marks the email unverified and shows a banner to the user and school admin: "Emails to s.mehta@… are bouncing. Update the address."
 - Rate: within the SES account send rate, and a worker concurrency limit per the SES quota.
@@ -96,7 +96,7 @@ type PaymentGateway = {
 ```mermaid
 sequenceDiagram
   actor P as Parent
-  participant V as Vidyawan web
+  participant V as Sanchalix web
   participant R as Razorpay
   participant W as Worker
   P->>V: Pay ₹24,300 (invoiceIds)
@@ -148,7 +148,7 @@ Rules: read the **raw body** (the route handler uses `await req.text()` before p
 | Claude API | Narrative summaries and remark drafts, opt-in, no PII ([16-auth-and-security.md](16-auth-and-security.md#ai-and-privacy-v2)) | v2 |
 | UDISE+ / board exports | Annual school statistics and board registration exports in the required formats | v2 |
 
-Outbound webhooks for third parties (school-built integrations) are a v2 "Could": signed with `X-Vidyawan-Signature` (HMAC-SHA256), retried with backoff for 24 h, events `student.enrolled`, `payment.captured`, `attendance.submitted`.
+Outbound webhooks for third parties (school-built integrations) are a v2 "Could": signed with `X-Sanchalix-Signature` (HMAC-SHA256), retried with backoff for 24 h, events `student.enrolled`, `payment.captured`, `attendance.submitted`.
 
 ## Biometric and QR attendance
 

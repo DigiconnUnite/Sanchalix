@@ -34,6 +34,7 @@ const ROLES: { key: string; icon: IconKey }[] = [
   { key: 'families', icon: 'guardians' },
 ];
 const STEPS = ['setup', 'run', 'share'];
+const SECTIONS = ['features', 'roles', 'steps'];
 
 export default async function WelcomePage() {
   const [t, ctx] = await Promise.all([getTranslations('marketing'), getContext()]);
@@ -44,6 +45,8 @@ export default async function WelcomePage() {
     <>
       <PublicHeader
         brand={t('brand')}
+        builtBy={t('builtBy')}
+        links={SECTIONS.map((key) => ({ href: `#${key}`, text: t(`nav.${key}`) }))}
         enter={enter}
         visualMode={parseVisualMode((await cookies()).get(MODE_COOKIE)?.value)}
       />
@@ -162,9 +165,11 @@ export default async function WelcomePage() {
                 <nav aria-label={t('footer.product')}>
                   <SpaceBetween size="xs">
                     <Box variant="awsui-key-label">{t('footer.product')}</Box>
-                    <Link href="#features">{t('footer.features')}</Link>
-                    <Link href="#roles">{t('footer.roles')}</Link>
-                    <Link href="#steps">{t('footer.steps')}</Link>
+                    {SECTIONS.map((key) => (
+                      <Link key={key} href={`#${key}`}>
+                        {t(`nav.${key}`)}
+                      </Link>
+                    ))}
                   </SpaceBetween>
                 </nav>
                 <nav aria-label={t('footer.account')}>

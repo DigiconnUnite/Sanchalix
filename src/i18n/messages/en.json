@@ -102,7 +102,7 @@
       "reports": "Reports"
     },
     "logoAlt": "{school} logo",
-    "platformLogoAlt": "Vidyawan",
+    "platformLogoAlt": "Sanchalix",
     "notificationsMenu": {
       "title": "Notifications",
       "new": "New",
@@ -113,7 +113,7 @@
   },
   "auth": {
     "signIn": {
-      "title": "Sign in to Vidyawan",
+      "title": "Sign in",
       "email": "Email",
       "password": "Password",
       "submit": "Sign in",
@@ -127,7 +127,9 @@
         "button": "Sign in with Google",
         "failed": "Google sign-in didn't finish. Try again, or sign in with your password.",
         "noAccount": "That Google account isn't linked to a staff account at any school. Sign in with the email your school gave you."
-      }
+      },
+      "description": "Welcome back. Use the account your school gave you.",
+      "emailPlaceholder": "name@school.example"
     },
     "totp": {
       "cancel": "Cancel sign-in",
@@ -137,7 +139,7 @@
       "alreadySetUp": "Two-step verification is already set up. Sign in again.",
       "challenge": {
         "title": "Enter your verification code",
-        "description": "Open your authenticator app and enter the 6-digit code for Vidyawan.",
+        "description": "Open your authenticator app and enter the 6-digit code for Sanchalix.",
         "recoveryHint": "Lost your phone? Enter one of your recovery codes instead.",
         "submit": "Verify code"
       },
@@ -161,7 +163,7 @@
         },
         "enter": {
           "title": "Enter the code",
-          "description": "Enter the 6-digit code your app shows for Vidyawan."
+          "description": "Enter the 6-digit code your app shows for Sanchalix."
         },
         "codes": {
           "title": "Save your recovery codes",
@@ -241,6 +243,12 @@
     "google": {
       "failed": "Google sign-in didn't finish. Try again.",
       "noAccount": "That Google account isn't linked to a staff account."
+    },
+    "card": {
+      "logo": "Sanchalix",
+      "or": "or",
+      "note": "Accounts are created by your school.",
+      "home": "About Sanchalix"
     }
   },
   "dashboard": {
@@ -2316,12 +2324,18 @@
   },
   "marketing": {
     "metaTitle": "School management, made simple",
-    "brand": "Vidyawan",
+    "brand": "Sanchalix",
     "signIn": "Sign in",
     "openApp": "Open dashboard",
+    "builtBy": "Built by DCU",
+    "nav": {
+      "features": "Features",
+      "roles": "Who it's for",
+      "steps": "Getting started"
+    },
     "hero": {
       "title": "Run your whole school from one place",
-      "body": "Vidyawan brings admissions, attendance, fees, exams and parent communication together, so the office, teachers and families all work from the same up-to-date records.",
+      "body": "Sanchalix brings admissions, attendance, fees, exams and parent communication together, so the office, teachers and families all work from the same up-to-date records.",
       "seeFeatures": "See what it does"
     },
     "features": {
@@ -2401,26 +2415,23 @@
     "footer": {
       "tagline": "One system for admissions, attendance, fees, exams and parent communication.",
       "product": "Product",
-      "features": "Features",
-      "roles": "Who it's for",
-      "steps": "Getting started",
       "account": "Account",
       "forgotPassword": "Forgot password",
-      "copyright": "© {year} Vidyawan. All rights reserved.",
+      "copyright": "© {year} Sanchalix. All rights reserved.",
       "credit": "Designed and developed by Digiconn Unite"
     }
   },
   "outbound": {
     "absence": "{school}: {student} was marked absent on {date}. Please contact the school office if this is a mistake.",
     "dues": "{school}: fees of {amount} for {student} are overdue. Please pay at the school fee counter.",
-    "otp": "{code} is your Vidyawan sign-in code. It works for 5 minutes. Don't share it with anyone.",
+    "otp": "{code} is your Sanchalix sign-in code. It works for 5 minutes. Don't share it with anyone.",
     "passwordReset": {
-      "subject": "Reset your Vidyawan password",
+      "subject": "Reset your Sanchalix password",
       "body": "Open this link within 30 minutes to choose a new password: {link}\nIf you didn't ask for this, you can ignore this email."
     },
     "invite": {
-      "subject": "Your Vidyawan account is ready",
-      "body": "Hello {name}, your school has created a Vidyawan account for you. Open this link within 3 days to choose your password: {link}"
+      "subject": "Your Sanchalix account is ready",
+      "body": "Hello {name}, your school has created a Sanchalix account for you. Open this link within 3 days to choose your password: {link}"
     }
   },
   "outbox": {

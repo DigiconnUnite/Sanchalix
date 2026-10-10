@@ -1,13 +1,13 @@
 # 15 · API Specification
 
-Every Server Action and Route Handler in Vidyawan: its permission, input, output and errors. Permission strings come from [02-personas-and-roles.md](02-personas-and-roles.md#permission-model). Shapes use the entities in [14-data-model.md](14-data-model.md). Enforcement is described in [16-auth-and-security.md](16-auth-and-security.md#authorization-rbac).
+Every Server Action and Route Handler in Sanchalix: its permission, input, output and errors. Permission strings come from [02-personas-and-roles.md](02-personas-and-roles.md#permission-model). Shapes use the entities in [14-data-model.md](14-data-model.md). Enforcement is described in [16-auth-and-security.md](16-auth-and-security.md#authorization-rbac).
 
 ## Conventions
 
 ### When to use which
 | Use | Mechanism | Location |
 |---|---|---|
-| Mutations from the Vidyawan UI | **Server Action** | `src/server/modules/{module}/actions.ts` |
+| Mutations from the Sanchalix UI | **Server Action** | `src/server/modules/{module}/actions.ts` |
 | Reads for pages | **Server-side query functions** called by RSC (not HTTP) | `src/server/modules/{module}/queries.ts` |
 | Client-side reads (autosuggest, polling, infinite lists) | **Route Handler** `GET /api/v1/...` | `src/app/api/v1/...` |
 | Webhooks, file exports, PWA sync, device ingestion, public verification | **Route Handler** | `src/app/api/...` |

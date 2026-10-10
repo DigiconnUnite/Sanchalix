@@ -1,6 +1,6 @@
 # 03 · Product Requirements (PRD)
 
-Requirements for every Vidyawan module. Each module lists its features with MoSCoW priority and target release (MVP, v1 or v2, see [05-roadmap.md](05-roadmap.md)), then its key user stories with acceptance criteria in Given/When/Then form. Roles and permissions: [02-personas-and-roles.md](02-personas-and-roles.md). Entities: [14-data-model.md](14-data-model.md). Screens: [10-screen-specs.md](10-screen-specs.md). Endpoints: [15-api-spec.md](15-api-spec.md).
+Requirements for every Sanchalix module. Each module lists its features with MoSCoW priority and target release (MVP, v1 or v2, see [05-roadmap.md](05-roadmap.md)), then its key user stories with acceptance criteria in Given/When/Then form. Roles and permissions: [02-personas-and-roles.md](02-personas-and-roles.md). Entities: [14-data-model.md](14-data-model.md). Screens: [10-screen-specs.md](10-screen-specs.md). Endpoints: [15-api-spec.md](15-api-spec.md).
 
 **MoSCoW:** **M** Must · **S** Should · **C** Could · **W** Won't (this cycle).
 

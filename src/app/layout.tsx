@@ -10,7 +10,7 @@ import { Providers } from './providers';
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('app');
   return {
-    title: { default: 'Vidyawan', template: '%s · Vidyawan' },
+    title: { default: 'Sanchalix', template: '%s · Sanchalix' },
     description: t('description'),
     authors: [{ name: 'Shivam Thakur' }],
     creator: 'Shivam Thakur',

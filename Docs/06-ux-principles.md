@@ -1,6 +1,6 @@
 # 06 · UX Principles
 
-UX is Vidyawan's top priority. This document sets the principles, the heuristics every screen is reviewed against, and the rules for how UX decisions get made. It applies to every screen in [10-screen-specs.md](10-screen-specs.md), using the components in [08-design-system.md](08-design-system.md), the icons in [09-iconography.md](09-iconography.md) and the words in [12-content-and-microcopy.md](12-content-and-microcopy.md).
+UX is Sanchalix's top priority. This document sets the principles, the heuristics every screen is reviewed against, and the rules for how UX decisions get made. It applies to every screen in [10-screen-specs.md](10-screen-specs.md), using the components in [08-design-system.md](08-design-system.md), the icons in [09-iconography.md](09-iconography.md) and the words in [12-content-and-microcopy.md](12-content-and-microcopy.md).
 
 ## Principles
 
@@ -66,9 +66,9 @@ Show who changed what (history tabs), why a number is what it is (the "Why?" on 
 
 ## Heuristics (review checklist)
 
-Nielsen's 10 heuristics, applied to Vidyawan. Every screen spec and PR with UI is reviewed against this list.
+Nielsen's 10 heuristics, applied to Sanchalix. Every screen spec and PR with UI is reviewed against this list.
 
-| # | Heuristic | What it means in Vidyawan |
+| # | Heuristic | What it means in Sanchalix |
 |---|---|---|
 | H1 | Visibility of system status | Autosave status, sync status (offline), job progress (imports, report cards), notification delivery status |
 | H2 | Match with the real world | School words: "Class 7-B", "Roll no.", "TC", "Fee counter", "Half-Yearly". Indian formats: ₹12,500, 30 Sep 2026, +91 98xxx xxxxx |
@@ -89,7 +89,7 @@ Nielsen's 10 heuristics, applied to Vidyawan. Every screen spec and PR with UI i
    1. Safety and privacy of children's data
    2. Accessibility
    3. Speed of the most frequent task for the most frequent role
-   4. Consistency with existing Vidyawan patterns
+   4. Consistency with existing Sanchalix patterns
    5. Visual preference (last, always)
 4. **Test with real users before building anything major.** Wizards, grids and dashboards are prototyped and tested with ≥ 5 users of that role (a hallway test is fine for small changes).
 5. **Measure after release.** Each major screen has one metric tied to its budget (P1) and is reviewed 30 days after release.

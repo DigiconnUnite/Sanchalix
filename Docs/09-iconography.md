@@ -1,6 +1,6 @@
 # 09 · Iconography (Reicon)
 
-Vidyawan uses **Reicon** (`reicon-react`) as its only icon library, rendered through Cloudscape's custom-icon slots. This document is the single source of truth for which icon means what. The code mirror of the map below is `src/components/icons.tsx`, and the two must always match. Decision record: [ADR-004](23-decision-log.md#adr-004-reicon-over-cloudscape-built-in-icons). Layout and component usage: [08-design-system.md](08-design-system.md).
+Sanchalix uses **Reicon** (`reicon-react`) as its only icon library, rendered through Cloudscape's custom-icon slots. This document is the single source of truth for which icon means what. The code mirror of the map below is `src/components/icons.tsx`, and the two must always match. Decision record: [ADR-004](23-decision-log.md#adr-004-reicon-over-cloudscape-built-in-icons). Layout and component usage: [08-design-system.md](08-design-system.md).
 
 ## 1. Rules
 
@@ -384,7 +384,7 @@ Some Cloudscape components draw their own glyphs (StatusIndicator, Alert, Flashb
 >
 ```
 
-These keys are the **only** place Cloudscape icon names appear in Vidyawan, and only as override keys, never as `iconName`. Component chrome (carets, angles, close ×, sort indicators, drag handles, resize handles, the calendar grid arrows) stays on Cloudscape's glyphs. They are tuned to their component mechanics, and swapping them adds risk without helping users. See [ADR-004](23-decision-log.md#adr-004-reicon-over-cloudscape-built-in-icons).
+These keys are the **only** place Cloudscape icon names appear in Sanchalix, and only as override keys, never as `iconName`. Component chrome (carets, angles, close ×, sort indicators, drag handles, resize handles, the calendar grid arrows) stays on Cloudscape's glyphs. They are tuned to their component mechanics, and swapping them adds risk without helping users. See [ADR-004](23-decision-log.md#adr-004-reicon-over-cloudscape-built-in-icons).
 
 ## 5. Complete icon map
 

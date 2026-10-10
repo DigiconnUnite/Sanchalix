@@ -1,6 +1,6 @@
 # 13 · Architecture
 
-The system architecture for Vidyawan: its components, folder structure, rendering strategy, state management and the main runtime flows. Decisions and trade-offs are recorded in [23-decision-log.md](23-decision-log.md). Data: [14-data-model.md](14-data-model.md). APIs: [15-api-spec.md](15-api-spec.md). Security: [16-auth-and-security.md](16-auth-and-security.md). Operations: [20-devops-and-deployment.md](20-devops-and-deployment.md).
+The system architecture for Sanchalix: its components, folder structure, rendering strategy, state management and the main runtime flows. Decisions and trade-offs are recorded in [23-decision-log.md](23-decision-log.md). Data: [14-data-model.md](14-data-model.md). APIs: [15-api-spec.md](15-api-spec.md). Security: [16-auth-and-security.md](16-auth-and-security.md). Operations: [20-devops-and-deployment.md](20-devops-and-deployment.md).
 
 ## Stack
 
@@ -218,7 +218,7 @@ Every job is idempotent: jobs carry a deterministic `jobId` (e.g. `invoices:{sch
 
 - **Serwist** service worker: precaches the app shell; runtime caching (NetworkFirst) for the Today and homework payloads; a background sync for the offline queue.
 - Web push via VAPID. Subscriptions are stored per user and device. iOS needs the PWA installed (iOS 16.4+), so the install prompt explains this.
-- The manifest has school-branded `short_name` and `icons` per school subdomain (v1: `{code}.vidyawan.app`).
+- The manifest has school-branded `short_name` and `icons` per school subdomain (v1: `{code}.sanchalix.app`).
 
 ## Key architectural qualities
 

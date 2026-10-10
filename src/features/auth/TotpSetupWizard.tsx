@@ -50,7 +50,7 @@ export function TotpSetupWizard({ qrCode, secret }: { qrCode: string; secret: st
     const url = URL.createObjectURL(new Blob([recoveryCodes.join('\n')], { type: 'text/plain' }));
     const link = document.createElement('a');
     link.href = url;
-    link.download = 'vidyawan-recovery-codes.txt';
+    link.download = 'sanchalix-recovery-codes.txt';
     link.click();
     URL.revokeObjectURL(url);
   }

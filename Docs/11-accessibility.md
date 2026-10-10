@@ -1,6 +1,6 @@
 # 11 · Accessibility
 
-Vidyawan meets **WCAG 2.2 Level AA** on every screen, in both languages and both visual modes. Accessibility is a release blocker, not a backlog item. Cloudscape components are built to be accessible. Most failures come from how we use them, so this document focuses on our responsibilities. Related: [06-ux-principles.md](06-ux-principles.md) (P9), [08-design-system.md](08-design-system.md), [09-iconography.md](09-iconography.md#1-rules), [18-testing-strategy.md](18-testing-strategy.md#accessibility-tests).
+Sanchalix meets **WCAG 2.2 Level AA** on every screen, in both languages and both visual modes. Accessibility is a release blocker, not a backlog item. Cloudscape components are built to be accessible. Most failures come from how we use them, so this document focuses on our responsibilities. Related: [06-ux-principles.md](06-ux-principles.md) (P9), [08-design-system.md](08-design-system.md), [09-iconography.md](09-iconography.md#1-rules), [18-testing-strategy.md](18-testing-strategy.md#accessibility-tests).
 
 ## Who we are designing for
 
@@ -10,7 +10,7 @@ Vidyawan meets **WCAG 2.2 Level AA** on every screen, in both languages and both
 - Users with screen readers: NVDA and JAWS (Windows), TalkBack (Android), VoiceOver (iOS/macOS).
 - Users on small screens at high zoom, and on low-contrast, glare-prone phone screens outdoors.
 
-## WCAG 2.2 AA: how Vidyawan meets it
+## WCAG 2.2 AA: how Sanchalix meets it
 
 | Criterion | What we do |
 |---|---|
@@ -27,7 +27,7 @@ Vidyawan meets **WCAG 2.2 Level AA** on every screen, in both languages and both
 | 2.2.1 Timing adjustable | Session timeout warns 2 minutes ahead with "Stay signed in". OTP expiry is shown with a resend option. |
 | 2.3.3 Animation | We use no custom animation. Cloudscape honours `prefers-reduced-motion`. |
 | 2.4.1 Bypass blocks | Cloudscape `AppLayout` provides skip links to the main content and navigation. |
-| 2.4.2 Page titled | `<title>` = "{Page} · {Context} · {School} · Vidyawan", e.g. "Take attendance · 7-B · Green Valley School · Vidyawan". |
+| 2.4.2 Page titled | `<title>` = "{Page} · {Context} · {School} · Sanchalix", e.g. "Take attendance · 7-B · Green Valley School · Sanchalix". |
 | 2.4.3 Focus order | DOM order = visual order. After an action, focus moves predictably (below). |
 | 2.4.6 Headings and labels | Descriptive headings. Buttons are verb + noun ("Collect payment", not "Submit"). |
 | 2.4.7 / 2.4.11 Focus visible, not obscured | Cloudscape focus rings. Sticky headers and footers (the attendance summary, marks totals) must not cover the focused element, so we use `scroll-padding` equal to the sticky height. |

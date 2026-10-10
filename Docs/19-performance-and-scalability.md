@@ -1,6 +1,6 @@
 # 19 · Performance and Scalability
 
-How Vidyawan stays fast on cheap phones and slow networks, and how it scales from 1 school to 500. Architecture: [13-architecture.md](13-architecture.md). Indexes per collection: [14-data-model.md](14-data-model.md). Load tests: [18-testing-strategy.md](18-testing-strategy.md#load-tests-k6).
+How Sanchalix stays fast on cheap phones and slow networks, and how it scales from 1 school to 500. Architecture: [13-architecture.md](13-architecture.md). Indexes per collection: [14-data-model.md](14-data-model.md). Load tests: [18-testing-strategy.md](18-testing-strategy.md#load-tests-k6).
 
 ## Load targets
 

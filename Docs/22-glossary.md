@@ -1,12 +1,12 @@
 # 22 · Glossary
 
-The single source of truth for Vidyawan terminology. If a word appears in the UI, the data model or the API, it is defined here, and every other document uses it exactly as written. User-facing wording rules live in [12-content-and-microcopy.md](12-content-and-microcopy.md).
+The single source of truth for Sanchalix terminology. If a word appears in the UI, the data model or the API, it is defined here, and every other document uses it exactly as written. User-facing wording rules live in [12-content-and-microcopy.md](12-content-and-microcopy.md).
 
 ## Organisation and tenancy
 
 | Term | Definition | Code name |
 |---|---|---|
-| Organization | A legal entity that owns one or more schools (e.g. a trust or society). The billing customer of Vidyawan. | `Organization` |
+| Organization | A legal entity that owns one or more schools (e.g. a trust or society). The billing customer of Sanchalix. | `Organization` |
 | School | A single institution with its own affiliation (CBSE, ICSE, State board), branding, settings and fee structures. The primary **tenant boundary**. | `School`, `schoolId` |
 | Branch | A physical campus of a school. Students, staff, classes and vehicles belong to one branch. Single-campus schools have one default branch. | `Branch`, `branchId` |
 | Tenant | Shorthand for the `schoolId` scope every request and document carries. | — |
@@ -21,7 +21,7 @@ The single source of truth for Vidyawan terminology. If a word appears in the UI
 | Role | One of the nine fixed roles below. | `RoleKey` |
 | Role assignment | A user + role + scope (school, optionally branch). | `User.roles[]` |
 | Permission | A dotted string that authorizes one action, e.g. `fees.invoice.create`. Roles are bundles of permissions. | `Permission` |
-| Super Admin | Vidyawan platform operator. Manages organizations and schools. Never sees student data unless granted break-glass access. | `super_admin` |
+| Super Admin | Sanchalix platform operator. Manages organizations and schools. Never sees student data unless granted break-glass access. | `super_admin` |
 | School Admin | Runs day-to-day administration of a school. | `school_admin` |
 | Principal | Academic head. Approves, oversees and reads everything in the school; edits little. | `principal` |
 | Teacher | Teaches subjects; may be the **class teacher** of one section. | `teacher` |

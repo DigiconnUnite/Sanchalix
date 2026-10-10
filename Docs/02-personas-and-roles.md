@@ -1,12 +1,12 @@
 # 02 · Personas and Roles
 
-Who uses Vidyawan, what they are trying to get done, and exactly what each role is allowed to do. Role keys, permission strings and scopes defined here are used unchanged in [14-data-model.md](14-data-model.md#users), [15-api-spec.md](15-api-spec.md) and [16-auth-and-security.md](16-auth-and-security.md#authorization-rbac). Navigation per role is in [07-information-architecture.md](07-information-architecture.md#navigation-per-role).
+Who uses Sanchalix, what they are trying to get done, and exactly what each role is allowed to do. Role keys, permission strings and scopes defined here are used unchanged in [14-data-model.md](14-data-model.md#users), [15-api-spec.md](15-api-spec.md) and [16-auth-and-security.md](16-auth-and-security.md#authorization-rbac). Navigation per role is in [07-information-architecture.md](07-information-architecture.md#navigation-per-role).
 
 ## Persona summary
 
 | Role key | Persona | Primary device | Sessions/day | Top job to be done |
 |---|---|---|---|---|
-| `super_admin` | Arjun, Vidyawan platform ops | Desktop | 1–3 | Onboard a school in under a day |
+| `super_admin` | Arjun, Sanchalix platform ops | Desktop | 1–3 | Onboard a school in under a day |
 | `school_admin` | Meena, school office administrator | Desktop | Continuous | Clear the front-office queue: admissions, records, certificates |
 | `principal` | Dr. Rao, principal | Desktop + phone | 3–5 | Know what needs attention today |
 | `teacher` | Priya, maths teacher and class teacher of 7-B | Phone in class, laptop at home | 6–10 | Take attendance and enter marks in seconds |
@@ -19,7 +19,7 @@ Who uses Vidyawan, what they are trying to get done, and exactly what each role 
 ## Personas
 
 ### Arjun — Super Admin (`super_admin`)
-- **Context:** Vidyawan employee. Onboards 5–20 schools a month and supports them.
+- **Context:** Sanchalix employee. Onboards 5–20 schools a month and supports them.
 - **Goals:** Provision an organization and school, import the school's legacy data, and hand over to the School Admin.
 - **Frustrations:** CSV imports that fail silently; support tickets he can't reproduce because he can't see what the user saw.
 - **UX implications:** The import wizard shows row-level errors and a downloadable error file. An impersonation mode ("View as") is read-only, time-boxed, audited and shown to the school in the audit log.

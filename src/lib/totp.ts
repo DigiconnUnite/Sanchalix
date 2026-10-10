@@ -36,4 +36,4 @@ export function verifyTotpCode(secret: string, code: string, time = Date.now()) 
 }
 
 export const otpauthUrl = (secret: string, account: string) =>
-  `otpauth://totp/${encodeURIComponent(`Vidyawan:${account}`)}?secret=${secret}&issuer=Vidyawan`;
+  `otpauth://totp/${encodeURIComponent(`Sanchalix:${account}`)}?secret=${secret}&issuer=Sanchalix`;

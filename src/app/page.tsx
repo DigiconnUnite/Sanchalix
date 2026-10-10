@@ -7,7 +7,7 @@ import SpaceBetween from '@cloudscape-design/components/space-between';
 import type { Metadata } from 'next';
 import { svg } from '@/components/icons';
 
-export const metadata: Metadata = { title: 'Dashboard · Vidyawan' };
+export const metadata: Metadata = { title: 'Dashboard · Sanchalix' };
 
 export default function DashboardPage() {
   return (

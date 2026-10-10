@@ -1,6 +1,6 @@
-# Vidyawan Documentation
+# Sanchalix Documentation
 
-Vidyawan is a multi-school School Management System for K-12 schools, built with Next.js (App Router, TypeScript), MongoDB/Mongoose, the AWS Cloudscape Design System and Reicon icons. These documents define what we build, for whom, how it looks and behaves, and how it is engineered. **UX is the top priority**, and every decision traces back to a real user.
+Sanchalix is a multi-school School Management System for K-12 schools, built with Next.js (App Router, TypeScript), MongoDB/Mongoose, the AWS Cloudscape Design System and Reicon icons. These documents define what we build, for whom, how it looks and behaves, and how it is engineered. **UX is the top priority**, and every decision traces back to a real user.
 
 > This folder is referred to as `/docs` throughout. On disk it is `Docs/`, which is the same path on Windows and macOS default file systems.
 
@@ -20,7 +20,7 @@ Vidyawan is a multi-school School Management System for K-12 schools, built with
 ### Product
 | Doc | What it answers |
 |---|---|
-| [01-product-vision.md](01-product-vision.md) | Why Vidyawan exists; goals, success metrics, non-goals, key assumptions |
+| [01-product-vision.md](01-product-vision.md) | Why Sanchalix exists; goals, success metrics, non-goals, key assumptions |
 | [02-personas-and-roles.md](02-personas-and-roles.md) | Who the 9 roles are; scopes; the full RBAC permission matrix |
 | [03-prd.md](03-prd.md) | Every module's features (MoSCoW + release), user stories and acceptance criteria |
 | [04-user-journeys.md](04-user-journeys.md) | End-to-end flows across roles (admission → first day, attendance, exams, fees, PTM…) |

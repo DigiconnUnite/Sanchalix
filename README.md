@@ -1,4 +1,4 @@
-# Vidyawan
+# Sanchalix
 
 A multi-school School Management System covering admissions, attendance, exams, fees and communication.
 
@@ -132,4 +132,4 @@ Not built yet, in roadmap order: OTP and Google sign-in (waiting for provider cr
 
 ## Documentation
 
-Everything about what Vidyawan does and how it is built is in [Docs/](Docs/README.md). The rules for writing code are in [CLAUDE.md](CLAUDE.md) and [Docs/17-coding-standards.md](Docs/17-coding-standards.md).
+Everything about what Sanchalix does and how it is built is in [Docs/](Docs/README.md). The rules for writing code are in [CLAUDE.md](CLAUDE.md) and [Docs/17-coding-standards.md](Docs/17-coding-standards.md).

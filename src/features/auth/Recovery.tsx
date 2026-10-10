@@ -2,10 +2,8 @@
 
 import Alert from '@cloudscape-design/components/alert';
 import Button from '@cloudscape-design/components/button';
-import Container from '@cloudscape-design/components/container';
-import Form from '@cloudscape-design/components/form';
+import Box from '@cloudscape-design/components/box';
 import FormField from '@cloudscape-design/components/form-field';
-import Header from '@cloudscape-design/components/header';
 import Input from '@cloudscape-design/components/input';
 import SpaceBetween from '@cloudscape-design/components/space-between';
 import { useTranslations } from 'next-intl';
@@ -13,6 +11,7 @@ import { type ReactNode, useState } from 'react';
 import { AppLink } from '@/components/AppLink';
 import { useRouter } from '@/i18n/navigation';
 import type { ActionResult } from '@/lib/appError';
+import { AuthCard } from './AuthCard';
 import { requestOtpCode, requestPasswordReset, resetPassword, signInWithOtp } from '@/server/auth/actions';
 
 type Failure = { message: string; fieldErrors?: Record<string, string> };
@@ -44,34 +43,24 @@ function AuthForm({
   }
 
   return (
-    <form
-      noValidate
-      onSubmit={(event) => {
-        event.preventDefault();
-        void send();
-      }}
-    >
-      <Form
-        header={
-          <Header variant="h1" description={description}>
-            {title}
-          </Header>
-        }
-        errorText={error && !error.fieldErrors ? error.message : null}
-        actions={
-          <Button variant="primary" loading={busy}>
+    <AuthCard title={title} {...(description && { description })}>
+      <form
+        noValidate
+        onSubmit={(event) => {
+          event.preventDefault();
+          void send();
+        }}
+      >
+        <SpaceBetween size="l">
+          {error && !error.fieldErrors && <Alert type="error">{error.message}</Alert>}
+          {children(error?.fieldErrors ?? {})}
+          <Button variant="primary" fullWidth loading={busy}>
             {submit}
           </Button>
-        }
-      >
-        <SpaceBetween size="m">
-          <Container>
-            <SpaceBetween size="m">{children(error?.fieldErrors ?? {})}</SpaceBetween>
-          </Container>
-          {footer}
+          {footer && <Box textAlign="center">{footer}</Box>}
         </SpaceBetween>
-      </Form>
-    </form>
+      </form>
+    </AuthCard>
   );
 }
 
@@ -84,12 +73,14 @@ export function ForgotPasswordForm() {
 
   if (sent) {
     return (
-      <SpaceBetween size="m">
-        <Alert type="success" header={t('sentTitle')}>
-          {t('sentBody', { email })}
-        </Alert>
-        {backToSignIn(t('back'))}
-      </SpaceBetween>
+      <AuthCard title={t('forgotTitle')}>
+        <SpaceBetween size="l">
+          <Alert type="success" header={t('sentTitle')}>
+            {t('sentBody', { email })}
+          </Alert>
+          <Box textAlign="center">{backToSignIn(t('back'))}</Box>
+        </SpaceBetween>
+      </AuthCard>
     );
   }
   return (
@@ -128,12 +119,14 @@ export function ResetPasswordForm({ token }: { token: string }) {
 
   if (done) {
     return (
-      <SpaceBetween size="m">
-        <Alert type="success" header={t('doneTitle')}>
-          {t('doneBody')}
-        </Alert>
-        {backToSignIn(t('signIn'))}
-      </SpaceBetween>
+      <AuthCard title={t('resetTitle')}>
+        <SpaceBetween size="l">
+          <Alert type="success" header={t('doneTitle')}>
+            {t('doneBody')}
+          </Alert>
+          <Box textAlign="center">{backToSignIn(t('signIn'))}</Box>
+        </SpaceBetween>
+      </AuthCard>
     );
   }
   const field = (name: 'next' | 'confirm', errors: Record<string, string>, hint?: string) => (

@@ -1,6 +1,6 @@
 # 23 · Decision Log (ADRs)
 
-Architecture and design decisions for Vidyawan, in a lightweight ADR format. A decision is changed by adding a new ADR that supersedes the old one, never by editing history. Add an ADR for any choice with real trade-offs, including any custom component that Cloudscape doesn't cover ([06-ux-principles.md](06-ux-principles.md#how-ux-decisions-get-made)).
+Architecture and design decisions for Sanchalix, in a lightweight ADR format. A decision is changed by adding a new ADR that supersedes the old one, never by editing history. Add an ADR for any choice with real trade-offs, including any custom component that Cloudscape doesn't cover ([06-ux-principles.md](06-ux-principles.md#how-ux-decisions-get-made)).
 
 **Status values:** Proposed · Accepted · Superseded by ADR-xxx · Deprecated.
 
@@ -31,7 +31,7 @@ Architecture and design decisions for Vidyawan, in a lightweight ADR format. A d
 
 ## ADR-001: Next.js monolith plus a background worker
 
-**Context.** Vidyawan needs server-rendered pages, form mutations, webhooks, and long or retried work (notification fan-out to thousands, PDF batches, imports, the timetable solver, scheduled fee jobs). The team is small (4 engineers).
+**Context.** Sanchalix needs server-rendered pages, form mutations, webhooks, and long or retried work (notification fan-out to thousands, PDF batches, imports, the timetable solver, scheduled fee jobs). The team is small (4 engineers).
 
 **Decision.** One Next.js App Router application serves the UI, Server Actions and Route Handlers. A separate Node **worker** process, built from the same repository and sharing `src/server/**`, consumes BullMQ queues. There are no other services.
 
@@ -252,7 +252,7 @@ Architecture and design decisions for Vidyawan, in a lightweight ADR format. A d
 
 ## ADR-021: Orange as the default accent colour
 
-**Context.** Cloudscape's accent is blue. The owner wants Vidyawan to read as orange by default, before any school sets its own brand colour.
+**Context.** Cloudscape's accent is blue. The owner wants Sanchalix to read as orange by default, before any school sets its own brand colour.
 
 **Decision.** Replace Cloudscape's `primary` reference palette (steps 50 to 1000) with an orange scale, using `generateThemeStylesheet` from `@cloudscape-design/components/theming` in `src/app/providers.tsx`. The stylesheet is generated once and rendered as a `<style>` during server rendering. No Cloudscape class is restyled and nothing is added to `global.css`.
 

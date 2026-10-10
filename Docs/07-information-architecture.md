@@ -1,6 +1,6 @@
 # 07 · Information Architecture
 
-How Vidyawan is organised: the sitemap, the navigation each role sees, and the URL structure. Icons are the keys from [09-iconography.md](09-iconography.md#5-complete-icon-map). Permissions come from [02-personas-and-roles.md](02-personas-and-roles.md#rbac-matrix). Screen details are in [10-screen-specs.md](10-screen-specs.md).
+How Sanchalix is organised: the sitemap, the navigation each role sees, and the URL structure. Icons are the keys from [09-iconography.md](09-iconography.md#5-complete-icon-map). Permissions come from [02-personas-and-roles.md](02-personas-and-roles.md#rbac-matrix). Screen details are in [10-screen-specs.md](10-screen-specs.md).
 
 ## Principles
 

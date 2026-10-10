@@ -15,9 +15,9 @@ Existing school ERPs digitise these forms but copy their clumsiness: dense scree
 
 ## Vision
 
-> **Vidyawan makes running a school feel effortless for everyone in it: the teacher in the corridor, the parent at home, the accountant at the counter and the principal who needs to know what matters today.**
+> **Sanchalix makes running a school feel effortless for everyone in it: the teacher in the corridor, the parent at home, the accountant at the counter and the principal who needs to know what matters today.**
 
-Vidyawan is one system of record for the whole school, designed task-first for each role, fast on cheap phones and patchy networks, available in the family's language, and careful with children's data.
+Sanchalix is one system of record for the whole school, designed task-first for each role, fast on cheap phones and patchy networks, available in the family's language, and careful with children's data.
 
 ## Goals
 
@@ -55,12 +55,12 @@ Measured per school, after 90 days live.
 
 ## Non-goals
 
-These are deliberately out of scope, so Vidyawan stays focused.
+These are deliberately out of scope, so Sanchalix stays focused.
 
 | Non-goal | Why not |
 |---|---|
 | A full LMS (video lessons, quizzes, course authoring) | Schools already use Google Classroom or similar. Homework and submissions cover the daily loop, and deep links cover the rest. |
-| Accounting ledger / general ledger | Vidyawan produces fee and payroll exports for Tally and Zoho Books. It doesn't replace the school's accounts. |
+| Accounting ledger / general ledger | Sanchalix produces fee and payroll exports for Tally and Zoho Books. It doesn't replace the school's accounts. |
 | Native iOS/Android apps in v1 or v2 | A PWA covers install, push and offline at a fraction of the cost. Revisit if iOS push reach falls below target. |
 | Higher education (credits, semesters, university exams) | A different domain model; it would bloat K-12 UX. |
 | Building our own payment, SMS or email infrastructure | We integrate with providers ([21-notifications-and-integrations.md](21-notifications-and-integrations.md)). |

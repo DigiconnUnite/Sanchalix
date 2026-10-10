@@ -1,6 +1,6 @@
 # 08 · Design System (Cloudscape)
 
-Vidyawan's UI is built entirely from the **AWS Cloudscape Design System** (`@cloudscape-design/components`, `@cloudscape-design/global-styles`, `@cloudscape-design/design-tokens`). This document says which Cloudscape component or pattern to use for each Vidyawan use case, how theming, dark mode and density work, and what not to do. Icons are covered in [09-iconography.md](09-iconography.md), UX rules in [06-ux-principles.md](06-ux-principles.md) and screens in [10-screen-specs.md](10-screen-specs.md).
+Sanchalix's UI is built entirely from the **AWS Cloudscape Design System** (`@cloudscape-design/components`, `@cloudscape-design/global-styles`, `@cloudscape-design/design-tokens`). This document says which Cloudscape component or pattern to use for each Sanchalix use case, how theming, dark mode and density work, and what not to do. Icons are covered in [09-iconography.md](09-iconography.md), UX rules in [06-ux-principles.md](06-ux-principles.md) and screens in [10-screen-specs.md](10-screen-specs.md).
 
 ## 1. Foundations
 
@@ -102,7 +102,7 @@ Vidyawan's UI is built entirely from the **AWS Cloudscape Design System** (`@clo
 | 300 | `#fdba74` | Dark mode hover and pressed |
 | 50 / 1000 | `#fff7ed` / `#2a0c03` | Selected-row background in light / dark |
 
-Schools may set a **primary brand colour** and a **logo**. Vidyawan applies the colour with Cloudscape `applyTheme` (`@cloudscape-design/components/theming`) to a restricted set of tokens only:
+Schools may set a **primary brand colour** and a **logo**. Sanchalix applies the colour with Cloudscape `applyTheme` (`@cloudscape-design/components/theming`) to a restricted set of tokens only:
 
 ```ts
 applyTheme({

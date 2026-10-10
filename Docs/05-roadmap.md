@@ -4,7 +4,7 @@ Phased delivery from MVP to v2. Every feature's phase matches its row in [03-prd
 
 ```mermaid
 gantt
-  title Vidyawan delivery plan
+  title Sanchalix delivery plan
   dateFormat YYYY-MM-DD
   axisFormat %b %y
   section MVP
@@ -28,7 +28,7 @@ gantt
 
 ## MVP: "Run the school day" (Oct 2026 → Feb 2027, about 19 weeks)
 
-**Outcome:** A pilot school (1 branch, about 800 students) runs daily attendance, fees and announcements entirely in Vidyawan.
+**Outcome:** A pilot school (1 branch, about 800 students) runs daily attendance, fees and announcements entirely in Sanchalix.
 
 | Area | Scope |
 |---|---|
@@ -54,7 +54,7 @@ gantt
 
 ## v1: "The whole academic cycle" (Feb → Jul 2027)
 
-**Outcome:** 20 schools. Exam season (Sept half-yearlies) runs on Vidyawan, and parents use the PWA daily.
+**Outcome:** 20 schools. Exam season (Sept half-yearlies) runs on Sanchalix, and parents use the PWA daily.
 
 | Area | Scope |
 |---|---|

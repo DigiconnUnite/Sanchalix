@@ -24,7 +24,7 @@ export default function proxy(request: NextRequest) {
   if (PUBLIC_PATH.test(path) || request.cookies.has(SESSION_COOKIE)) {
     response = handleLocale(request);
   } else if (path === '/') {
-    // A visitor with no session who opens the site sees what Vidyawan is, not a bare sign-in form.
+    // A visitor with no session who opens the site sees what Sanchalix is, not a bare sign-in form.
     response = NextResponse.redirect(new URL(`${prefix}/welcome`, request.url));
   } else {
     const signIn = new URL(`${prefix}/signin`, request.url);
