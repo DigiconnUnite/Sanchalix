@@ -96,7 +96,7 @@ export function StudentsTable({
     loadingText: t('loading'),
     header: (
       <Header
-        variant="h1"
+        variant="h2"
         counter={counter}
         actions={
           canCreate && (

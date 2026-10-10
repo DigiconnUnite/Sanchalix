@@ -112,7 +112,7 @@ export function EventsCalendar({
         header={
           <SpaceBetween size="m">
             <Header
-              variant="h1"
+              variant="h2"
               description={t('description')}
               actions={
                 <SpaceBetween direction="horizontal" size="xs">

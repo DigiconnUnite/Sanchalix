@@ -123,7 +123,7 @@ export function LeaveTable({
         loadingText={t('loading')}
         header={
           <SpaceBetween size="m">
-            <Header variant="h1" description={t(canApprove ? 'descriptionApprover' : 'description')} actions={canApply && applyButton(true)}>
+            <Header variant="h2" description={t(canApprove ? 'descriptionApprover' : 'description')} actions={canApply && applyButton(true)}>
               {t('title')}
             </Header>
             {balances.length > 0 && (

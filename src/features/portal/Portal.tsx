@@ -33,12 +33,10 @@ const day = (value: string) => date.format(new Date(`${value}T00:00:00Z`));
 export function PortalHome({
   home,
   title,
-  welcome,
   canPay,
 }: {
   home: Home;
   title: string;
-  welcome: string;
   canPay: boolean;
 }) {
   const t = useTranslations('portal');
@@ -58,8 +56,7 @@ export function PortalHome({
     <ContentLayout
       header={
         <Header
-          variant="h1"
-          description={welcome}
+          variant="h2"
           actions={
             home.children.length > 1 && (
               <Select

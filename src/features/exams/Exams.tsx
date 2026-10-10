@@ -109,7 +109,7 @@ export function ExamsTable({ exams, classes, canEdit }: { exams: ExamRow[]; clas
         trackBy="id"
         items={exams}
         header={
-          <Header variant="h1" counter={`(${exams.length})`} description={t('description')} actions={canEdit && addButton(true)}>
+          <Header variant="h2" counter={`(${exams.length})`} description={t('description')} actions={canEdit && addButton(true)}>
             {t('title')}
           </Header>
         }

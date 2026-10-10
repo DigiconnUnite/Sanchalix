@@ -111,7 +111,7 @@ export function ReportCardsTable({
         header={
           <SpaceBetween size="m">
             <Header
-              variant="h1"
+              variant="h2"
               counter={section ? `(${list.rows.length})` : ''}
               description={t('description')}
               actions={

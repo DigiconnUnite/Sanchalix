@@ -62,7 +62,7 @@ export function PaymentsTable({ pageSize, data }: { pageSize: number; data: Data
     loadingText: t('loading'),
     stickyHeader: true,
     header: (
-      <Header variant="h1" actions={<ExportButton kind="payments" />}>
+      <Header variant="h2" actions={<ExportButton kind="payments" />}>
         {t('title')}
       </Header>
     ),

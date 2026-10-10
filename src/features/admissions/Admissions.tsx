@@ -95,7 +95,7 @@ export function AdmissionsTable({
       loadingText={t('loading')}
       header={
         <SpaceBetween size="m">
-          <Header variant="h1" actions={canEdit && addButton(true)}>
+          <Header variant="h2" actions={canEdit && addButton(true)}>
             {t('title')}
           </Header>
           {created && (

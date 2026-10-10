@@ -86,7 +86,7 @@ export function DuesTable({
     header: (
       <SpaceBetween size="m">
         <Header
-          variant="h1"
+          variant="h2"
           counter={data ? `(${data.count})` : ''}
           description={canCollect && t('hint')}
           actions={

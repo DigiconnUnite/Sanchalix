@@ -58,7 +58,7 @@ export function SubjectsTable({ subjects, canCreate }: { subjects: SubjectRow[];
         items={subjects}
         header={
           <SpaceBetween size="m">
-            <Header variant="h1" counter={`(${subjects.length})`} actions={canCreate && addButton(true)}>
+            <Header variant="h2" counter={`(${subjects.length})`} actions={canCreate && addButton(true)}>
               {t('title')}
             </Header>
             {added && (
@@ -186,7 +186,7 @@ export function TimetableGrid({
         trackBy="number"
         items={sectionId ? timetable.periods : []}
         header={
-          <Header variant="h1" description={t('description')}>
+          <Header variant="h2" description={t('description')}>
             {t('title')}
           </Header>
         }

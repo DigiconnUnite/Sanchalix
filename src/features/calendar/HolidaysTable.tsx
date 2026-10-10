@@ -84,7 +84,7 @@ export function HolidaysTable({
         items={holidays}
         header={
           <SpaceBetween size="m">
-            <Header variant="h1" counter={`(${holidays.length})`} actions={canEdit && addButton(true)}>
+            <Header variant="h2" counter={`(${holidays.length})`} actions={canEdit && addButton(true)}>
               {t('title')}
             </Header>
             {feedback && (

@@ -108,6 +108,13 @@
    the theme's own page colour, in light and in dark mode. */
 body {
   background: var(--color-background-layout-main-y4565g);
+  /* ADR-021: the band behind the title of each main page. It starts in the header's dark colour, so white text
+     stays readable, and only tints towards the brand blue at the far edge. */
+  --vw-banner-background: linear-gradient(
+    115deg,
+    var(--color-background-home-header-x3x77n, #0f1b2a) 40%,
+    var(--color-background-button-primary-default-x6ecit, #0972d3) 180%
+  );
 }
 
 /* The home page header opens with the maker's logo in the logo box, then the product's own logo and name.

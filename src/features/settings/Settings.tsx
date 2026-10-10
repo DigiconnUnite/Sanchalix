@@ -114,7 +114,7 @@ export function Settings({ settings, tab }: { settings: SchoolSettings; tab: str
   );
 
   return (
-    <ContentLayout header={<Header variant="h1">{t('title')}</Header>}>
+    <ContentLayout>
       <Tabs
         activeTabId={tab === 'periods' ? 'periods' : 'school'}
         onChange={({ detail }) => router.replace(`${pathname}?tab=${detail.activeTabId}`)}

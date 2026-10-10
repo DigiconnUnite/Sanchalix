@@ -88,7 +88,7 @@ export function InvoicesTable({
     loading: !data,
     loadingText: t('loading'),
     stickyHeader: true,
-    header: <Header variant="h1">{t('title')}</Header>,
+    header: <Header variant="h2">{t('title')}</Header>,
     filter: (
       <Select
         inlineLabelText={t('filter.status')}

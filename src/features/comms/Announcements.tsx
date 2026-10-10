@@ -81,7 +81,7 @@ export function AnnouncementsTable({
       items={announcements}
       header={
         <SpaceBetween size="m">
-          <Header variant="h1" counter={`(${announcements.length})`} actions={canCreate && addButton(true)}>
+          <Header variant="h2" counter={`(${announcements.length})`} actions={canCreate && addButton(true)}>
             {t('announcements.title')}
           </Header>
           {published && (

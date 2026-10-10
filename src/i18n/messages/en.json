@@ -110,7 +110,34 @@
       "empty": "No notifications yet",
       "viewAll": "View all notifications"
     },
-    "switchTo": "Switch to {role}"
+    "switchTo": "Switch to {role}",
+    "banner": {
+      "students": "Everyone enrolled at the school, with their class, parents and status.",
+      "admissions": "Applications from first enquiry to a confirmed seat.",
+      "staff": "Teachers and office staff, and how to reach them.",
+      "staffAttendance": "Who is in today, on leave or absent.",
+      "leave": "Leave requests and the days each person has left.",
+      "academics": "Classes and sections for this academic year, and who looks after each.",
+      "subjects": "The subjects taught at the school.",
+      "timetable": "The weekly periods of each section.",
+      "attendance": "Mark who is present today, section by section.",
+      "exams": "Exams, their papers and the marks entered so far.",
+      "reportCards": "Report cards for each section, from draft to published.",
+      "homework": "Work set for each section and when it is due.",
+      "calendar": "Days the school is closed. Attendance is not taken on them.",
+      "feeCounter": "Collect a payment and print the receipt.",
+      "feeStructures": "What each class pays in a year, and in which installments.",
+      "invoices": "Every installment billed to a student, and what is still owed.",
+      "payments": "Receipts for every payment collected.",
+      "dues": "Unpaid fees past their due date, oldest first.",
+      "feeReports": "What was collected, day by day and by payment method.",
+      "announcements": "Notices sent to staff, students and parents.",
+      "calendarEvents": "Events, exams and holidays through the year.",
+      "promotion": "Move students to the next academic year.",
+      "users": "People who can sign in to this school, and what role each has.",
+      "outbox": "Every SMS and email the school has sent.",
+      "settings": "The school profile, working days and bell schedule."
+    }
   },
   "auth": {
     "signIn": {

@@ -102,7 +102,7 @@ export function TakeAttendance({
       header={
         <SpaceBetween size="m">
           <Header
-            variant="h1"
+            variant="h2"
             counter={hidesRoster ? '' : `(${sheet.students.length})`}
             actions={
               <SpaceBetween direction="horizontal" size="xs">

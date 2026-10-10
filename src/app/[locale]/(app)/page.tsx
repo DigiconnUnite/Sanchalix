@@ -68,7 +68,7 @@ export default async function DashboardPage({
     const title = tNav(homeLabel(ctx.role));
     if (!home) {
       return (
-        <ContentLayout header={<Header variant="h1">{title}</Header>}>
+        <ContentLayout>
           <EmptyState icon="students" heading={tPortal('notLinked.heading')} body={tPortal('notLinked.body')} />
         </ContentLayout>
       );
@@ -78,7 +78,6 @@ export default async function DashboardPage({
         key={home.selected.id}
         home={home}
         title={title}
-        welcome={t('welcome', { name: ctx.name })}
         canPay={ctx.role === 'parent'}
       />
     );
@@ -101,8 +100,7 @@ export default async function DashboardPage({
     <ContentLayout
       header={
         <Header
-          variant="h1"
-          description={t('welcome', { name: ctx.name })}
+          variant="h2"
           actions={
             can(ctx.role, 'fees.payment.create') ? (
               <Button variant="primary" href="/fees/counter" iconSvg={svg('collectPayment')}>

@@ -110,7 +110,7 @@ export function FeeStructuresTable({
         header={
           <SpaceBetween size="m">
             <Header
-              variant="h1"
+              variant="h2"
               counter={`(${structures.length})`}
               actions={
                 <SpaceBetween direction="horizontal" size="xs">

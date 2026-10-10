@@ -70,7 +70,7 @@ export function SectionsTable({
     header: (
       <SpaceBetween size="m">
         <Header
-          variant="h1"
+          variant="h2"
           counter={`(${sections.length})`}
           actions={
             canCreate && (

@@ -90,7 +90,7 @@ export function HomeworkTable({
         loadingText={t('loading')}
         header={
           <SpaceBetween size="m">
-            <Header variant="h1" actions={canCreate && addButton(true)}>
+            <Header variant="h2" actions={canCreate && addButton(true)}>
               {t('title')}
             </Header>
             {feedback && (

@@ -148,7 +148,7 @@ export function UsersTable({ data, canEdit }: { data: Data | null; canEdit: bool
         loadingText={t('loading')}
         header={
           <SpaceBetween size="m">
-            <Header variant="h1" description={t('description')} actions={canEdit && addButton(true)}>
+            <Header variant="h2" description={t('description')} actions={canEdit && addButton(true)}>
               {t('title')}
             </Header>
             {credentials && <TemporaryPassword {...credentials} />}

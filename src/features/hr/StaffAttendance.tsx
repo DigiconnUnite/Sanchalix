@@ -56,7 +56,7 @@ export function StaffAttendance({ sheet, canEdit }: { sheet: StaffSheet; canEdit
       header={
         <SpaceBetween size="m">
           <Header
-            variant="h1"
+            variant="h2"
             counter={closed ? '' : `(${sheet.staff.length})`}
             description={t('description')}
             actions={

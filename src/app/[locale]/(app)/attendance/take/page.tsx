@@ -1,5 +1,4 @@
 import ContentLayout from '@cloudscape-design/components/content-layout';
-import Header from '@cloudscape-design/components/header';
 import { notFound } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 import { EmptyState } from '@/components/EmptyState';
@@ -28,7 +27,7 @@ export default async function TakeAttendancePage({
   const sectionId = typeof section === 'string' ? section : sections[0]?.id;
   if (!sectionId) {
     return (
-      <ContentLayout header={<Header variant="h1">{t('title')}</Header>}>
+      <ContentLayout>
         <EmptyState icon="attendance" heading={t('noSections.heading')} body={t('noSections.body')} />
       </ContentLayout>
     );

@@ -20,7 +20,7 @@ export function OutboxTable({ messages }: { messages: OutboxRow[] }) {
       trackBy="id"
       items={messages}
       header={
-        <Header variant="h1" counter={`(${messages.length})`} description={t('description')}>
+        <Header variant="h2" counter={`(${messages.length})`} description={t('description')}>
           {t('title')}
         </Header>
       }

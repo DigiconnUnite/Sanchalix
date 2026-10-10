@@ -47,7 +47,7 @@ export function CollectionReport({ report }: { report: Report }) {
   );
 
   return (
-    <ContentLayout header={<Header variant="h1" description={t('description')}>{t('title')}</Header>}>
+    <ContentLayout>
       <SpaceBetween size="l">
         <Container>
           <SpaceBetween size="l">

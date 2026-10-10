@@ -49,7 +49,7 @@ export function Promotion({ state, sheet }: { state: PromotionState; sheet: Prom
 
   if (!state.current) {
     return (
-      <ContentLayout header={<Header variant="h1">{t('title')}</Header>}>
+      <ContentLayout>
         <EmptyState icon="academicYear" heading={t('noYear.heading')} body={t('noYear.body')} />
       </ContentLayout>
     );
@@ -116,7 +116,7 @@ export function Promotion({ state, sheet }: { state: PromotionState; sheet: Prom
 
   if (!state.next) {
     return (
-      <ContentLayout header={<Header variant="h1" description={t('description')}>{t('title')}</Header>}>
+      <ContentLayout>
         <SpaceBetween size="l">
           {alert}
           <Container
@@ -153,7 +153,7 @@ export function Promotion({ state, sheet }: { state: PromotionState; sheet: Prom
     <ContentLayout
       header={
         <Header
-          variant="h1"
+          variant="h2"
           description={t('fromTo', { current: state.current.label, next: state.next.label })}
           actions={
             <Button disabled={state.remaining > 0} onClick={() => setClosing(true)}>

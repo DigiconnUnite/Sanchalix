@@ -250,7 +250,7 @@ function Counter({ student }: { student: CounterStudent }) {
 export function FeeCounter({ student, notFound }: { student: CounterStudent | null; notFound: boolean }) {
   const t = useTranslations('fees.counter');
   return (
-    <ContentLayout header={<Header variant="h1">{t('title')}</Header>}>
+    <ContentLayout>
       {student ? (
         <Counter key={student.id} student={student} />
       ) : (
