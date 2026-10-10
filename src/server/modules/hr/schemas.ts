@@ -1,5 +1,6 @@
 import 'server-only';
 import { z } from 'zod';
+import type { LeaveBalance } from './leave';
 import { STAFF_STATUSES, STAFF_TYPES } from '@/server/models/staff';
 
 const E = 'hr.errors';
@@ -39,6 +40,23 @@ export type StaffMember = {
   email: string;
   joinedOn: string;
   status: string;
+};
+
+export type StaffProfile = {
+  id: string;
+  name: string;
+  employeeNo: string;
+  designation: string;
+  department: string | null;
+  type: (typeof STAFF_TYPES)[number];
+  phone: string;
+  email: string | null;
+  joinedOn: string;
+  status: (typeof STAFF_STATUSES)[number];
+  hasAccount: boolean;
+  classTeacherOf: string[];
+  teaches: { subject: string; sections: string; periods: number }[];
+  leave: LeaveBalance[];
 };
 
 export const ListStaff = z.object({

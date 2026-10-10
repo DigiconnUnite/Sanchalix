@@ -12,6 +12,7 @@ import Form from '@cloudscape-design/components/form';
 import FormField from '@cloudscape-design/components/form-field';
 import Header from '@cloudscape-design/components/header';
 import Input, { type InputProps } from '@cloudscape-design/components/input';
+import KeyValuePairs from '@cloudscape-design/components/key-value-pairs';
 import Pagination from '@cloudscape-design/components/pagination';
 import Select from '@cloudscape-design/components/select';
 import SpaceBetween from '@cloudscape-design/components/space-between';
@@ -22,11 +23,12 @@ import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { AppLink } from '@/components/AppLink';
 import { useCrumb } from '@/components/Crumb';
 import { EmptyState } from '@/components/EmptyState';
+import { svg } from '@/components/icons';
 import { usePathname, useRouter } from '@/i18n/navigation';
 import { formatPhone } from '@/lib/phone';
 import { useIsMobile } from '@/lib/useIsMobile';
 import { createStaff, updateStaff } from '@/server/modules/hr/actions';
-import type { StaffMember, StaffRow } from '@/server/modules/hr/schemas';
+import type { StaffMember, StaffProfile, StaffRow } from '@/server/modules/hr/schemas';
 
 const LIST = '/staff';
 const NEW = '/staff/new';
@@ -45,14 +47,12 @@ type Data = { rows: StaffRow[]; page: number; nextCursor: string | null; prevCur
 export function StaffTable({
   pageSize,
   canCreate,
-  canEdit,
   created,
   updated,
   data,
 }: {
   pageSize: number;
   canCreate: boolean;
-  canEdit: boolean;
   created: string | null;
   updated: string | null;
   data: Data | null;
@@ -90,14 +90,7 @@ export function StaffTable({
     {
       id: 'name',
       header: t('columns.name'),
-      content: (member) =>
-        canEdit ? (
-          <AppLink href={`${LIST}/${member.id}/edit`} ariaLabel={t('editLabel', { name: member.name })}>
-            {member.name}
-          </AppLink>
-        ) : (
-          member.name
-        ),
+      content: (member) => <AppLink href={`${LIST}/${member.id}`}>{member.name}</AppLink>,
     },
     { id: 'employeeNo', header: t('columns.employeeNo'), content: (member) => member.employeeNo },
     { id: 'designation', header: t('columns.designation'), content: (member) => member.designation },
@@ -298,6 +291,99 @@ export function StaffForm({ member }: { member?: StaffMember }) {
           </Container>
         </Form>
       </form>
+    </ContentLayout>
+  );
+}
+
+const NONE = '—';
+const day = new Intl.DateTimeFormat('en-IN', { dateStyle: 'medium', timeZone: 'UTC' });
+
+export function StaffProfileView({ member, canEdit }: { member: StaffProfile; canEdit: boolean }) {
+  const t = useTranslations('hr');
+  const tLeave = useTranslations('hr.leave');
+  const router = useRouter();
+  useCrumb(member.name);
+  const editHref = `${LIST}/${member.id}/edit`;
+
+  return (
+    <ContentLayout
+      header={
+        <Header
+          variant="h1"
+          description={`${member.designation} · ${member.employeeNo}`}
+          actions={
+            canEdit && (
+              <Button
+                iconSvg={svg('edit')}
+                href={editHref}
+                onFollow={(event) => {
+                  event.preventDefault();
+                  router.push(editHref);
+                }}
+              >
+                {t('profile.edit')}
+              </Button>
+            )
+          }
+        >
+          {member.name}
+        </Header>
+      }
+    >
+      <SpaceBetween size="l">
+        <Container header={<Header variant="h2">{t('profile.details')}</Header>}>
+          <KeyValuePairs
+            columns={3}
+            items={[
+              {
+                label: t('columns.status'),
+                value: <StatusIndicator type={STATUS_TYPE[member.status]}>{t(`status.${member.status}`)}</StatusIndicator>,
+              },
+              { label: t('columns.type'), value: t(`type.${member.type}`) },
+              { label: t('form.department'), value: member.department ?? NONE },
+              { label: t('columns.phone'), value: formatPhone(member.phone) },
+              { label: t('form.email'), value: member.email ?? NONE },
+              { label: t('form.joinedOn'), value: day.format(new Date(`${member.joinedOn}T00:00:00Z`)) },
+              {
+                label: t('profile.account'),
+                value: (
+                  <StatusIndicator type={member.hasAccount ? 'success' : 'stopped'}>
+                    {t(member.hasAccount ? 'profile.hasAccount' : 'profile.noAccount')}
+                  </StatusIndicator>
+                ),
+              },
+              { label: t('profile.classTeacherOf'), value: member.classTeacherOf.join(', ') || NONE },
+            ]}
+          />
+        </Container>
+        <Table
+          variant="container"
+          trackBy="subject"
+          items={member.teaches}
+          header={
+            <Header variant="h2" counter={`(${member.teaches.length})`} description={t('profile.teachingHint')}>
+              {t('profile.teaching')}
+            </Header>
+          }
+          empty={
+            <EmptyState icon="timetable" heading={t('profile.noTeaching.heading')} body={t('profile.noTeaching.body')} />
+          }
+          columnDefinitions={[
+            { id: 'subject', header: t('profile.subject'), cell: (row) => row.subject, isRowHeader: true },
+            { id: 'sections', header: t('profile.sections'), cell: (row) => row.sections },
+            { id: 'periods', header: t('profile.periods'), cell: (row) => row.periods },
+          ]}
+        />
+        <Container header={<Header variant="h2">{t('profile.leave')}</Header>}>
+          <KeyValuePairs
+            columns={3}
+            items={member.leave.map((balance) => ({
+              label: tLeave(`type.${balance.type}`),
+              value: tLeave('balance', { left: balance.left, quota: balance.quota }),
+            }))}
+          />
+        </Container>
+      </SpaceBetween>
     </ContentLayout>
   );
 }

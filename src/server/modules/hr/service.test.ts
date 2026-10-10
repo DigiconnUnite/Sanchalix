@@ -10,7 +10,7 @@ import { listSections } from '@/server/modules/academics/queries';
 import { assignClassTeacher } from '@/server/modules/academics/service';
 import { findAttendanceSection } from '@/server/modules/attendance/queries';
 import { StaffInput } from './schemas';
-import { createStaff, listStaff, listTeachers } from './service';
+import { createStaff, getStaffProfile, listStaff, listTeachers } from './service';
 
 const ADDRESS = { line1: '12 School Road', city: 'Bhopal', state: 'Madhya Pradesh', pincode: '462001', country: 'IN' };
 let ctx: RequestContext;
@@ -104,4 +104,14 @@ it('refuses non-teaching staff, another school’s teacher and another school’
   await expect(assignClassTeacher(ctx, sectionId, String(zoya?._id))).rejects.toMatchObject({ code: 'NOT_FOUND' });
   await expect(assignClassTeacher(other, sectionId, null)).rejects.toMatchObject({ code: 'NOT_FOUND' });
   await expect(assignClassTeacher(other, sectionId, priya?.id ?? '')).rejects.toMatchObject({ code: 'NOT_FOUND' });
+});
+
+it('shows a staff profile to its own school only, without pay or bank details', async () => {
+  const { rows } = await listStaff(ctx, { pageSize: 10 });
+  const id = rows[0]?.id ?? '';
+  const profile = await getStaffProfile(ctx, id);
+  expect(profile).toMatchObject({ id, hasAccount: false, classTeacherOf: [], teaches: [] });
+  expect(profile?.leave.map((balance) => balance.type)).toEqual(['CL', 'SL', 'EL']);
+  expect(profile).not.toHaveProperty('salary');
+  expect(await getStaffProfile(other, id)).toBeNull();
 });

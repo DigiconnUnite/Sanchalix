@@ -1679,6 +1679,24 @@
         "date": "Choose a date",
         "roster": "The list doesn't match the staff of this school. Reload the page and try again."
       }
+    },
+    "profile": {
+      "edit": "Edit",
+      "details": "Details",
+      "account": "Sign-in account",
+      "hasAccount": "Has a sign-in",
+      "noAccount": "No sign-in yet",
+      "classTeacherOf": "Class teacher of",
+      "teaching": "Teaching this year",
+      "teachingHint": "From the timetable of the current academic year.",
+      "subject": "Subject",
+      "sections": "Sections",
+      "periods": "Periods a week",
+      "noTeaching": {
+        "heading": "No periods in the timetable",
+        "body": "Subjects appear here once this person is given periods in a timetable."
+      },
+      "leave": "Leave left this year"
     }
   },
   "homework": {

@@ -4,8 +4,13 @@ import type { RequestContext } from '@/server/auth/context';
 import { paginate } from '@/server/db/paginate';
 import { Branch } from '@/server/models/branch';
 import { Counter } from '@/server/models/counter';
+import { AcademicYear } from '@/server/models/academicYear';
+import { Section } from '@/server/models/section';
 import { Staff } from '@/server/models/staff';
-import type { ListStaff, StaffInput, StaffMember, StaffRow, StaffUpdate } from './schemas';
+import { Subject } from '@/server/models/subject';
+import { TimetableSlot } from '@/server/models/timetableSlot';
+import { getLeaveBalances } from './leave';
+import type { ListStaff, StaffInput, StaffMember, StaffProfile, StaffRow, StaffUpdate } from './schemas';
 
 const scopeOf = (ctx: RequestContext) => ({
   schoolId: ctx.schoolId,
@@ -30,6 +35,60 @@ export async function getStaffMember(ctx: RequestContext, id: string): Promise<S
       status: member.status,
     }
   );
+}
+
+/** The staff record with this year's work: the class they look after, what they teach and the leave they have left. */
+export async function getStaffProfile(ctx: RequestContext, id: string): Promise<StaffProfile | null> {
+  if (!/^[0-9a-f]{24}$/.test(id)) return null;
+  const { schoolId } = ctx;
+  const [member, year] = await Promise.all([
+    Staff.findOne({ ...scopeOf(ctx), _id: id })
+      .select('name employeeNo designation department type phone email joinedOn status userId')
+      .lean(),
+    AcademicYear.findOne({ schoolId, status: 'current' }).select('_id').lean(),
+  ]);
+  if (!member) return null;
+
+  const thisYear = { schoolId, academicYearId: year?._id ?? null };
+  const [ownSections, slots, leave] = await Promise.all([
+    Section.find({ ...thisYear, classTeacherId: member._id }).sort({ displayName: 1 }).select('displayName').lean(),
+    TimetableSlot.find({ ...thisYear, teacherId: member._id }).select('sectionId subjectId').lean(),
+    getLeaveBalances({ ...ctx, staffId: member._id }),
+  ]);
+  const [subjects, sections] = await Promise.all([
+    Subject.find({ schoolId, _id: { $in: slots.map((slot) => slot.subjectId) } }).sort({ name: 1 }).select('name').lean(),
+    Section.find({ schoolId, _id: { $in: slots.map((slot) => slot.sectionId) } })
+      .sort({ displayName: 1 })
+      .select('displayName')
+      .lean(),
+  ]);
+
+  return {
+    id,
+    name: member.name,
+    employeeNo: member.employeeNo,
+    designation: member.designation,
+    department: member.department || null,
+    type: member.type,
+    phone: member.phone,
+    email: member.email || null,
+    joinedOn: member.joinedOn,
+    status: member.status,
+    hasAccount: Boolean(member.userId),
+    classTeacherOf: ownSections.map((section) => section.displayName),
+    teaches: subjects.map((subject) => {
+      const own = slots.filter((slot) => slot.subjectId.equals(subject._id));
+      return {
+        subject: subject.name,
+        sections: sections
+          .filter((section) => own.some((slot) => slot.sectionId.equals(section._id)))
+          .map((section) => section.displayName)
+          .join(', '),
+        periods: own.length,
+      };
+    }),
+    leave,
+  };
 }
 
 export async function updateStaff(ctx: RequestContext, { id, email, department, ...rest }: StaffUpdate) {
