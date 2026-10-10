@@ -77,9 +77,9 @@ export async function upsertFeeHead(input: unknown) {
 export async function upsertFeeStructure(input: unknown) {
   return withAction('fees.structure.update', async () => {
     const ctx = await requirePermission('fees.structure.update');
-    const data = FeeStructureInput.parse(input);
-    const structure = await createFeeStructure(ctx, data);
-    await audit(ctx, 'fees.structure.create', { type: 'feeStructure', id: structure.id }, {
+    const { id, ...data } = FeeStructureInput.extend({ id: FeeStructureId.optional() }).parse(input);
+    const structure = await createFeeStructure(ctx, data, id);
+    await audit(ctx, id ? 'fees.structure.update' : 'fees.structure.create', { type: 'feeStructure', id: structure.id }, {
       after: { name: data.name, lines: data.lines.length, installments: data.installments.length },
     });
     return { name: structure.name };

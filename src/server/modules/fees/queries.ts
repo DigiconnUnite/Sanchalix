@@ -55,6 +55,27 @@ export async function listFeeStructures(ctx: RequestContext): Promise<FeeStructu
   }));
 }
 
+/** A draft's values as the form holds them. Null once it is approved, because its invoices are already issued. */
+export async function getDraftFeeStructure(ctx: RequestContext, id: string) {
+  if (!/^[0-9a-f]{24}$/.test(id)) return null;
+  const structure = await FeeStructure.findOne({ schoolId: ctx.schoolId, _id: id, status: 'draft' }).lean();
+  if (!structure) return null;
+  return {
+    id,
+    name: structure.name,
+    classIds: structure.classIds.map(String),
+    lines: structure.lines.map((line) => ({
+      feeHeadId: String(line.feeHeadId),
+      amountMinor: String(line.amountMinor / 100),
+    })),
+    installments: structure.installments.map((item) => ({
+      label: item.label,
+      dueDate: item.dueDate,
+      percent: String(item.percent),
+    })),
+  };
+}
+
 export async function listInvoices(ctx: RequestContext, query: ListInvoices) {
   const { schoolId } = ctx;
   const { rows, ...page } = await paginate(

@@ -31,11 +31,13 @@ export function FeeStructuresTable({
   canEdit,
   canApprove,
   created,
+  updated,
 }: {
   structures: FeeStructureRow[];
   canEdit: boolean;
   canApprove: boolean;
   created: string | null;
+  updated: string | null;
 }) {
   const t = useTranslations('fees');
   const router = useRouter();
@@ -44,7 +46,12 @@ export function FeeStructuresTable({
   const [removing, setRemoving] = useState<FeeStructureRow | null>(null);
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<Feedback | null>(null);
-  const feedback = result ?? (created ? { type: 'success' as const, text: t('structures.created', { name: created }) } : null);
+  const saved = created ?? updated;
+  const feedback =
+    result ??
+    (saved
+      ? { type: 'success' as const, text: t(created ? 'structures.created' : 'structures.updated', { name: saved }) }
+      : null);
 
   const link = (href: string, label: string, primary = false) => (
     <Button
@@ -164,6 +171,19 @@ export function FeeStructuresTable({
                             onClick={() => setPending(row)}
                           >
                             {t('structures.approve')}
+                          </Button>
+                        )}
+                        {canEdit && (
+                          <Button
+                            variant="inline-link"
+                            ariaLabel={t('structures.editLabel', { name: row.name })}
+                            href={`/fees/structures/${row.id}/edit`}
+                            onFollow={(event) => {
+                              event.preventDefault();
+                              router.push(`/fees/structures/${row.id}/edit`);
+                            }}
+                          >
+                            {t('structures.edit')}
                           </Button>
                         )}
                         {canEdit && (

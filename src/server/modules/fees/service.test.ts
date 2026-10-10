@@ -8,7 +8,7 @@ import { Enrollment } from '@/server/models/enrollment';
 import { FeeHead } from '@/server/models/feeHead';
 import { Invoice } from '@/server/models/invoice';
 import { Student } from '@/server/models/student';
-import { listFeeStructures, listInvoices } from './queries';
+import { getDraftFeeStructure, listFeeStructures, listInvoices } from './queries';
 import { FeeHeadInput, FeeStructureInput } from './schemas';
 import { approveFeeStructure, createFeeHead, createFeeStructure } from './service';
 import { FeeStructure } from '@/server/models/feeStructure';
@@ -177,4 +177,16 @@ it('lists invoices for the school only, with the student and paging', async () =
   expect((await listInvoices(ctx, { status: 'paid', pageSize: 10 })).rows).toEqual([]);
   expect((await listInvoices(other, { pageSize: 10 })).rows).toEqual([]);
   await expect(approveFeeStructure(other, first.rows[0]?.id ?? '')).rejects.toMatchObject({ code: 'NOT_FOUND' });
+});
+
+it('edits a draft structure, but not another school’s or an approved one', async () => {
+  const draft = await FeeStructure.findOne({ schoolId: ctx.schoolId, status: 'draft' }).orFail().lean();
+  const approved = await FeeStructure.findOne({ schoolId: ctx.schoolId, status: { $ne: 'draft' } }).orFail().lean();
+  const renamed = structureInput({ name: 'Renamed structure' });
+
+  await expect(createFeeStructure(ctx, renamed, String(approved._id))).rejects.toMatchObject({ code: 'BUSINESS_RULE' });
+  expect(await getDraftFeeStructure(other, String(draft._id))).toBeNull();
+  await createFeeStructure(ctx, renamed, String(draft._id));
+  expect(await getDraftFeeStructure(ctx, String(draft._id))).toMatchObject({ name: 'Renamed structure' });
+  expect(await getDraftFeeStructure(ctx, String(approved._id))).toBeNull();
 });

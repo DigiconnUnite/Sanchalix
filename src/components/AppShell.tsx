@@ -17,7 +17,7 @@ import { useIsMobile } from '@/lib/useIsMobile';
 import type { VisualMode } from '@/lib/visualMode';
 
 // Paths that are part of a URL but have no page of their own, so they get no crumb.
-const NO_PAGE = [/^\/academics\/sections$/, /^\/staff\/[0-9a-f]{24}$/, /^\/fees$/, /^\/academics$/, /^\/attendance$/, /^\/calendar$/, /^\/communication$/];
+const NO_PAGE = [/^\/fees\/structures\/[0-9a-f]{24}$/, /^\/academics\/sections$/, /^\/staff\/[0-9a-f]{24}$/, /^\/fees$/, /^\/academics$/, /^\/attendance$/, /^\/calendar$/, /^\/communication$/];
 
 const VIEW_ALL = 'view-all';
 

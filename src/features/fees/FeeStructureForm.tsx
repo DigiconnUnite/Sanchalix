@@ -23,14 +23,25 @@ const LIST = '/fees/structures';
 type Option = { id: string; name: string };
 type Line = { feeHeadId: string; amountMinor: string };
 type Installment = { label: string; dueDate: string; percent: string };
+type Draft = { id: string; name: string; classIds: string[]; lines: Line[]; installments: Installment[] };
 
-export function FeeStructureForm({ classes, heads }: { classes: Option[]; heads: Option[] }) {
+export function FeeStructureForm({
+  classes,
+  heads,
+  draft,
+}: {
+  classes: Option[];
+  heads: Option[];
+  draft?: Draft;
+}) {
   const t = useTranslations('fees');
   const router = useRouter();
-  const [name, setName] = useState('');
-  const [classIds, setClassIds] = useState<string[]>([]);
-  const [lines, setLines] = useState<Line[]>([{ feeHeadId: '', amountMinor: '' }]);
-  const [installments, setInstallments] = useState<Installment[]>([{ label: '', dueDate: '', percent: '100' }]);
+  const [name, setName] = useState(draft?.name ?? '');
+  const [classIds, setClassIds] = useState<string[]>(draft?.classIds ?? []);
+  const [lines, setLines] = useState<Line[]>(draft?.lines ?? [{ feeHeadId: '', amountMinor: '' }]);
+  const [installments, setInstallments] = useState<Installment[]>(
+    draft?.installments ?? [{ label: '', dueDate: '', percent: '100' }],
+  );
   const [error, setError] = useState<{ message: string; fieldErrors?: Record<string, string> } | null>(null);
   const [busy, setBusy] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
@@ -50,14 +61,16 @@ export function FeeStructureForm({ classes, heads }: { classes: Option[]; heads:
   async function submit() {
     setBusy(true);
     setError(null);
-    const result = await upsertFeeStructure({ name, classIds, lines, installments });
-    if (result.ok) return router.push(`${LIST}?created=${encodeURIComponent(result.data.name)}`);
+    const result = await upsertFeeStructure({ ...(draft && { id: draft.id }), name, classIds, lines, installments });
+    if (result.ok) {
+      return router.push(`${LIST}?${draft ? 'updated' : 'created'}=${encodeURIComponent(result.data.name)}`);
+    }
     setError(result.error);
     setBusy(false);
   }
 
   return (
-    <ContentLayout header={<Header variant="h1">{t('structures.form.title')}</Header>}>
+    <ContentLayout header={<Header variant="h1">{t(draft ? 'structures.form.editTitle' : 'structures.form.title')}</Header>}>
       <form
         ref={formRef}
         noValidate
@@ -74,7 +87,7 @@ export function FeeStructureForm({ classes, heads }: { classes: Option[]; heads:
                 {t('cancel')}
               </Button>
               <Button variant="primary" loading={busy} disabled={Boolean(blocked)}>
-                {t('structures.form.submit')}
+                {t(draft ? 'structures.form.save' : 'structures.form.submit')}
               </Button>
             </SpaceBetween>
           }

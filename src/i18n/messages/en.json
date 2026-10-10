@@ -1116,14 +1116,19 @@
         "percentTotal": "Installments add up to {total}%. They must equal 100%.",
         "submit": "Save as draft",
         "noHeads": "Add at least one fee head before creating a fee structure.",
-        "noClasses": "Add classes for the current academic year before creating a fee structure."
+        "noClasses": "Add classes for the current academic year before creating a fee structure.",
+        "editTitle": "Edit fee structure",
+        "save": "Save changes"
       },
       "delete": "Delete",
       "deleteLabel": "Delete draft fee structure {name}",
       "deleteTitle": "Delete {name}?",
       "deleteBody": "This draft was never approved, so no invoices depend on it. To correct a draft, delete it and add it again.",
       "deleteConfirm": "Delete draft",
-      "deleted": "{name} deleted."
+      "deleted": "{name} deleted.",
+      "edit": "Edit",
+      "editLabel": "Edit fee structure {name}",
+      "updated": "{name} updated. It is still waiting for approval."
     },
     "invoices": {
       "title": "Invoices",

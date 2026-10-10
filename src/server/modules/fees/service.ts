@@ -31,7 +31,8 @@ export async function createFeeHead(ctx: RequestContext, input: FeeHeadInput) {
   }
 }
 
-export async function createFeeStructure(ctx: RequestContext, input: FeeStructureInput) {
+/** Saves a new draft, or with an id replaces a draft. An approved structure has invoices, so it can't change. */
+export async function createFeeStructure(ctx: RequestContext, input: FeeStructureInput, id?: string | undefined) {
   const { schoolId } = ctx;
   const academicYearId = await getCurrentYearId(ctx);
   if (!academicYearId) throw new AppError('BUSINESS_RULE', 'fees.errors.noYear');
@@ -43,6 +44,16 @@ export async function createFeeStructure(ctx: RequestContext, input: FeeStructur
   if (classes !== new Set(input.classIds).size) throw new AppError('NOT_FOUND', 'fees.errors.classes');
   if (heads !== input.lines.length) throw new AppError('NOT_FOUND', 'fees.errors.lineHead');
 
+  if (id) {
+    const updated = await FeeStructure.findOneAndUpdate(
+      { schoolId, _id: id, status: 'draft' },
+      { ...input, updatedBy: ctx.userId },
+    )
+      .select('_id')
+      .lean();
+    if (!updated) throw new AppError('BUSINESS_RULE', 'fees.errors.notDraft');
+    return { id: updated._id, name: input.name };
+  }
   const structure = await FeeStructure.create({
     schoolId,
     academicYearId,
@@ -54,7 +65,6 @@ export async function createFeeStructure(ctx: RequestContext, input: FeeStructur
   return { id: structure._id, name: structure.name };
 }
 
-/** Approves a draft structure and, in the same transaction, issues every installment's invoice to every active student. */
 /** Only a draft can go: once approved, invoices point at the structure. */
 export async function deleteDraftFeeStructure(ctx: RequestContext, id: string) {
   const structure = await FeeStructure.findOneAndUpdate(
