@@ -48,6 +48,8 @@ export function AttendanceRegisterTable({
   ];
   const percent = (student: Student) => (student.percent === null ? NONE : `${student.percent}%`);
   const takeHref = `/attendance/take?section=${register.section.id}`;
+  const query = `section=${register.section.id}&month=${register.month}${register.period ? `&period=${register.period}` : ''}`;
+  const exportHref = `/api/v1/attendance/register?${query}`;
 
   const shared = {
     trackBy: 'id',
@@ -58,16 +60,21 @@ export function AttendanceRegisterTable({
           variant="h1"
           counter={`(${register.students.length})`}
           actions={
-            <Button
-              iconSvg={svg('attendance')}
-              href={takeHref}
-              onFollow={(event) => {
-                event.preventDefault();
-                router.push(takeHref);
-              }}
-            >
-              {t('take')}
-            </Button>
+            <SpaceBetween direction="horizontal" size="xs">
+              <Button href={exportHref} download iconSvg={svg('export')} ariaLabel={t('exportLabel')}>
+                {t('export')}
+              </Button>
+              <Button
+                iconSvg={svg('attendance')}
+                href={takeHref}
+                onFollow={(event) => {
+                  event.preventDefault();
+                  router.push(takeHref);
+                }}
+              >
+                {t('take')}
+              </Button>
+            </SpaceBetween>
           }
         >
           {t('title')}

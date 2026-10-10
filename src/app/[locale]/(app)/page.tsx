@@ -25,6 +25,7 @@ import {
   getDuesAgeing,
   getFeesSummary,
 } from '@/server/modules/dashboard/queries';
+import { getAttention } from '@/server/modules/dashboard/attention';
 import { getCollectionReport } from '@/server/modules/fees/reports';
 import { countStudents } from '@/server/modules/sis/queries';
 import { PortalHome } from '@/features/portal/Portal';
@@ -215,8 +216,9 @@ async function OverdueTile({ ctx }: { ctx: RequestContext }) {
 }
 
 async function Attention({ ctx, attendance, fees }: { ctx: RequestContext; attendance: boolean; fees: boolean }) {
-  const [t, today, summary] = await Promise.all([
+  const [t, waiting, today, summary] = await Promise.all([
     getTranslations('dashboard.attention'),
+    getAttention(ctx),
     attendance ? attendanceToday(ctx) : null,
     fees ? feesSummary(ctx) : null,
   ]);
@@ -247,6 +249,7 @@ async function Attention({ ctx, attendance, fees }: { ctx: RequestContext; atten
           },
         ]
       : []),
+    ...waiting.map(({ key, count, href }) => ({ href, text: t(key, { count }) })),
   ];
   return (
     <Container

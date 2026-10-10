@@ -6,8 +6,8 @@ import { audit } from '@/server/audit';
 import { getTranslations } from 'next-intl/server';
 import { requirePermission } from '@/server/auth/context';
 import { requestPasswordReset } from '@/server/auth/recovery';
-import { createUser as create, resetUserPassword as reset, setUserStatus as setStatus } from './service';
-import { UserId, UserInput, UserStatus } from './service';
+import { addUserRole as addRole, createUser as create, resetUserPassword as reset, setUserStatus as setStatus } from './service';
+import { AddRole, UserId, UserInput, UserStatus } from './service';
 
 export async function createUser(input: unknown) {
   return withAction('users.user.create', async () => {
@@ -38,6 +38,16 @@ export async function setUserStatus(input: unknown) {
       after: { status },
     });
     return { name: user.name, status };
+  });
+}
+
+export async function addUserRole(input: unknown) {
+  return withAction('users.user.addRole', async () => {
+    const ctx = await requirePermission('users.user.update');
+    const { id, role } = AddRole.parse(input);
+    const user = await addRole(ctx, id, role);
+    await audit(ctx, 'users.user.addRole', { type: 'user', id: user.id }, { after: { role } });
+    return { name: user.name, role };
   });
 }
 

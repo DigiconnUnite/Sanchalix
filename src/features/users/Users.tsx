@@ -21,13 +21,13 @@ import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 import { EmptyState } from '@/components/EmptyState';
 import { usePathname, useRouter } from '@/i18n/navigation';
-import { createUser, resetUserPassword, setUserStatus } from '@/server/modules/users/actions';
+import { addUserRole, createUser, resetUserPassword, setUserStatus } from '@/server/modules/users/actions';
 import type { UserRow } from '@/server/modules/users/service';
 
 const LIST = '/users';
 const NEW = '/users/new';
 const NONE = '—';
-const ROLES = ['teacher', 'accountant', 'principal', 'school_admin', 'librarian', 'transport_manager'];
+const ROLES: UserRow['roles'] = ['teacher', 'accountant', 'principal', 'school_admin', 'librarian', 'transport_manager'];
 const STATUS_TYPE: Record<UserRow['status'], StatusIndicatorProps.Type> = {
   invited: 'pending',
   active: 'success',
@@ -35,7 +35,7 @@ const STATUS_TYPE: Record<UserRow['status'], StatusIndicatorProps.Type> = {
   disabled: 'stopped',
 };
 type Data = { rows: UserRow[]; page: number; nextCursor: string | null; prevCursor: string | null };
-type Pending = { row: UserRow; action: 'reset' | 'disable' | 'enable' };
+type Pending = { row: UserRow; action: 'reset' | 'disable' | 'enable' | 'addRole' };
 type Credentials = { name: string; email?: string; password: string };
 const dateTime = new Intl.DateTimeFormat('en-IN', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Kolkata' });
 
@@ -76,6 +76,7 @@ export function UsersTable({ data, canEdit }: { data: Data | null; canEdit: bool
   const pathname = usePathname();
   const [pending, setPending] = useState<Pending | null>(null);
   const [busy, setBusy] = useState(false);
+  const [newRole, setNewRole] = useState('');
   const [credentials, setCredentials] = useState<Credentials | null>(null);
   const [result, setResult] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const page = data?.page ?? 1;
@@ -102,6 +103,13 @@ export function UsersTable({ data, canEdit }: { data: Data | null; canEdit: bool
       const response = await resetUserPassword(row.id);
       if (response.ok) setCredentials(response.data);
       else setResult({ type: 'error', text: response.error.message });
+    } else if (action === 'addRole') {
+      const response = await addUserRole({ id: row.id, role: newRole });
+      setResult(
+        response.ok
+          ? { type: 'success', text: t('done.addRole', { name: row.name, role: tRole(newRole) }) }
+          : { type: 'error', text: response.error.message },
+      );
     } else {
       const response = await setUserStatus({ id: row.id, status: action === 'disable' ? 'disabled' : 'active' });
       setResult(
@@ -119,7 +127,10 @@ export function UsersTable({ data, canEdit }: { data: Data | null; canEdit: bool
     <Button
       variant="inline-link"
       ariaLabel={t(`actionLabel.${kind}`, { name: row.name })}
-      onClick={() => setPending({ row, action: kind })}
+      onClick={() => {
+        setNewRole('');
+        setPending({ row, action: kind });
+      }}
     >
       {t(`action.${kind}`)}
     </Button>
@@ -165,7 +176,7 @@ export function UsersTable({ data, canEdit }: { data: Data | null; canEdit: bool
         columnDefinitions={[
           { id: 'name', header: t('columns.name'), cell: (row) => row.name, isRowHeader: true },
           { id: 'email', header: t('columns.email'), cell: (row) => row.email ?? NONE },
-          { id: 'role', header: t('columns.role'), cell: (row) => tRole(row.role) },
+          { id: 'role', header: t('columns.role'), cell: (row) => row.roles.map((role) => tRole(role)).join(', ') },
           { id: 'staff', header: t('columns.staff'), cell: (row) => row.staffName ?? NONE },
           {
             id: 'status',
@@ -186,6 +197,7 @@ export function UsersTable({ data, canEdit }: { data: Data | null; canEdit: bool
                     !row.isSelf && (
                       <SpaceBetween direction="horizontal" size="s">
                         {row.status !== 'disabled' && action(row, 'reset')}
+                        {row.status !== 'disabled' && ROLES.some((role) => !row.roles.includes(role)) && action(row, 'addRole')}
                         {action(row, row.status === 'disabled' ? 'enable' : 'disable')}
                       </SpaceBetween>
                     ),
@@ -205,14 +217,35 @@ export function UsersTable({ data, canEdit }: { data: Data | null; canEdit: bool
               <Button variant="link" onClick={() => setPending(null)}>
                 {t('cancel')}
               </Button>
-              <Button variant="primary" loading={busy} onClick={() => void confirm()}>
+              <Button
+                variant="primary"
+                loading={busy}
+                disabled={pending?.action === 'addRole' && !newRole}
+                onClick={() => void confirm()}
+              >
                 {pending ? t(`action.${pending.action}`) : ''}
               </Button>
             </SpaceBetween>
           </Box>
         }
       >
-        {pending ? t(`confirmBody.${pending.action}`) : ''}
+        {pending?.action === 'addRole' ? (
+          <FormField label={t('addRole.role')} description={t('addRole.hint')}>
+            <Select
+              placeholder={t('addRole.placeholder')}
+              selectedOption={newRole ? { value: newRole, label: tRole(newRole) } : null}
+              options={ROLES.filter((role) => !pending.row.roles.includes(role)).map((value) => ({
+                value,
+                label: tRole(value),
+              }))}
+              onChange={({ detail }) => setNewRole(detail.selectedOption.value ?? '')}
+            />
+          </FormField>
+        ) : pending ? (
+          t(`confirmBody.${pending.action}`)
+        ) : (
+          ''
+        )}
       </Modal>
     </>
   );

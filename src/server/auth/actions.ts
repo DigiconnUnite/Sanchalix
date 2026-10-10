@@ -169,6 +169,17 @@ export async function changePassword(input: unknown) {
   });
 }
 
+export async function signOutOtherSessions() {
+  return withAction('auth.signOutOthers', async () => {
+    const ctx = await getContext();
+    const session = await readSession();
+    if (!ctx || !session) throw new AppError('UNAUTHENTICATED', 'errors.unauthenticated');
+    const { deletedCount } = await Session.deleteMany({ userId: ctx.userId, _id: { $ne: session._id } });
+    await audit(ctx, 'auth.session.signOutOthers', { type: USER, id: ctx.userId }, { after: { count: deletedCount } });
+    return { count: deletedCount };
+  });
+}
+
 export async function setVisualMode(input: unknown) {
   return withAction('auth.setVisualMode', async () => {
     const ctx = await getContext();

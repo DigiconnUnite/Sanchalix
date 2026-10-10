@@ -15,7 +15,7 @@ import { User } from '@/server/models/user';
 import { addEvent, EventInput, getMonth, removeEvent } from '@/server/modules/calendar/events';
 import { StudentInput } from '@/server/modules/sis/schemas';
 import { createStudent } from '@/server/modules/sis/service';
-import { createUser, listUsers, resetUserPassword, setUserStatus, UserInput } from '@/server/modules/users/service';
+import { addUserRole, createUser, listUsers, resetUserPassword, setUserStatus, UserInput } from '@/server/modules/users/service';
 import { closeYear, createNextYear, getPromotionSheet, getPromotionState, promoteSection } from './service';
 
 const ADDRESS = { line1: '12 School Road', city: 'Bhopal', state: 'Madhya Pradesh', pincode: '462001' };
@@ -167,7 +167,7 @@ it('creates a sign-in with a one-time password, and resets or disables it only w
   const stored = await User.findById(created.id).select('+passwordHash').lean();
   expect(stored).toMatchObject({ email, status: 'active', roles: [{ role: 'teacher', scope: 'assigned' }] });
   expect(await verifyPassword(stored?.passwordHash ?? '', created.password)).toBe(true);
-  expect((await listUsers(ctx, {})).rows).toMatchObject([{ name: 'Farah Khan', role: 'teacher', isSelf: false }]);
+  expect((await listUsers(ctx, {})).rows).toMatchObject([{ name: 'Farah Khan', roles: ['teacher'], isSelf: false }]);
   expect((await listUsers(otherSchool, {})).rows).toEqual([]);
 
   const id = String(created.id);
@@ -182,6 +182,12 @@ it('creates a sign-in with a one-time password, and resets or disables it only w
   const reset = await resetUserPassword(ctx, id);
   expect(reset.password).not.toBe(created.password);
   expect(await Session.countDocuments({ userId: created.id })).toBe(0);
+
+  await expect(addUserRole(otherSchool, id, 'accountant')).rejects.toMatchObject({ code: 'NOT_FOUND' });
+  await expect(addUserRole(ctx, String(ctx.userId), 'accountant')).rejects.toMatchObject({ code: 'BUSINESS_RULE' });
+  await addUserRole(ctx, id, 'accountant');
+  await expect(addUserRole(ctx, id, 'accountant')).rejects.toMatchObject({ code: 'CONFLICT' });
+  expect((await listUsers(ctx, {})).rows.find((row) => row.id === id)?.roles).toHaveLength(2);
 
   await expect(setUserStatus(otherSchool, id, 'disabled')).rejects.toMatchObject({ code: 'NOT_FOUND' });
   await expect(setUserStatus(ctx, String(ctx.userId), 'disabled')).rejects.toMatchObject({ code: 'BUSINESS_RULE' });

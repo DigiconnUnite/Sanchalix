@@ -206,6 +206,18 @@
         "hint": "At least 10 characters. A long phrase is stronger than a short mix of symbols.",
         "submit": "Change password",
         "changed": "Password changed. Other devices signed in to this account have been signed out."
+      },
+      "sessions": {
+        "title": "Where you're signed in",
+        "description": "Each device that is signed in to your account.",
+        "device": "Device",
+        "ip": "IP address",
+        "signedIn": "Signed in",
+        "current": "This device",
+        "unknown": "Unknown device",
+        "signOutOthers": "Sign out other devices",
+        "signedOut": "{count, plural, one {# other device was} other {# other devices were}} signed out.",
+        "dismiss": "Dismiss message"
       }
     },
     "reset": {
@@ -294,7 +306,11 @@
       "clear": {
         "heading": "All clear",
         "body": "Nothing needs your attention right now."
-      }
+      },
+      "leave": "{count, plural, one {# leave request is} other {# leave requests are}} waiting for a decision",
+      "admissions": "{count, plural, one {# applicant has} other {# applicants have}} an offered seat to confirm",
+      "marks": "{count, plural, one {# exam paper is} other {# exam papers are}} past the exam date with marks not locked",
+      "reportCards": "{count, plural, one {# report card is} other {# report cards are}} still a draft"
     },
     "charts": {
       "viewTable": "View as table",
@@ -891,7 +907,9 @@
       },
       "period": "Period",
       "wholeDay": "Whole day",
-      "periodNo": "Period {number}"
+      "periodNo": "Period {number}",
+      "export": "Export CSV",
+      "exportLabel": "Export this register as a CSV file"
     }
   },
   "calendar": {
@@ -1825,17 +1843,20 @@
     "action": {
       "reset": "Reset password",
       "disable": "Disable",
-      "enable": "Enable"
+      "enable": "Enable",
+      "addRole": "Add role"
     },
     "actionLabel": {
       "reset": "Reset password for {name}",
       "disable": "Disable sign-in for {name}",
-      "enable": "Enable sign-in for {name}"
+      "enable": "Enable sign-in for {name}",
+      "addRole": "Add a role for {name}"
     },
     "confirm": {
       "reset": "Reset the password for {name}?",
       "disable": "Disable sign-in for {name}?",
-      "enable": "Enable sign-in for {name}?"
+      "enable": "Enable sign-in for {name}?",
+      "addRole": "Add a role for {name}"
     },
     "confirmBody": {
       "reset": "They are signed out everywhere and get a new temporary password, which you will see once.",
@@ -1844,7 +1865,8 @@
     },
     "done": {
       "disable": "Sign-in disabled for {name}.",
-      "enable": "Sign-in enabled for {name}."
+      "enable": "Sign-in enabled for {name}.",
+      "addRole": "{name} can now switch to {role}."
     },
     "empty": {
       "heading": "No users yet",
@@ -1878,7 +1900,15 @@
       "staffLinked": "That staff member already has an account.",
       "notFound": "We couldn't find that user.",
       "self": "You can't disable your own account.",
-      "selfReset": "Change your own password from Profile."
+      "selfReset": "Change your own password from Profile.",
+      "roleHeld": "They already have that role.",
+      "selfRole": "You can't change your own roles."
+    },
+    "addRole": {
+      "role": "Role to add",
+      "placeholder": "Choose a role",
+      "hint": "They keep their current role and can switch between roles from the user menu.",
+      "submit": "Add role"
     }
   },
   "promotion": {

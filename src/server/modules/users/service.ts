@@ -34,6 +34,7 @@ export const UserInput = z.object({
 export type UserInput = z.infer<typeof UserInput>;
 
 export const UserId = Id;
+export const AddRole = z.object({ id: Id, role: z.enum(STAFF_ROLES, `${E}.role`) });
 export const UserStatus = z.object({ id: Id, status: z.enum(['active', 'disabled']) });
 export const ListUsers = z.object({ cursor: z.string().optional().catch(undefined) });
 export type ListUsers = z.infer<typeof ListUsers>;
@@ -42,7 +43,7 @@ export type UserRow = {
   id: string;
   name: string;
   email: string | null;
-  role: RoleKey;
+  roles: RoleKey[];
   staffName: string | null;
   status: 'invited' | 'active' | 'locked' | 'disabled';
   lastLoginAt: string | null;
@@ -109,7 +110,7 @@ export async function listUsers(ctx: RequestContext, query: ListUsers) {
     id: String(row._id),
     name: row.name,
     email: row.email ?? null,
-    role: row.roles.find((assignment) => assignment.schoolId?.equals(ctx.schoolId))?.role ?? 'teacher',
+    roles: row.roles.filter((assignment) => assignment.schoolId?.equals(ctx.schoolId)).map(({ role }) => role),
     staffName: staffOf.get(String(row.staffId)) ?? null,
     status: row.status,
     lastLoginAt: row.lastLoginAt?.toISOString() ?? null,
@@ -145,6 +146,22 @@ export async function setUserStatus(ctx: RequestContext, id: string, status: 'ac
   if (!user) throw new AppError('NOT_FOUND', `${E}.notFound`);
   if (status === 'disabled') await Session.deleteMany({ userId: user._id });
   return { id: user._id, name: user.name, before: user.status };
+}
+
+/** Gives someone a second role in this school. They choose which one is active from the user menu. */
+export async function addUserRole(ctx: RequestContext, id: string, role: (typeof STAFF_ROLES)[number]) {
+  if (ctx.userId.equals(id)) throw new AppError('BUSINESS_RULE', `${E}.selfRole`);
+  const { schoolId } = ctx;
+  const user = await User.findOneAndUpdate(
+    { _id: id, $and: [inSchool(ctx), { roles: { $not: { $elemMatch: { schoolId, role } } } }] },
+    { $push: { roles: { role, schoolId, scope: SCOPE_OF[role] ?? 'school' } } },
+  )
+    .select('name')
+    .lean();
+  if (user) return { id: user._id, name: user.name };
+  throw (await User.exists({ ...inSchool(ctx), _id: id }))
+    ? new AppError('CONFLICT', `${E}.roleHeld`)
+    : new AppError('NOT_FOUND', `${E}.notFound`);
 }
 
 /** Gives the user a new temporary password and signs them out everywhere. The password is returned once. */

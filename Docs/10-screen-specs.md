@@ -286,7 +286,10 @@ Built with `Board` (staff, rearrangeable in v1) or `Grid` (student, parent). Eve
 - **Staff attendance** (`/staff/attendance?date=`): one row per staff member with a segmented control; approved leave is pre-filled and badged.
 - **Settings** (`/settings?tab=school|periods`): School (profile and working days) and Bell schedule (an `AttributeEditor` of periods with `TimeInput`), each with its own Save changes.
 - **Export CSV** button on the Students, Dues and Payments tables.
-- **Users** (`/users`, `/users/new`): the temporary password is shown once in a success alert with a copy button.
+- **Users** (`/users`, `/users/new`): the temporary password is shown once in a success alert with a copy button. The Role column lists every role a user holds; Add role opens a modal with the roles they don't have yet.
+- **Profile** (`/profile`): a "Where you're signed in" table of signed-in devices with Sign out other devices.
+- **Attendance register:** Export CSV downloads the section, month and period on screen.
+- **Dashboard, Needs your attention:** also lists pending staff leave, offered admission seats, exam papers past their date with marks not locked, and draft report cards, each only for a role that can act on it.
 - **Student profile, Portal access tab:** the student and each guardian with their account email or "No account", and Create account.
 - **Home for students and parents:** a summary (attendance, fees due, homework due), today's classes, homework, fees to pay, coming up. Parents with several children get a child selector in the header.
 - **Calendar** (`/calendar/events?month=`): a month list of events and holidays with Previous and Next; Add event in a dialog.
