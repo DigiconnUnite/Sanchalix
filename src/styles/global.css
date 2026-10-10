@@ -108,9 +108,16 @@
    the theme's own page colour, in light and in dark mode. */
 body {
   background: var(--color-background-layout-main-y4565g);
-  /* ADR-022: the band behind the title of each main page. It starts in the header's dark colour, so white text
-     stays readable, and only tints towards the brand blue at the far edge. */
-  --vw-banner-background: linear-gradient(
+}
+
+/* ADR-022: the banner that opens each main page. It is a card as wide as the table under it, with the same
+   rounded corners. The background starts in the header's dark colour, so the light text stays readable, and only
+   tints towards the accent colour at the far edge. */
+.vw-page-banner {
+  margin-block-end: var(--space-scaled-l-33ruz6, 20px);
+  padding: var(--space-scaled-l-33ruz6, 20px) var(--space-container-horizontal-quy5ai, 20px);
+  border-radius: var(--border-radius-container-33hhdh, 16px);
+  background: linear-gradient(
     115deg,
     var(--color-background-home-header-x3x77n, #0f1b2a) 40%,
     var(--color-background-button-primary-default-x6ecit, #0972d3) 180%
@@ -400,6 +407,7 @@ body {
    navigation and the breadcrumb row are removed here, along with anything marked vw-no-print. */
 @media print {
   .vw-top-nav,
+  .vw-page-banner,
   .vw-no-print,
   [class*='awsui_navigation_'],
   [class*='awsui_toolbar-container_'] {

@@ -2,7 +2,6 @@
 
 import AppLayoutToolbar from '@cloudscape-design/components/app-layout-toolbar';
 import BreadcrumbGroup from '@cloudscape-design/components/breadcrumb-group';
-import ContentLayout from '@cloudscape-design/components/content-layout';
 import Header from '@cloudscape-design/components/header';
 import Icon from '@cloudscape-design/components/icon';
 import SideNavigation from '@cloudscape-design/components/side-navigation';
@@ -215,7 +214,6 @@ export function AppShell({
       <AppLayoutToolbar
         headerSelector="#top-nav"
         toolsHide
-        disableContentPaddings={Boolean(banner)}
         navigationCloseBehavior="collapse"
         navigationOpen={navigationOpen}
         onNavigationChange={({ detail }) => setNavigationChoice(detail.open)}
@@ -250,18 +248,15 @@ export function AppShell({
         }
         content={
           banner ? (
-            <ContentLayout
-              defaultPadding
-              headerVariant="high-contrast"
-              headerBackgroundStyle="var(--vw-banner-background)"
-              header={
+            <>
+              {/* Cloudscape's header context, so the title and description take light text on the dark band. */}
+              <div className="vw-page-banner awsui-context-top-navigation">
                 <Header variant="h1" description={banner.description}>
                   {banner.text}
                 </Header>
-              }
-            >
+              </div>
               {children}
-            </ContentLayout>
+            </>
           ) : (
             children
           )

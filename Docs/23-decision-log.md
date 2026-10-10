@@ -271,10 +271,10 @@ Architecture and design decisions for Sanchalix, in a lightweight ADR format. A 
 
 **Context.** The owner wants every main page of the app to open with a banner, with colour behind it, instead of a plain heading.
 
-**Decision.** The app shell (`src/components/AppShell.tsx`) wraps any page whose URL is a side-navigation link in a Cloudscape `ContentLayout` with `headerVariant="high-contrast"` and `headerBackgroundStyle`. The banner shows the navigation label as the page's `h1` and a one-line description from `shell.banner.*`; the dashboard's description is the welcome line. The background is the gradient `--vw-banner-background` in `src/styles/global.css`, built from two Cloudscape colour tokens. No Cloudscape class is overridden: both properties are part of `ContentLayout`.
+**Decision.** The app shell (`src/components/AppShell.tsx`) puts a banner card above any page whose URL is a side-navigation link. The card is as wide as the table under it and has the same rounded corners. It shows the navigation label as the page's `h1` and a one-line description from `shell.banner.*`; the dashboard's description is the welcome line. The card is the `.vw-page-banner` rule in `src/styles/global.css`: a gradient built from two Cloudscape colour tokens, with Cloudscape's container radius and spacing tokens. It carries Cloudscape's `awsui-context-top-navigation` class so the `Header` inside takes light text. No Cloudscape class is overridden.
 
 **Consequences.**
 - ✅ One place draws the banner, so a new navigation page gets it by adding its description string.
 - The page's own heading on those pages is an `h2` (it keeps its counter, filters and buttons), or is removed where it only repeated the title. Forms, records and other pages that are not navigation links keep their plain `h1`.
-- Banner pages run edge to edge under the band, because the shell turns off `AppLayout`'s content padding for them and `ContentLayout` supplies its own.
+- The banner is hidden when a page is printed.
 - ⚠️ White text sits on the gradient, so the band must stay dark where the text is. Check contrast if the colours change, or if a school logo or image is put behind it later.
