@@ -2,6 +2,7 @@
 
 import AppLayoutToolbar from '@cloudscape-design/components/app-layout-toolbar';
 import BreadcrumbGroup from '@cloudscape-design/components/breadcrumb-group';
+import ContentLayout from '@cloudscape-design/components/content-layout';
 import Header from '@cloudscape-design/components/header';
 import Icon from '@cloudscape-design/components/icon';
 import SideNavigation from '@cloudscape-design/components/side-navigation';
@@ -22,7 +23,7 @@ const NO_PAGE = [/^\/fees\/structures\/[0-9a-f]{24}$/, /^\/academics\/sections$/
 
 const VIEW_ALL = 'view-all';
 
-export type NavItem = { text: string; href: string; icon: IconKey; group?: string; description: string };
+export type NavItem = { text: string; href: string; icon: IconKey; group?: string; banner: { title: string; description: string; image?: string } };
 
 export function AppShell({
   nav,
@@ -214,6 +215,7 @@ export function AppShell({
       <AppLayoutToolbar
         headerSelector="#top-nav"
         toolsHide
+        disableContentPaddings={Boolean(banner)}
         navigationCloseBehavior="collapse"
         navigationOpen={navigationOpen}
         onNavigationChange={({ detail }) => setNavigationChoice(detail.open)}
@@ -248,15 +250,29 @@ export function AppShell({
         }
         content={
           banner ? (
-            <>
-              {/* Cloudscape's header context, so the title and description take light text on the dark band. */}
-              <div className="vw-page-banner awsui-context-top-navigation">
-                <Header variant="h1" description={banner.description}>
-                  {banner.text}
-                </Header>
-              </div>
-              {children}
-            </>
+            <div
+              className="vw-page-banner"
+              {...(banner.banner.image && {
+                'data-image': true,
+                style: { '--vw-banner-image': `url(${JSON.stringify(banner.banner.image)})` } as CSSProperties,
+              })}
+            >
+              <ContentLayout
+                defaultPadding
+                disableOverlap
+                headerVariant="high-contrast"
+                headerBackgroundStyle="var(--vw-banner-background)"
+                header={
+                  <div className="vw-page-banner-title">
+                    <Header variant="h1" description={banner.banner.description}>
+                      {banner.banner.title}
+                    </Header>
+                  </div>
+                }
+              >
+                <div className="vw-page-banner-body">{children}</div>
+              </ContentLayout>
+            </div>
           ) : (
             children
           )

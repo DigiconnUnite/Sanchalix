@@ -110,18 +110,57 @@ body {
   background: var(--color-background-layout-main-y4565g);
 }
 
-/* ADR-022: the banner that opens each main page. It is a card as wide as the table under it, with the same
-   rounded corners. The background starts in the header's dark colour, so the light text stays readable, and only
-   tints towards the accent colour at the far edge. */
+/* ADR-022: the banner that opens each main page. It runs edge to edge directly under the breadcrumb row, square
+   at the top and rounded at the bottom like a container. ContentLayout draws the band but has no property for its
+   corners, so they are set on its background element. The band is one flat colour, the dark of the top header,
+   which is the same in light and dark mode. */
 .vw-page-banner {
-  margin-block-end: var(--space-scaled-l-33ruz6, 20px);
-  padding: var(--space-scaled-l-33ruz6, 20px) var(--space-container-horizontal-quy5ai, 20px);
-  border-radius: var(--border-radius-container-33hhdh, 16px);
-  background: linear-gradient(
-    115deg,
-    var(--color-background-home-header-x3x77n, #0f1b2a) 40%,
-    var(--color-background-button-primary-default-x6ecit, #0972d3) 180%
-  );
+  --vw-banner-colour: var(--color-background-home-header-x3x77n, #0f1b2a);
+  --vw-banner-background: var(--vw-banner-colour);
+}
+
+/* A banner with an illustration is taller, and on a wide window the picture stands on the band's bottom edge at
+   the right, with a small gap above it. It is decoration, drawn as a background so screen readers skip it. Narrow
+   windows and phones have no room beside the title, so there the band is plain. */
+@media (min-width: 1000px) {
+  .vw-page-banner[data-image] {
+    /* A light rising from the bottom edge behind the picture, brightest at its feet. It is the light orange of
+       the accent scale (step 400 in providers.tsx), fixed so the glow is the same in light and dark mode: the
+       accent token itself is a darker orange in light mode. */
+    --vw-banner-glow-colour: #fb923c;
+    --vw-banner-glow: radial-gradient(
+      ellipse 340px 130% at calc(100% - 210px) 100%,
+      color-mix(in srgb, var(--vw-banner-glow-colour) 75%, transparent) 0%,
+      color-mix(in srgb, var(--vw-banner-glow-colour) 30%, transparent) 45%,
+      transparent 100%
+    );
+    --vw-banner-background:
+      var(--vw-banner-image) right var(--space-scaled-xxl-qprsam, 32px) bottom 0 / auto
+        calc(100% - var(--space-scaled-s-2crg2b, 12px)) no-repeat,
+      var(--vw-banner-glow), var(--vw-banner-colour);
+  }
+
+  .vw-page-banner[data-image] .vw-page-banner-title {
+    display: flex;
+    align-items: center;
+    min-block-size: 140px;
+    /* The title never runs under the picture. */
+    padding-inline-end: 420px;
+  }
+}
+
+.vw-page-banner-body {
+  padding-block-start: var(--space-scaled-l-33ruz6, 20px);
+}
+
+.vw-page-banner [class*='awsui_background_'],
+.vw-page-banner [class*='awsui_header-background_'] {
+  border-end-start-radius: var(--border-radius-container-33hhdh, 16px);
+  border-end-end-radius: var(--border-radius-container-33hhdh, 16px);
+}
+
+.vw-page-banner [class*='awsui_background_'] {
+  border-block-end: var(--border-divider-section-width-dlkb8v, 1px) solid var(--color-border-divider-default-diwd4w);
 }
 
 /* The home page header opens with the maker's logo in the logo box, then the product's own logo and name.
@@ -407,7 +446,8 @@ body {
    navigation and the breadcrumb row are removed here, along with anything marked vw-no-print. */
 @media print {
   .vw-top-nav,
-  .vw-page-banner,
+  .vw-page-banner [class*='awsui_background_'],
+  .vw-page-banner [class*='awsui_header-wrapper_'],
   .vw-no-print,
   [class*='awsui_navigation_'],
   [class*='awsui_toolbar-container_'] {

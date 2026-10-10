@@ -38,7 +38,7 @@ type ModuleKey =
   | 'outbox';
 type Group = 'people' | 'academics' | 'fees' | 'communication' | 'admin';
 
-const MODULES: (Omit<NavItem, 'text' | 'group' | 'description'> & { key: ModuleKey; group: Group; permission: Permission })[] = [
+const MODULES: (Omit<NavItem, 'text' | 'group' | 'banner'> & { key: ModuleKey; group: Group; permission: Permission })[] = [
   { key: 'students', group: 'people', href: '/students', icon: 'students', permission: 'sis.student.read' },
   { key: 'admissions', group: 'people', href: '/admissions', icon: 'admissions', permission: 'sis.admission.read' },
   { key: 'staff', group: 'people', href: '/staff', icon: 'staff', permission: 'hr.staff.read' },
@@ -90,6 +90,26 @@ const MODULES: (Omit<NavItem, 'text' | 'group' | 'description'> & { key: ModuleK
   { key: 'settings', group: 'admin', href: '/settings', icon: 'settings', permission: 'settings.school.update' },
 ];
 
+// Pages whose banner has an illustration in public/banners, named after the module key.
+const ILLUSTRATED = new Set<ModuleKey>([
+  'students',
+  'admissions',
+  'staff',
+  'staffAttendance',
+  'leave',
+  'academics',
+  'subjects',
+  'timetable',
+  'attendance',
+  'exams',
+  'reportCards',
+  'homework',
+  'calendar',
+  'feeCounter',
+  'feeStructures',
+  'invoices',
+]);
+
 export default async function AppGroupLayout({ children }: { children: ReactNode }) {
   const ctx = await pageContext();
   const [t, tDashboard, school] = await Promise.all([
@@ -104,13 +124,21 @@ export default async function AppGroupLayout({ children }: { children: ReactNode
   const nav: NavItem[] = [
     {
       text: t(`nav.${homeLabel(ctx.role)}`),
-      description: tDashboard('welcome', { name: ctx.name }),
+      banner: {
+        title: tDashboard('welcome', { name: ctx.name }),
+        description: t('banner.home', { school: school.name }),
+        image: '/banners/dashboard.svg',
+      },
       href: '/',
       icon: 'dashboard',
     },
     ...MODULES.filter((item) => can(ctx.role, item.permission)).map(({ key, group, href, icon }) => ({
       text: t(`nav.${key}`),
-      description: t(`banner.${key}`),
+      banner: {
+        title: t(`banner.${key}.title`),
+        description: t(`banner.${key}.description`),
+        ...(ILLUSTRATED.has(key) && { image: `/banners/${key}.svg` }),
+      },
       group: t(`groups.${group}`),
       href,
       icon,

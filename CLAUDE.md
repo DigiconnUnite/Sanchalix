@@ -48,6 +48,11 @@ Sanchalix is a multi-school School Management System: Next.js (App Router, TypeS
 - Don't add a dependency when the platform, Cloudscape or a few lines will do.
 - Never cut corners on validation at trust boundaries, authorization, tenant isolation, money handling, data-loss prevention or accessibility.
 
+### 7. Commits: only when told, and only as Shivam Thakur
+- **Never commit until Shivam says so** ("okay", "commit"). Finishing a task is not permission. Leave the work in the working tree and say what is uncommitted. One go-ahead covers the work done so far, not later work.
+- Every commit is authored by Shivam Thakur's developer account, `ShivamThakurXcode`, which is this repository's git identity (`Shivam Thakur <shivam.it1311@gmail.com>`). Never pass `--author`, never change `user.name` or `user.email`, and never add a `Co-Authored-By: Claude` line, a "Generated with Claude Code" line or any other mention of Claude to a commit message or pull request.
+- Never push unless asked. Work reaches `DigiconnUnite/Sanchalix` (`upstream`) as a pull request from the fork `ShivamThakurXcode/Sanchalix` (`origin`), never by pushing to its `main`.
+
 ## Safety rails specific to Sanchalix
 - **Tenant isolation:** never write a query without `schoolId`, and never take `schoolId` from client input. It comes from `ctx`.
 - **Children's data:** don't log PII; project away `medical`, `aadhaarNo`, `bank` and `salary` unless the role needs them; sensitive reads go through `revealSensitive` (audited).

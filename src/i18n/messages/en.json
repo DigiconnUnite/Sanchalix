@@ -112,31 +112,107 @@
     },
     "switchTo": "Switch to {role}",
     "banner": {
-      "students": "Everyone enrolled at the school, with their class, parents and status.",
-      "admissions": "Applications from first enquiry to a confirmed seat.",
-      "staff": "Teachers and office staff, and how to reach them.",
-      "staffAttendance": "Who is in today, on leave or absent.",
-      "leave": "Leave requests and the days each person has left.",
-      "academics": "Classes and sections for this academic year, and who looks after each.",
-      "subjects": "The subjects taught at the school.",
-      "timetable": "The weekly periods of each section.",
-      "attendance": "Mark who is present today, section by section.",
-      "exams": "Exams, their papers and the marks entered so far.",
-      "reportCards": "Report cards for each section, from draft to published.",
-      "homework": "Work set for each section and when it is due.",
-      "calendar": "Days the school is closed. Attendance is not taken on them.",
-      "feeCounter": "Collect a payment and print the receipt.",
-      "feeStructures": "What each class pays in a year, and in which installments.",
-      "invoices": "Every installment billed to a student, and what is still owed.",
-      "payments": "Receipts for every payment collected.",
-      "dues": "Unpaid fees past their due date, oldest first.",
-      "feeReports": "What was collected, day by day and by payment method.",
-      "announcements": "Notices sent to staff, students and parents.",
-      "calendarEvents": "Events, exams and holidays through the year.",
-      "promotion": "Move students to the next academic year.",
-      "users": "People who can sign in to this school, and what role each has.",
-      "outbox": "Every SMS and email the school has sent.",
-      "settings": "The school profile, working days and bell schedule."
+      "home": "Here is what is happening at {school} today.",
+      "students": {
+        "title": "Student directory",
+        "description": "Find any student, open their record, or admit someone new."
+      },
+      "admissions": {
+        "title": "Admissions desk",
+        "description": "Follow every application from the first enquiry to a confirmed seat."
+      },
+      "staff": {
+        "title": "Staff directory",
+        "description": "Your teachers and office staff, with how to reach each of them."
+      },
+      "staffAttendance": {
+        "title": "Staff register",
+        "description": "Record who is in today, who is on leave and who is absent."
+      },
+      "leave": {
+        "title": "Leave desk",
+        "description": "Apply for leave, decide requests and see the days each person has left."
+      },
+      "academics": {
+        "title": "Classes and sections",
+        "description": "How the school is organised this year, and who looks after each section."
+      },
+      "subjects": {
+        "title": "Subject list",
+        "description": "Everything the school teaches. Subjects feed the timetable, exams and homework."
+      },
+      "timetable": {
+        "title": "Weekly timetable",
+        "description": "Who teaches what, period by period, for each section."
+      },
+      "attendance": {
+        "title": "Today’s attendance",
+        "description": "Everyone starts as present. Change only those who are not, then submit."
+      },
+      "exams": {
+        "title": "Examinations",
+        "description": "Set up exams and papers, enter marks and publish results."
+      },
+      "reportCards": {
+        "title": "Report card office",
+        "description": "Generate each section’s report cards, add remarks and publish them to parents."
+      },
+      "homework": {
+        "title": "Homework diary",
+        "description": "Set work for your sections and keep track of what is due."
+      },
+      "calendar": {
+        "title": "School holidays",
+        "description": "Days the school is closed. Attendance is not taken on a holiday."
+      },
+      "feeCounter": {
+        "title": "Fee counter",
+        "description": "Find a student, collect what is due and print the receipt."
+      },
+      "feeStructures": {
+        "title": "Fee plans",
+        "description": "What each class pays in a year and when each installment falls due."
+      },
+      "invoices": {
+        "title": "Billing ledger",
+        "description": "Every installment billed to a student, with what has been paid and what is owed."
+      },
+      "payments": {
+        "title": "Receipt book",
+        "description": "Every payment the school has collected, newest first."
+      },
+      "dues": {
+        "title": "Overdue fees",
+        "description": "Who owes fees past the due date, oldest first, with a reminder ready to send."
+      },
+      "feeReports": {
+        "title": "Collection report",
+        "description": "How much came in, day by day and by payment method."
+      },
+      "announcements": {
+        "title": "Notice board",
+        "description": "Tell staff, students and parents what they need to know."
+      },
+      "calendarEvents": {
+        "title": "School calendar",
+        "description": "Events, exams and holidays through the year."
+      },
+      "promotion": {
+        "title": "Year-end promotion",
+        "description": "Move each section to the next academic year, then close this one."
+      },
+      "users": {
+        "title": "Sign-in accounts",
+        "description": "Who can sign in to this school and which roles they hold."
+      },
+      "outbox": {
+        "title": "Message log",
+        "description": "Every SMS and email the school has sent, and whether it went through."
+      },
+      "settings": {
+        "title": "School settings",
+        "description": "Your school’s profile, working days and bell schedule."
+      }
     }
   },
   "auth": {

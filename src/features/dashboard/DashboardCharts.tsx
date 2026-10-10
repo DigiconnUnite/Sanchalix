@@ -5,9 +5,9 @@ import Button from '@cloudscape-design/components/button';
 import Container from '@cloudscape-design/components/container';
 import Header from '@cloudscape-design/components/header';
 import LineChart from '@cloudscape-design/components/line-chart';
-import PieChart from '@cloudscape-design/components/pie-chart';
 import SpaceBetween from '@cloudscape-design/components/space-between';
 import Table from '@cloudscape-design/components/table';
+import dynamic from 'next/dynamic';
 import { useTranslations } from 'next-intl';
 import { type ReactNode, useState } from 'react';
 import { AppLink } from '@/components/AppLink';
@@ -15,6 +15,10 @@ import { EmptyState } from '@/components/EmptyState';
 import type { IconKey } from '@/components/icons';
 import { formatMoney } from '@/lib/money';
 import type { AGEING_BANDS } from '@/server/modules/dashboard/queries';
+
+// The donut's arcs are computed with trigonometry, and Node and the browser disagree in the last decimal place, so
+// a server-rendered chart never matches on hydration. It is drawn in the browser only.
+const PieChart = dynamic(() => import('@cloudscape-design/components/pie-chart'), { ssr: false });
 
 const HEIGHT = 220;
 const shortDate = new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'short', timeZone: 'UTC' });
@@ -195,7 +199,7 @@ export function MethodChart({ methods }: { methods: { method: string; amountMino
         segmentDescription={(entry, sum) => percent(Math.round((entry.value / sum) * 100))}
         detailPopoverContent={(entry) => [
           { key: t('amount'), value: formatMoney(entry.value) },
-          { key: t('receipts'), value: entry.receipts },
+          { key: t('receipts'), value: data.find((item) => item.title === entry.title)?.receipts ?? 0 },
         ]}
         ariaLabel={t('title')}
         ariaDescription={t('description')}
