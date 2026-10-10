@@ -265,7 +265,7 @@ Architecture and design decisions for Sanchalix, in a lightweight ADR format. A 
 - ⚠️ When the CSP in [16-auth-and-security.md](16-auth-and-security.md) gains a `style-src` directive, this inline `<style>` needs the request nonce.
 - School branding ([08-design-system.md](08-design-system.md#5-theming-school-branding)) will later override this default per school.
 
-## ADR-021: A banner on the main pages
+## ADR-022: A banner on the main pages
 
 **Status.** Accepted by the project owner on 2026-10-10.
 
