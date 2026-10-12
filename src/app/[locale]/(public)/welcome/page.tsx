@@ -5,18 +5,15 @@ import Container from '@cloudscape-design/components/container';
 import ContentLayout from '@cloudscape-design/components/content-layout';
 import Header from '@cloudscape-design/components/header';
 import Icon from '@cloudscape-design/components/icon';
-import Link from '@cloudscape-design/components/link';
 import SpaceBetween from '@cloudscape-design/components/space-between';
-import { cookies } from 'next/headers';
 import { getTranslations } from 'next-intl/server';
 import { type IconKey, svg } from '@/components/icons';
-import { PublicHeader } from '@/features/marketing/PublicHeader';
-import { MODE_COOKIE, parseVisualMode } from '@/lib/visualMode';
-import { getContext } from '@/server/auth/context';
+import { getEntry, PublicPage } from '@/features/marketing/PublicPage';
 
 export async function generateMetadata() {
   const t = await getTranslations('marketing');
-  return { title: t('metaTitle'), description: t('hero.body') };
+  // The tagline already carries the product name, so the usual "· Sanchalix" suffix is left off.
+  return { title: { absolute: t('tagline') }, description: t('hero.body') };
 }
 
 const FEATURES: { key: string; icon: IconKey }[] = [
@@ -34,22 +31,12 @@ const ROLES: { key: string; icon: IconKey }[] = [
   { key: 'families', icon: 'guardians' },
 ];
 const STEPS = ['setup', 'run', 'share'];
-const SECTIONS = ['features', 'roles', 'steps'];
 
 export default async function WelcomePage() {
-  const [t, ctx] = await Promise.all([getTranslations('marketing'), getContext()]);
-  // Someone already signed in gets a way back into the app, not a second sign-in.
-  const enter = ctx ? { href: '/', text: t('openApp') } : { href: '/signin', text: t('signIn') };
+  const [t, enter] = await Promise.all([getTranslations('marketing'), getEntry()]);
 
   return (
-    <>
-      <PublicHeader
-        brand={t('brand')}
-        builtBy={t('builtBy')}
-        links={SECTIONS.map((key) => ({ href: `#${key}`, text: t(`nav.${key}`) }))}
-        enter={enter}
-        visualMode={parseVisualMode((await cookies()).get(MODE_COOKIE)?.value)}
-      />
+    <PublicPage home>
       <ContentLayout
         defaultPadding
         disableOverlap
@@ -58,6 +45,9 @@ export default async function WelcomePage() {
         header={
           <Box padding={{ vertical: 'xxl' }}>
             <SpaceBetween size="l">
+              <Box variant="awsui-key-label" color="inherit">
+                {t('tagline')}
+              </Box>
               <Box variant="h1" fontSize="display-l" fontWeight="bold">
                 {t('hero.title')}
               </Box>
@@ -150,48 +140,6 @@ export default async function WelcomePage() {
           </SpaceBetween>
         </Box>
       </ContentLayout>
-
-      <footer className="vw-public-footer awsui-context-top-navigation">
-        <div className="vw-public-footer-inner">
-          <Box padding={{ vertical: 'xxl', horizontal: 'xl' }}>
-            <SpaceBetween size="xl">
-              <ColumnLayout columns={3} minColumnWidth={200}>
-                <SpaceBetween size="xs">
-                  <Box fontSize="heading-l" fontWeight="bold">
-                    {t('brand')}
-                  </Box>
-                  <Box color="text-body-secondary">{t('footer.tagline')}</Box>
-                </SpaceBetween>
-                <nav aria-label={t('footer.product')}>
-                  <SpaceBetween size="xs">
-                    <Box variant="awsui-key-label">{t('footer.product')}</Box>
-                    {SECTIONS.map((key) => (
-                      <Link key={key} href={`#${key}`}>
-                        {t(`nav.${key}`)}
-                      </Link>
-                    ))}
-                  </SpaceBetween>
-                </nav>
-                <nav aria-label={t('footer.account')}>
-                  <SpaceBetween size="xs">
-                    <Box variant="awsui-key-label">{t('footer.account')}</Box>
-                    <Link href={enter.href}>{enter.text}</Link>
-                    {!ctx && <Link href="/forgot-password">{t('footer.forgotPassword')}</Link>}
-                  </SpaceBetween>
-                </nav>
-              </ColumnLayout>
-              <div className="vw-public-footer-legal">
-                <Box color="text-body-secondary" fontSize="body-s">
-                  {t('footer.copyright', { year: new Date().getFullYear() })}
-                </Box>
-                <Box color="text-body-secondary" fontSize="body-s">
-                  {t('footer.credit')}
-                </Box>
-              </div>
-            </SpaceBetween>
-          </Box>
-        </div>
-      </footer>
-    </>
+    </PublicPage>
   );
 }

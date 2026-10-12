@@ -2520,7 +2520,6 @@
     }
   },
   "marketing": {
-    "metaTitle": "School management, made simple",
     "brand": "Sanchalix",
     "signIn": "Sign in",
     "openApp": "Open dashboard",
@@ -2528,7 +2527,8 @@
     "nav": {
       "features": "Features",
       "roles": "Who it's for",
-      "steps": "Getting started"
+      "steps": "Getting started",
+      "blog": "Blog"
     },
     "hero": {
       "title": "Run your whole school from one place",
@@ -2616,6 +2616,217 @@
       "forgotPassword": "Forgot password",
       "copyright": "© {year} Sanchalix. All rights reserved.",
       "credit": "Designed and developed by Digiconn Unite"
+    },
+    "tagline": "Sanchalix – Principal ka best friend",
+    "blog": {
+      "title": "The Sanchalix blog",
+      "description": "Practical notes on running a school office: fees, attendance, admissions, exams and getting off paper.",
+      "meta": "{date} · {minutes} min read",
+      "back": "All posts",
+      "more": "More from the blog",
+      "topics": {
+        "fees": "Fees",
+        "attendance": "Attendance",
+        "admissions": "Admissions",
+        "exams": "Exams",
+        "gettingStarted": "Getting started"
+      },
+      "posts": {
+        "fee-collection-without-the-queue": {
+          "title": "Fee collection without the queue at the counter",
+          "summary": "Most of the waiting at a fee counter is the office looking things up. Here is how to take that time out.",
+          "sections": [
+            {
+              "heading": "Where the time goes",
+              "paragraphs": [
+                "Watch a fee counter on the tenth of the month and time one parent from \"good morning\" to the receipt in their hand. The payment itself takes seconds. The minutes go to finding the child in a register, working out which installment is due, checking whether last term was cleared and then writing a receipt by hand.",
+                "None of that is the cashier being slow. It is the cashier doing a lookup that the school already did once, when it set the fees for the year."
+              ]
+            },
+            {
+              "heading": "Decide the year once",
+              "paragraphs": [
+                "Set each class’s fees and installments before the year starts, and have the principal approve them. From then on every student has their installments billed with a due date, and nobody at the counter is deciding what a family owes.",
+                "In Sanchalix this is a fee structure: what a class pays, split into installments by percentage. Approval issues the invoices for every student in those classes in one step."
+              ]
+            },
+            {
+              "heading": "Make the counter a search box",
+              "paragraphs": [
+                "The cashier should type a name or an admission number and see that child’s open dues, oldest first. They tick what is being paid, choose cash, UPI, card or cheque, and the receipt prints with its number.",
+                "Part payments are normal, not an exception. A family that pays half today should leave with a receipt for half and a clear balance, not a note in the margin."
+              ]
+            },
+            {
+              "heading": "Let reminders do the chasing",
+              "paragraphs": [
+                "A dues list sorted by how late each payment is tells the office who to call first. A reminder sent to every parent with an overdue installment, in one action, replaces a week of phone calls with an afternoon of the difficult ones."
+              ]
+            },
+            {
+              "heading": "What to keep on paper",
+              "paragraphs": [
+                "The printed receipt, signed if your school signs them. Parents value it and auditors ask for it. What you can stop keeping is the second handwritten copy and the ledger that exists only so someone can add it up."
+              ]
+            }
+          ]
+        },
+        "attendance-parents-can-trust": {
+          "title": "Attendance that parents can trust",
+          "summary": "A register is only useful if it is taken the same way every day and the family hears about an absence the same morning.",
+          "sections": [
+            {
+              "heading": "Start from present",
+              "paragraphs": [
+                "On an ordinary day almost everyone is in class. A register that starts every child as present and asks the teacher to change only the exceptions takes a minute, and a minute is short enough that it gets done before the first period, every day."
+              ]
+            },
+            {
+              "heading": "One person owns each section",
+              "paragraphs": [
+                "When any teacher can mark any class, nobody is sure who did. Give each section a class teacher who takes its daily attendance, and let subject teachers take period attendance only where the school needs it, usually the senior classes."
+              ]
+            },
+            {
+              "heading": "Tell the family the same morning",
+              "paragraphs": [
+                "An absence message that arrives in the evening is a record. One that arrives by mid-morning is useful: the parent who sent their child to school knows straight away that something is wrong.",
+                "Send it only after the register is submitted, and only for absences. Parents stop reading a school that messages them about everything."
+              ]
+            },
+            {
+              "heading": "Corrections are fine, silent ones are not",
+              "paragraphs": [
+                "Teachers make mistakes and children arrive late. Allow the day’s register to be changed on the day, and after that let a senior person correct it with a reason that is kept. A register that can never change is wrong for ever; one that changes without a trace is not a register."
+              ]
+            },
+            {
+              "heading": "Holidays should not count",
+              "paragraphs": [
+                "Mark holidays and non-working days once, in the school calendar, and attendance percentages take care of themselves. The 75 percent question at the end of the year should be an answer you read off, not a calculation."
+              ]
+            }
+          ]
+        },
+        "admissions-from-enquiry-to-first-day": {
+          "title": "Admissions: from the first enquiry to the first day",
+          "summary": "Admissions go wrong in the gaps between stages. Naming the stages, and what moves a family from one to the next, closes most of them.",
+          "sections": [
+            {
+              "heading": "Write down every enquiry",
+              "paragraphs": [
+                "The family that phoned in January and never heard back is the seat you could not fill in April. Record every enquiry the day it comes in, with the class sought and a phone number, even if nothing else is known yet."
+              ]
+            },
+            {
+              "heading": "Name the stages",
+              "paragraphs": [
+                "Enquiry, applied, documents pending, assessment, offered, admitted. The names matter less than everyone using the same ones, so that \"where is this child’s application?\" has one answer.",
+                "Each move should leave a line of history: who moved it, when, and a note if there was a reason. That history is what you read when a parent says they were told something different."
+              ]
+            },
+            {
+              "heading": "Ask for documents early, check them once",
+              "paragraphs": [
+                "Decide which documents the school must see before a child is admitted, usually a birth certificate and a photograph, and collect them while the application is still open. Checking each one once, and recording that it was checked, is better than asking the family again in June."
+              ]
+            },
+            {
+              "heading": "Make admitting a single step",
+              "paragraphs": [
+                "The moment a seat is confirmed, the child needs a student record, an admission number, a class and section, and their parents on file. Doing these as four jobs on four days is how a child ends up in class without a roll number.",
+                "In Sanchalix, admitting an applicant creates all of it together, or none of it, and carries the checked documents across to the student."
+              ]
+            },
+            {
+              "heading": "Count what you turned away",
+              "paragraphs": [
+                "At the end of the season, look at how many enquiries reached each stage. If most families drop out between enquiry and application, the form is the problem. If they drop out after the offer, it is usually fees or timing."
+              ]
+            }
+          ]
+        },
+        "report-cards-without-the-last-week-rush": {
+          "title": "Report cards without the last-week rush",
+          "summary": "The rush before results day is marks arriving late and being typed twice. Both can be designed out.",
+          "sections": [
+            {
+              "heading": "Agree the papers before the exam",
+              "paragraphs": [
+                "For each exam, list every class’s papers with the date and the maximum marks before the first one is written. A teacher who knows that Class 8 Science is out of 80 will not hand in marks out of 100."
+              ]
+            },
+            {
+              "heading": "Marks are entered once, by the teacher",
+              "paragraphs": [
+                "The person who marked the paper should be the person who enters the marks, in one place. Every copy from a mark sheet into a register and then into a report card is a chance to turn 67 into 76.",
+                "Entry should refuse a mark above the maximum and make \"absent\" a choice, not a zero."
+              ]
+            },
+            {
+              "heading": "Lock, then publish",
+              "paragraphs": [
+                "Give the principal a clear step between \"marks are in\" and \"families can see them\". Locking a paper says the marks are final; unlocking one should need a reason that is kept. Publish only when every paper is locked."
+              ]
+            },
+            {
+              "heading": "Generate, then add what only a teacher knows",
+              "paragraphs": [
+                "Totals, percentages and grades are arithmetic and should be generated. The class teacher’s time is better spent on the one thing that cannot be: a remark that sounds like it was written about this child."
+              ]
+            },
+            {
+              "heading": "Publish to families on one day",
+              "paragraphs": [
+                "When report cards go out for a whole section at once, every family sees them at the same time and the office is not asked forty times whether results are ready."
+              ]
+            }
+          ]
+        },
+        "moving-a-school-off-paper-registers": {
+          "title": "Moving a school off paper registers, one term at a time",
+          "summary": "Schools that change everything in a week go back to paper in a month. An order that works, and what to leave for later.",
+          "sections": [
+            {
+              "heading": "Start with the list of students",
+              "paragraphs": [
+                "Everything else hangs off it. Get every current student in with their class, section, roll number and one parent’s phone number. Import them from the spreadsheet you already have, check it with a trial run first, and fix the rows that fail.",
+                "Do not wait for perfect data. A correct name, class and phone number is enough to start; the rest can be filled in as families come to the office."
+              ]
+            },
+            {
+              "heading": "Then attendance",
+              "paragraphs": [
+                "It is daily, it is quick, and teachers see the benefit within a week. Run it alongside the paper register for a fortnight if that makes people comfortable, then stop the paper one."
+              ]
+            },
+            {
+              "heading": "Then fees",
+              "paragraphs": [
+                "Fees are where mistakes cost money, so move them at a boundary: the start of a term or a year. Set the structures, have them approved, and collect the new term through the system from day one. Finish the old term in the old ledger; do not try to type in history."
+              ]
+            },
+            {
+              "heading": "Exams and report cards last",
+              "paragraphs": [
+                "They happen a few times a year, so there is no hurry, and by then the students, classes and teachers are already in place. Try one unit test before you trust it with the half-yearly."
+              ]
+            },
+            {
+              "heading": "Give everyone their own sign-in",
+              "paragraphs": [
+                "A shared office password means nobody knows who changed what. Each person signs in as themselves, with the role that matches their job, and the record of who did what keeps itself."
+              ]
+            },
+            {
+              "heading": "What changes for the principal",
+              "paragraphs": [
+                "The questions you used to ask the office, you can now look up: who is absent today, what was collected this week, which sections have not submitted attendance, which fee structures are waiting for you. That is the point of the whole exercise."
+              ]
+            }
+          ]
+        }
+      }
     }
   },
   "outbound": {
