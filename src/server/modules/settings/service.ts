@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { AppError } from '@/lib/appError';
 import type { RequestContext } from '@/server/auth/context';
 import { AcademicYear } from '@/server/models/academicYear';
+import { Exam } from '@/server/models/exam';
 import { PeriodDefinition } from '@/server/models/periodDefinition';
 import { School } from '@/server/models/school';
 import { TimetableSlot } from '@/server/models/timetableSlot';
@@ -48,7 +49,15 @@ export type PeriodsInput = z.infer<typeof PeriodsInput>;
 
 const Day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, `${E}.date`);
 export const TermsInput = z
-  .array(z.object({ name: text('termName', 40), startDate: Day, endDate: Day }))
+  .array(
+    z.object({
+      // The id of a term that already exists, so exams tied to it stay tied when its name or dates change.
+      id: z.string().regex(/^[0-9a-f]{24}$/).optional(),
+      name: text('termName', 40),
+      startDate: Day,
+      endDate: Day,
+    }),
+  )
   .max(6, `${E}.tooManyTerms`)
   .superRefine((terms, issue) => {
     terms.forEach((term, index) => {
@@ -95,7 +104,12 @@ export async function getSettings(ctx: RequestContext): Promise<SchoolSettings |
       label: year.label,
       startDate: year.startDate,
       endDate: year.endDate,
-      terms: year.terms.map(({ name, startDate, endDate }) => ({ name, startDate: startDate ?? '', endDate: endDate ?? '' })),
+      terms: year.terms.map((term) => ({
+        id: String(term._id),
+        name: term.name,
+        startDate: term.startDate ?? '',
+        endDate: term.endDate ?? '',
+      })),
     },
   };
 }
@@ -130,7 +144,15 @@ export async function saveTerms(ctx: RequestContext, terms: TermsInput) {
   if (terms.some((term) => term.startDate < year.startDate || term.endDate > year.endDate)) {
     throw new AppError('BUSINESS_RULE', `${E}.termOutsideYear`);
   }
-  await AcademicYear.updateOne({ schoolId, _id: year._id }, { terms, updatedBy: ctx.userId });
+  const kept = new Set(terms.flatMap((term) => term.id ?? []));
+  const removed = year.terms.filter((term) => !kept.has(String(term._id))).map((term) => term._id);
+  if (removed.length > 0 && (await Exam.exists({ schoolId, termId: { $in: removed } }))) {
+    throw new AppError('BUSINESS_RULE', `${E}.termInUse`);
+  }
+  await AcademicYear.updateOne(
+    { schoolId, _id: year._id },
+    { terms: terms.map(({ id, ...term }) => ({ ...(id && { _id: id }), ...term })), updatedBy: ctx.userId },
+  );
   return { id: year._id, count: terms.length, before: year.terms.length };
 }
 

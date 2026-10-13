@@ -364,7 +364,7 @@ Indexes: `{ schoolId: 1, kind: 1, status: 1 }`, `{ schoolId: 1, studentId: 1, ac
 | schoolId, branchId, academicYearId | | |
 | invoiceNo | string | unique per school, `INV/{YYYY-YY}/{000000}` |
 | studentId | ObjectId | |
-| feeStructureId, installmentId | ObjectId | |
+| feeStructureId, installmentId | ObjectId | both absent on an opening balance (an amount owed from before the school used the system); the unique index on `studentId, installmentId` then allows one per student |
 | installmentLabel | string | copied from the installment at issue time, so lists don't need the structure |
 | lines | `{ feeHeadId, description, amountMinor, taxMinor }[]` | |
 | concessions | `{ source: 'discount' \| 'scholarship', refId, description, amountMinor }[]` | |

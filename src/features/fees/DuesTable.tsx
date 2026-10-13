@@ -45,6 +45,7 @@ export function DuesTable({
   data: Data | null;
 }) {
   const t = useTranslations('fees.dues');
+  const tExport = useTranslations('export');
   const router = useRouter();
   const pathname = usePathname();
   const isMobile = useIsMobile();
@@ -92,7 +93,7 @@ export function DuesTable({
           actions={
             <SpaceBetween direction="horizontal" size="xs">
               {canCollect && <DuesReminders />}
-              <ExportButton kind="dues" />
+              <ExportButton href="/api/v1/export/dues" label={tExport('label.dues')} />
             </SpaceBetween>
           }
         >

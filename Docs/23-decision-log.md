@@ -286,6 +286,19 @@ Architecture and design decisions for Sanchalix, in a lightweight ADR format. A 
 - ⚠️ The corner rule depends on Cloudscape's internal `awsui_background_` class name. Check the corners after every Cloudscape upgrade.
 - White text sits on the header's dark colour, the same pairing Cloudscape uses in the top navigation.
 
+## ADR-024: Three libraries for PDF, QR codes and Excel files
+
+**Status.** Accepted by the project owner on 2026-10-13.
+
+**Context.** The MVP needs a receipt as a PDF with a QR code to verify it, and exports as Excel workbooks. None of the three formats can be written sensibly by hand, and the rule is to add a dependency only when the platform or a few lines will not do.
+
+**Decision.** `pdfkit` draws the receipt, `qrcode` makes the QR image, and `write-excel-file` writes workbooks. All three run on the server only. `pdfkit` is listed in `serverExternalPackages` because it reads its font files from its own folder at run time.
+
+**Consequences.**
+- ✅ `write-excel-file` was chosen over `exceljs`, which is far larger and pulls in a `uuid` version with an open advisory. `npm audit` reports nothing for the three.
+- `pdfkit`'s built-in fonts cover Latin text only, with no rupee sign and no Devanagari, so the receipt embeds Mukta (Regular and Bold, SIL Open Font License, in `assets/fonts` with its licence). It is read from disk when a PDF is drawn; `outputFileTracingIncludes` in `next.config.ts` makes the files travel with the receipt route when deployed.
+- PDFs and workbooks are built inside the request, like the CSV exports. Bulk PDFs (report cards for a section) still wait for a queue ([ADR-023](#adr-023-scheduled-jobs-through-one-route-not-a-worker)).
+
 ## ADR-023: Scheduled jobs through one route, not a worker
 
 **Status.** Accepted for the MVP on 2026-10-13. Replaces the separate worker process in [13-architecture.md](13-architecture.md) until a job needs more than a request can give.

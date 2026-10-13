@@ -32,7 +32,7 @@ export function Results({ results }: { results: StudentResult[] }) {
                   : t('total', { total: result.total, max: result.maxTotal, percent: result.percent })
               }
             >
-              {result.exam}
+              {result.term ? `${result.exam} · ${result.term}` : result.exam}
             </Header>
           }
           columnDefinitions={[

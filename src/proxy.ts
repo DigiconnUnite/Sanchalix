@@ -5,7 +5,7 @@ import { SESSION_COOKIE } from '@/lib/sessionCookie';
 
 const handleLocale = createMiddleware(routing);
 const LOCALE_PREFIX = new RegExp(`^/(${routing.locales.join('|')})(?=/|$)`);
-const PUBLIC_PATH = /^\/(signin|welcome|blog|forgot-password|reset-password)(\/|$)/;
+const PUBLIC_PATH = /^\/(signin|welcome|blog|verify|forgot-password|reset-password)(\/|$)/;
 
 const SECURITY_HEADERS = {
   'Content-Security-Policy': "frame-ancestors 'none'",

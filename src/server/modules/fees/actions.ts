@@ -10,6 +10,8 @@ import { sendDuesReminders as remind } from '@/server/messaging/alerts';
 import { getSchoolBrand } from '@/server/platform/queries';
 import { z } from 'zod';
 import { CheckoutInput, createCheckout as checkout, OrderId, payWithDevGateway } from './online';
+import { ImportStudents as ImportFile } from '@/server/modules/sis/schemas';
+import { importOpeningBalances as importBalances } from './openingBalances';
 import { collectPayment as collect } from './paymentService';
 import {
   AutomaticDiscounts,
@@ -20,6 +22,7 @@ import {
   setAutomaticDiscounts as setAutomatic,
   setLateFeeRule as setLateFee,
   StudentDiscount,
+  withdrawStudentDiscount as withdrawDiscount,
 } from './discounts';
 import { CollectPayment, FeeHeadDiscountable, FeeHeadInput, FeeStructureId, FeeStructureInput } from './schemas';
 import {
@@ -150,6 +153,38 @@ export async function decideStudentDiscount(input: unknown) {
       after: { status: data.decision, invoices: discount.invoices },
     });
     return { name: discount.name, decision: data.decision, invoices: discount.invoices };
+  });
+}
+
+export async function withdrawStudentDiscount(input: unknown) {
+  return withAction('fees.discount.withdraw', async () => {
+    const ctx = await requirePermission('fees.discount.approve');
+    const discount = await withdrawDiscount(ctx, FeeStructureId.parse(input));
+    await audit(ctx, 'fees.discount.withdraw', { type: 'discount', id: discount.id }, {
+      before: { status: 'approved' },
+      after: { status: 'withdrawn', invoices: discount.invoices },
+    });
+    return { name: discount.name, invoices: discount.invoices };
+  });
+}
+
+export async function importOpeningBalances(input: unknown) {
+  return withAction('fees.openingBalance.import', async () => {
+    const ctx = await requirePermission('fees.structure.update');
+    const { csv, dryRun } = ImportFile.parse(input);
+    const t = await getTranslations();
+    const report = await importBalances(ctx, csv, dryRun, t('fees.openingBalances.label'));
+    if (report.imported > 0) {
+      await audit(ctx, 'fees.openingBalance.import', { type: 'school', id: ctx.schoolId }, {
+        after: { invoices: report.imported },
+      });
+    }
+    return {
+      total: report.total,
+      imported: report.imported,
+      errorCount: report.errors.length,
+      errors: report.errors.slice(0, 100).map(({ row, field, messageKey }) => ({ row, field, message: t(messageKey) })),
+    };
   });
 }
 

@@ -103,6 +103,7 @@ export type StudentMatch = { id: string; name: string; admissionNo: string; clas
 
 export type Receipt = {
   id: string;
+  studentId: string;
   receiptNo: string;
   collectedAt: string;
   collectedBy: string;

@@ -278,6 +278,13 @@ Built with `Board` (staff, rearrangeable in v1) or `Grid` (student, parent). Eve
 - **Import students** (`/students/import`): download the template, choose a CSV, Check file, then Import. Row errors are listed with row, column and problem.
 - **Admissions** (`/admissions`, `/admissions/new`, `/admissions/[id]`): a list filtered by stage in the URL, a detail page whose primary button is the next stage, and a dialog that asks for the section and address when admitting.
 - **Attendance report** (`/attendance/report`, in the Academics navigation): From and To date pickers in the URL, three totals (average, sections with attendance, students below the line), a table of students below 75% (lowest first, each linking to the student's Attendance tab) and a By section table whose rows link to the register.
+- **Reports** (`/reports`, in the Administration navigation): links to the other reports, then Admissions and Staff, each as three totals and small count tables. Stage rows link to the admissions list filtered to that stage.
+- **Export:** every Export button is a dropdown with CSV file and Excel workbook.
+- **Receipt:** Open PDF beside Print receipt opens the PDF in a new tab. `/verify/receipt/...` is the public page the QR code leads to.
+- **Portal home:** a Receipts table (receipt no., date, amount) under the fees table, each number opening its PDF in a new tab. Shown only when there is at least one receipt.
+- **Discounts:** an approved student discount has Withdraw, which asks for confirmation because it changes invoices; a withdrawn one shows a stopped "Withdrawn" status.
+- **Exams:** the New exam dialog has a Term select when the year has terms, and the list has a Term column.
+- **Import staff** (`/staff/import`) and **Import opening balances** (`/fees/invoices/import`): the same screen as Import students (template download, check, then import, with a table of rows to fix), reached from Import staff on the Staff list and Import opening balances on Fee structures.
 - **Settings, Terms tab** (`/settings?tab=terms`): an `AttributeEditor` of the current year's terms (name, starts on, ends on) with its own Save.
 - **Subjects by class:** a second table on the Subjects page, one row per class with its subjects ("All subjects" when none are set) and Edit, which opens a `Multiselect` in a modal.
 - **Announcement scheduling:** the New announcement form has two optional dates, Publish on and Show until. The list shows "Scheduled for {date}" with a pending `StatusIndicator` for one that is waiting, and "Shown until" or "Ended" under the published time for one with a last day.

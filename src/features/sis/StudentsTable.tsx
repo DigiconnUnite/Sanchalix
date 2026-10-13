@@ -46,6 +46,7 @@ export function StudentsTable({
   data: Data | null;
 }) {
   const t = useTranslations('sis.students');
+  const tExport = useTranslations('export');
   const router = useRouter();
   const pathname = usePathname();
   const isMobile = useIsMobile();
@@ -101,7 +102,7 @@ export function StudentsTable({
         actions={
           canCreate && (
             <SpaceBetween direction="horizontal" size="xs">
-              <ExportButton kind="students" />
+              <ExportButton href="/api/v1/export/students" label={tExport('label.students')} />
               <Button
                 href="/students/import"
                 iconSvg={svg('import')}

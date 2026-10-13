@@ -12,9 +12,29 @@ import {
   LeaveId,
   LeaveInput,
 } from './leave';
+import { getTranslations } from 'next-intl/server';
+import { ImportStudents as ImportFile } from '@/server/modules/sis/schemas';
+import { importStaff as importService } from './importService';
 import { StaffInput, StaffUpdate } from './schemas';
 import { SaveStaffAttendance, saveStaffAttendance } from './staffAttendance';
 import { createStaff as create, updateStaff as update } from './service';
+
+export async function importStaff(input: unknown) {
+  return withAction('hr.staff.import', async () => {
+    const ctx = await requirePermission('hr.staff.create');
+    const { csv, dryRun } = ImportFile.parse(input);
+    const [report, t] = await Promise.all([importService(ctx, csv, dryRun), getTranslations()]);
+    if (report.imported > 0) {
+      await audit(ctx, 'hr.staff.import', { type: 'school', id: ctx.schoolId }, { after: { staff: report.imported } });
+    }
+    return {
+      total: report.total,
+      imported: report.imported,
+      errorCount: report.errors.length,
+      errors: report.errors.slice(0, 100).map(({ row, field, messageKey }) => ({ row, field, message: t(messageKey) })),
+    };
+  });
+}
 
 export async function submitStaffAttendance(input: unknown) {
   return withAction('hr.attendance.update', async () => {

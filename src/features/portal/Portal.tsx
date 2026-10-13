@@ -3,6 +3,7 @@
 import Alert from '@cloudscape-design/components/alert';
 import Box from '@cloudscape-design/components/box';
 import Button from '@cloudscape-design/components/button';
+import Link from '@cloudscape-design/components/link';
 import ColumnLayout from '@cloudscape-design/components/column-layout';
 import Container from '@cloudscape-design/components/container';
 import ContentLayout from '@cloudscape-design/components/content-layout';
@@ -170,6 +171,33 @@ export function PortalHome({
             { id: 'balance', header: tInvoice('columns.balance'), cell: (invoice) => formatMoney(invoice.balanceMinor) },
           ]}
         />
+
+        {fees.payments.length > 0 && (
+          <Table
+            variant="container"
+            trackBy="id"
+            items={fees.payments}
+            header={<Header variant="h2">{t('receipts.title')}</Header>}
+            columnDefinitions={[
+              {
+                id: 'receiptNo',
+                header: t('receipts.receiptNo'),
+                isRowHeader: true,
+                cell: (payment) => (
+                  <Link
+                    href={`/api/v1/payments/${payment.id}/receipt`}
+                    external
+                    externalIconAriaLabel={t('receipts.opens')}
+                  >
+                    {payment.receiptNo}
+                  </Link>
+                ),
+              },
+              { id: 'date', header: t('receipts.date'), cell: (payment) => day(payment.collectedAt.slice(0, 10)) },
+              { id: 'amount', header: t('receipts.amount'), cell: (payment) => formatMoney(payment.amountMinor) },
+            ]}
+          />
+        )}
 
         {home.reportCardId && (
           <Alert

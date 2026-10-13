@@ -67,7 +67,7 @@ export type DiscountRules = {
     type: 'percent' | 'fixed';
     value: number;
     reason: string;
-    status: 'pending' | 'approved' | 'rejected';
+    status: 'pending' | 'approved' | 'rejected' | 'withdrawn';
   }[];
 };
 
@@ -198,7 +198,8 @@ export async function getDiscountRules(ctx: RequestContext): Promise<DiscountRul
         type: discount.type,
         value: discount.value,
         reason: discount.reason ?? '',
-        status: discount.status,
+        // A withdrawn discount keeps its approval on record and is switched off.
+        status: discount.status === 'approved' && !discount.active ? ('withdrawn' as const) : discount.status,
       };
     }),
   };
@@ -284,7 +285,7 @@ export async function decideStudentDiscount(ctx: RequestContext, { id, decision 
         .select('gstRate discountable')
         .session(session)
         .lean(),
-      FeeStructure.find({ schoolId, _id: { $in: invoices.map((invoice) => invoice.feeStructureId) } })
+      FeeStructure.find({ schoolId, _id: { $in: invoices.flatMap((invoice) => invoice.feeStructureId ?? []) } })
         .select('installments')
         .session(session)
         .lean(),
@@ -294,8 +295,9 @@ export async function decideStudentDiscount(ctx: RequestContext, { id, decision 
     for (const invoice of invoices) {
       const percent =
         structures
-          .find((structure) => structure._id.equals(invoice.feeStructureId))
-          ?.installments.find((installment) => installment._id.equals(invoice.installmentId))?.percent ?? 0;
+          .find((structure) => invoice.feeStructureId && structure._id.equals(invoice.feeStructureId))
+          ?.installments.find((installment) => invoice.installmentId && installment._id.equals(invoice.installmentId))
+          ?.percent ?? 0;
       const already = invoice.concessions.reduce((sum, concession) => sum + concession.amountMinor, 0);
       const priced = priceInvoice(
         invoice.lines,
@@ -315,6 +317,46 @@ export async function decideStudentDiscount(ctx: RequestContext, { id, decision 
       changed += 1;
     }
     return { id: discount._id, name: discount.name, invoices: changed };
+  });
+}
+
+/**
+ * Takes an approved student discount back. It stops applying from now on and comes off the student's invoices that
+ * nobody has paid towards; an invoice with a receipt against it keeps the discount it was paid with.
+ */
+export async function withdrawStudentDiscount(ctx: RequestContext, id: string) {
+  const { schoolId } = ctx;
+  return withTransaction(async (session) => {
+    const discount = await Discount.findOneAndUpdate(
+      { schoolId, _id: id, kind: 'custom', status: 'approved', active: true },
+      { active: false, updatedBy: ctx.userId },
+      { session },
+    ).lean();
+    if (!discount) throw new AppError('BUSINESS_RULE', `${E}.decided`);
+
+    const invoices = await Invoice.find({ schoolId, 'concessions.refId': discount._id, paidMinor: 0 }).session(session).lean();
+    const heads = await FeeHead.find({ schoolId, _id: { $in: invoices.flatMap((invoice) => invoice.lines.map((line) => line.feeHeadId)) } })
+      .select('gstRate discountable')
+      .session(session)
+      .lean();
+    const headOf = (headId: Types.ObjectId) => heads.find((head) => head._id.equals(headId));
+    for (const invoice of invoices) {
+      const kept = invoice.concessions
+        .filter((concession) => !concession.refId.equals(discount._id))
+        .reduce((sum, concession) => sum + concession.amountMinor, 0);
+      // Priced again with only the discounts that stay, so the tax on the returned amount comes back too.
+      const priced = priceInvoice(invoice.lines, headOf, [], 0, kept);
+      const totalMinor = priced.totalMinor - kept + invoice.lateFeeMinor;
+      await Invoice.updateOne(
+        { schoolId, _id: invoice._id, paidMinor: 0 },
+        {
+          $set: { lines: priced.lines, totalMinor, balanceMinor: totalMinor, updatedBy: ctx.userId },
+          $pull: { concessions: { refId: discount._id } },
+        },
+        { session },
+      );
+    }
+    return { id: discount._id, name: discount.name, invoices: invoices.length };
   });
 }
 

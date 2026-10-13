@@ -11,6 +11,7 @@ import SpaceBetween from '@cloudscape-design/components/space-between';
 import Table, { type TableProps } from '@cloudscape-design/components/table';
 import { useTranslations } from 'next-intl';
 import { EmptyState } from '@/components/EmptyState';
+import { ExportButton } from '@/components/ExportButton';
 import { svg } from '@/components/icons';
 import { usePathname, useRouter } from '@/i18n/navigation';
 import { useIsMobile } from '@/lib/useIsMobile';
@@ -61,9 +62,7 @@ export function AttendanceRegisterTable({
           counter={`(${register.students.length})`}
           actions={
             <SpaceBetween direction="horizontal" size="xs">
-              <Button href={exportHref} download iconSvg={svg('export')} ariaLabel={t('exportLabel')}>
-                {t('export')}
-              </Button>
+              <ExportButton href={exportHref} label={t('exportLabel')} />
               <Button
                 iconSvg={svg('attendance')}
                 href={takeHref}

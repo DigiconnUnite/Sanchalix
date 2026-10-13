@@ -482,12 +482,24 @@ body {
        1620px content limit, which Cloudscape keeps in the grid columns, become padding. */
     grid-column: 3 / 6 !important;
     margin-block: 0 !important;
-    padding-block: var(--space-scaled-s-2crg2b, 12px) var(--space-layout-content-bottom-adv8e9, 40px);
     padding-inline: max(var(--space-layout-content-horizontal-axaoos, 24px), (100% - 1620px) / 2);
   }
 
   [data-awsui-app-layout-widget-loaded] > main > [class*='awsui_main-disable-paddings_'] {
     padding: 0;
+  }
+
+  /* The space above and below a page is drawn as spacers, not padding: a sticky table header keeps clear of its
+     scroll area's padding, so it would stop 12px short of the top with rows showing through the gap. */
+  [data-awsui-app-layout-widget-loaded] > main > [class*='awsui_main_']:not([class*='awsui_main-disable-paddings_'])::before,
+  [data-awsui-app-layout-widget-loaded] > main > [class*='awsui_main_']:not([class*='awsui_main-disable-paddings_'])::after {
+    content: '';
+    display: block;
+    block-size: var(--space-scaled-s-2crg2b, 12px);
+  }
+
+  [data-awsui-app-layout-widget-loaded] > main > [class*='awsui_main_']:not([class*='awsui_main-disable-paddings_'])::after {
+    block-size: var(--space-layout-content-bottom-adv8e9, 40px);
   }
 
   /* Sticky table and card headers now stick to the top of the content area, not 91px below it. */

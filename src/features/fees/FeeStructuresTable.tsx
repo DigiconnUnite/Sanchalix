@@ -115,6 +115,7 @@ export function FeeStructuresTable({
               actions={
                 <SpaceBetween direction="horizontal" size="xs">
                   {link(HEADS, t('structures.feeHeads'))}
+                  {canEdit && link('/fees/invoices/import', t('openingBalances.action'))}
                   {canEdit && link(NEW, t('structures.add'), true)}
                 </SpaceBetween>
               }

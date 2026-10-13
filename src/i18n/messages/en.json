@@ -33,7 +33,8 @@
       "outbox": "Sent messages",
       "feeReports": "Fee reports",
       "feeDiscounts": "Discounts and late fees",
-      "attendanceReport": "Attendance report"
+      "attendanceReport": "Attendance report",
+      "reports": "Reports"
     },
     "breadcrumbs": "Breadcrumbs",
     "signOut": "Sign out",
@@ -225,6 +226,10 @@
       "attendanceReport": {
         "title": "Attendance report",
         "description": "How each section is attending, and which students are falling behind."
+      },
+      "reports": {
+        "title": "School reports",
+        "description": "Admissions and staff at a glance, with the way to the other reports."
       }
     }
   },
@@ -744,7 +749,6 @@
       "import": "{count, plural, one {Import # student} other {Import # students}}",
       "ready": "{count, plural, one {# student is ready to import.} other {All # students are ready to import.}} Nothing has been saved yet.",
       "imported": "{count, plural, one {# student imported.} other {# students imported.}}",
-      "viewStudents": "View students",
       "errorsTitle": "Rows to fix",
       "errorsDescription": "Nothing was imported. Fix these in the file and check it again. Showing {shown} of {count}.",
       "row": "Row",
@@ -753,8 +757,31 @@
       "errors": {
         "noFile": "Choose a CSV file first.",
         "header": "The first row doesn't match the template. Download the template and copy your data into it.",
-        "empty": "The file has no students below the header row.",
-        "tooMany": "A file can hold up to {max} students. Split it into smaller files."
+        "empty": "The file has no rows below the header row.",
+        "tooMany": "A file can hold up to {max} rows. Split it into smaller files."
+      },
+      "view": "View students",
+      "kinds": {
+        "staff": {
+          "title": "Import staff",
+          "description": "Add many staff members at once from a CSV file. The file is checked first; nothing is saved until every row is correct.",
+          "columns": "The first row must be exactly these columns, in this order: {columns}. Type is teaching or non_teaching, the phone number is 10 digits, joinedOn is YYYY-MM-DD, and department and email may be left empty.",
+          "constraint": "One .csv file, up to 500 staff members.",
+          "import": "{count, plural, one {Import # staff member} other {Import # staff members}}",
+          "ready": "{count, plural, one {# staff member is ready to import.} other {All # staff members are ready to import.}} Nothing has been saved yet.",
+          "imported": "{count, plural, one {# staff member imported.} other {# staff members imported.}} Each got the next employee number.",
+          "view": "View staff"
+        },
+        "openingBalances": {
+          "title": "Import opening balances",
+          "description": "Bring in what each student still owed before the school started using Sanchalix. Each row becomes one invoice the fee counter can collect against.",
+          "columns": "The first row must be exactly these columns, in this order: {columns}. The admission number is as on the student's profile, the amount is in rupees such as 12500 or 12500.50, and dueDate is YYYY-MM-DD.",
+          "constraint": "One .csv file, up to 500 students. A student can have one opening balance.",
+          "import": "{count, plural, one {Import # opening balance} other {Import # opening balances}}",
+          "ready": "{count, plural, one {# opening balance is ready to import.} other {All # opening balances are ready to import.}} Nothing has been saved yet.",
+          "imported": "{count, plural, one {# invoice created.} other {# invoices created.}}",
+          "view": "View invoices"
+        }
       }
     },
     "documents": {
@@ -1088,8 +1115,7 @@
       "period": "Period",
       "wholeDay": "Whole day",
       "periodNo": "Period {number}",
-      "export": "Export CSV",
-      "exportLabel": "Export this register as a CSV file"
+      "exportLabel": "Export this register"
     },
     "report": {
       "title": "Attendance report",
@@ -1468,6 +1494,13 @@
         "heading": "Receipt not found",
         "body": "We couldn't find that receipt. You may have followed an old link.",
         "action": "Go to the fee counter"
+      },
+      "pdfButton": "Open PDF",
+      "pdfLabel": "Open receipt {receiptNo} as a PDF",
+      "pdf": {
+        "title": "Fee receipt",
+        "verify": "Scan to check this receipt on the school's system.",
+        "computer": "This is a computer-generated receipt and needs no signature."
       }
     },
     "payments": {
@@ -1640,7 +1673,8 @@
         "status": {
           "pending": "Waiting for approval",
           "approved": "Approved",
-          "rejected": "Rejected"
+          "rejected": "Rejected",
+          "withdrawn": "Withdrawn"
         },
         "form": {
           "admissionNo": "Admission number",
@@ -1655,7 +1689,12 @@
           "reason": "Reason",
           "reasonHint": "The principal sees this when deciding.",
           "submit": "Send for approval"
-        }
+        },
+        "withdraw": "Withdraw",
+        "withdrawLabel": "Withdraw {name} from {student}",
+        "withdrawTitle": "Withdraw {name} from {student}?",
+        "withdrawBody": "The discount stops applying. It comes off invoices that nobody has paid towards; an invoice with a receipt keeps it. This can't be undone, but a new discount can be added.",
+        "withdrawn": "{name} withdrawn. {count, plural, =0 {No unpaid invoices changed.} one {# unpaid invoice put back to its full amount.} other {# unpaid invoices put back to their full amount.}}"
       },
       "errors": {
         "notFound": "We couldn't find that discount.",
@@ -1668,6 +1707,28 @@
         "type": "Choose a type",
         "reason": "Enter a reason of up to 200 characters",
         "decided": "This discount has already been decided. Reload the page."
+      }
+    },
+    "verify": {
+      "title": "Check a fee receipt",
+      "valid": "This receipt is genuine",
+      "school": "School",
+      "receiptNo": "Receipt no.",
+      "date": "Date",
+      "amount": "Amount received",
+      "compare": "Compare these with the paper receipt. If the number, date or amount differ, the paper has been changed.",
+      "invalid": "We can't confirm this receipt",
+      "invalidBody": "The link is incomplete or was not issued by this system. Scan the code on the receipt again, or ask the school office."
+    },
+    "openingBalances": {
+      "action": "Import opening balances",
+      "label": "Opening balance",
+      "errors": {
+        "student": "No active student has this admission number",
+        "already": "This student already has an opening balance",
+        "repeated": "This admission number appears on an earlier row",
+        "amount": "Enter an amount greater than 0, such as 12500",
+        "dueDate": "Use YYYY-MM-DD"
       }
     }
   },
@@ -1978,6 +2039,13 @@
         "body": "Subjects appear here once this person is given periods in a timetable."
       },
       "leave": "Leave left this year"
+    },
+    "import": {
+      "action": "Import staff",
+      "errors": {
+        "phoneTaken": "Someone on the staff record already has this mobile number",
+        "phoneRepeated": "This mobile number appears on an earlier row"
+      }
     }
   },
   "homework": {
@@ -2414,14 +2482,21 @@
     "reportCard": {
       "ready": "The report card for {name} is ready.",
       "open": "Open report card"
+    },
+    "receipts": {
+      "title": "Receipts",
+      "receiptNo": "Receipt no.",
+      "date": "Date",
+      "amount": "Amount",
+      "opens": "Opens the receipt as a PDF in a new tab"
     }
   },
   "export": {
-    "button": "Export CSV",
+    "button": "Export",
     "label": {
-      "students": "Export active students as a CSV file",
-      "dues": "Export overdue dues as a CSV file",
-      "payments": "Export payments as a CSV file"
+      "students": "Export active students",
+      "dues": "Export overdue dues",
+      "payments": "Export payments"
     },
     "columns": {
       "admissionNo": "Admission no.",
@@ -2440,6 +2515,10 @@
       "collectedAt": "Collected at",
       "method": "Method",
       "amount": "Amount (INR)"
+    },
+    "format": {
+      "csv": "CSV file",
+      "xlsx": "Excel workbook"
     }
   },
   "settings": {
@@ -2516,7 +2595,8 @@
       "termEnd": "A term has to end after it starts",
       "termOverlap": "This term has to start after the one before it ends",
       "termOutsideYear": "Every term has to fall inside the academic year.",
-      "noYear": "There is no current academic year."
+      "noYear": "There is no current academic year.",
+      "termInUse": "An exam belongs to a term you removed. Keep the term, or it can only be renamed."
     },
     "terms": {
       "title": "Terms",
@@ -2566,7 +2646,8 @@
       "classes": "Classes",
       "papers": "Papers",
       "status": "Status",
-      "actions": "Actions"
+      "actions": "Actions",
+      "term": "Term"
     },
     "type": {
       "unit_test": "Unit test",
@@ -2661,7 +2742,8 @@
       "lockState": "This paper is already in that state. Reload the page.",
       "published": "Results are already published, so this can't be changed.",
       "noPapers": "Add at least one paper before publishing results.",
-      "notLocked": "{count, plural, one {# paper is} other {# papers are}} not locked yet. Lock every paper first."
+      "notLocked": "{count, plural, one {# paper is} other {# papers are}} not locked yet. Lock every paper first.",
+      "term": "Choose a term of the current academic year"
     },
     "reportCards": {
       "title": "Report cards",
@@ -2728,7 +2810,8 @@
         "noResults": "No student in this section has published exam results yet. Publish an exam's results first.",
         "nothingToPublish": "There are no draft cards to publish. Generate them first."
       }
-    }
+    },
+    "noTerm": "No term"
   },
   "marketing": {
     "brand": "Sanchalix",
@@ -3128,6 +3211,53 @@
     "empty": {
       "heading": "No messages yet",
       "body": "Absence alerts, fee reminders, sign-in codes and password reset links appear here."
+    }
+  },
+  "reports": {
+    "title": "Reports",
+    "count": "Number",
+    "more": "Other reports",
+    "links": {
+      "attendance": "Attendance report",
+      "fees": "Fee collection report",
+      "dues": "Overdue fees"
+    },
+    "empty": {
+      "heading": "Nothing to count yet",
+      "body": "Figures appear here once there are records."
+    },
+    "noYear": {
+      "heading": "No academic year yet",
+      "body": "Admissions are counted for the current academic year. Set one up first."
+    },
+    "admissions": {
+      "title": "Admissions",
+      "description": "Applications for {year}.",
+      "total": "Applications",
+      "admitted": "Admitted",
+      "open": "Still open",
+      "openNote": "Not yet admitted, rejected or withdrawn",
+      "byStage": "By stage",
+      "stage": "Stage",
+      "bySource": "How they found the school",
+      "source": "Source",
+      "byClass": "By class sought",
+      "class": "Class",
+      "applications": "Applications"
+    },
+    "staff": {
+      "title": "Staff",
+      "description": "People on the staff record. Totals count those working now, including anyone on leave.",
+      "total": "Working staff",
+      "totalNote": "Active or on leave",
+      "teaching": "Teaching staff",
+      "withAccount": "With a sign-in",
+      "withAccountNote": "Of {total} working staff",
+      "byStatus": "By status",
+      "status": "Status",
+      "byDepartment": "By department",
+      "department": "Department",
+      "noDepartment": "No department set"
     }
   }
 }

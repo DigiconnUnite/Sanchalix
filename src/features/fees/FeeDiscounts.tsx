@@ -26,6 +26,7 @@ import {
   requestStudentDiscount,
   saveAutomaticDiscounts,
   saveLateFeeRule,
+  withdrawStudentDiscount,
 } from '@/server/modules/fees/actions';
 import type { DiscountRules } from '@/server/modules/fees/discounts';
 
@@ -36,6 +37,7 @@ const STATUS_TYPE: Record<Row['status'], StatusIndicatorProps.Type> = {
   pending: 'pending',
   approved: 'success',
   rejected: 'stopped',
+  withdrawn: 'stopped',
 };
 const BLANK = { admissionNo: '', name: '', type: 'percent', value: '', reason: '' };
 
@@ -52,6 +54,7 @@ export function FeeDiscounts({ rules, canEdit, canApprove }: { rules: DiscountRu
   });
   const [draft, setDraft] = useState<typeof BLANK | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
+  const [withdrawing, setWithdrawing] = useState<Row | null>(null);
   const [errors, setErrors] = useState<Errors>({});
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const typeOptions = (['percent', 'fixed'] as const).map((value) => ({ value, label: t(`students.form.${value}`) }));
@@ -67,6 +70,7 @@ export function FeeDiscounts({ rules, canEdit, canApprove }: { rules: DiscountRu
       return setFeedback({ type: 'error', text: result.error.message });
     }
     setDraft(null);
+    setWithdrawing(null);
     setFeedback({ type: 'success', text: done(result.data) });
     router.refresh();
   }
@@ -233,17 +237,58 @@ export function FeeDiscounts({ rules, canEdit, canApprove }: { rules: DiscountRu
                   id: 'actions',
                   header: t('students.columns.actions'),
                   cell: (row: Row) =>
-                    row.status === 'pending' && (
+                    row.status === 'pending' ? (
                       <SpaceBetween direction="horizontal" size="s">
                         {decide(row, 'approved')}
                         {decide(row, 'rejected')}
                       </SpaceBetween>
+                    ) : (
+                      row.status === 'approved' && (
+                        <Button
+                          variant="inline-link"
+                          ariaLabel={t('students.withdrawLabel', { name: row.name, student: row.student })}
+                          onClick={() => setWithdrawing(row)}
+                        >
+                          {t('students.withdraw')}
+                        </Button>
+                      )
                     ),
                 },
               ]
             : []),
         ]}
       />
+      <Modal
+        visible={withdrawing !== null}
+        header={t('students.withdrawTitle', { name: withdrawing?.name ?? '', student: withdrawing?.student ?? '' })}
+        closeAriaLabel={t('cancel')}
+        onDismiss={() => setWithdrawing(null)}
+        footer={
+          <Box float="right">
+            <SpaceBetween direction="horizontal" size="xs">
+              <Button variant="link" onClick={() => setWithdrawing(null)}>
+                {t('cancel')}
+              </Button>
+              <Button
+                variant="primary"
+                loading={busy === 'withdraw'}
+                onClick={() =>
+                  withdrawing &&
+                  void run(
+                    'withdraw',
+                    () => withdrawStudentDiscount(withdrawing.id),
+                    (data) => t('students.withdrawn', { name: data.name, count: data.invoices }),
+                  )
+                }
+              >
+                {t('students.withdraw')}
+              </Button>
+            </SpaceBetween>
+          </Box>
+        }
+      >
+        {t('students.withdrawBody')}
+      </Modal>
       <Modal
         visible={draft !== null}
         header={t('students.add')}

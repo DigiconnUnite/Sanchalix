@@ -4,6 +4,7 @@ import type { RequestContext } from '@/server/auth/context';
 import { connectDb } from '@/server/db/connect';
 import { AcademicYear } from '@/server/models/academicYear';
 import { Class } from '@/server/models/class';
+import { Discount } from '@/server/models/discount';
 import { Enrollment } from '@/server/models/enrollment';
 import { FeeHead } from '@/server/models/feeHead';
 import { Guardian } from '@/server/models/guardian';
@@ -13,13 +14,16 @@ import { Staff } from '@/server/models/staff';
 import { Student } from '@/server/models/student';
 import {
   decideStudentDiscount,
+  getDiscountRules,
   priceInvoice,
   requestStudentDiscount,
   runFeeUpkeep,
   setAutomaticDiscounts,
   setLateFeeRule,
   StudentDiscount,
+  withdrawStudentDiscount,
 } from './discounts';
+import { importOpeningBalances, OPENING_BALANCE_COLUMNS } from './openingBalances';
 import { FeeHeadInput, FeeStructureInput } from './schemas';
 import { approveFeeStructure, createFeeHead, createFeeStructure } from './service';
 
@@ -174,4 +178,49 @@ it('marks unpaid invoices overdue and adds the late fee once, after the grace da
   const future = await createFeeStructure(ctx, structure('Due later', '2099-01-10'));
   await approveFeeStructure({ ...ctx, role: 'principal' }, String(future.id));
   expect(await runFeeUpkeep(ctx.schoolId)).toEqual({ overdue: 0, lateFees: 0 });
+});
+
+it('takes a withdrawn student discount back off unpaid invoices, once', async () => {
+  const discount = await Discount.findOne({ schoolId: ctx.schoolId, kind: 'custom', status: 'approved' }).sort({ createdAt: 1 }).orFail().lean();
+  const before = await invoiceOf('PLAIN', issued);
+  expect(before.concessions).toHaveLength(1);
+
+  // Two invoices carry it: the one it was approved onto, and one issued later by another fee structure.
+  expect(await withdrawStudentDiscount(ctx, String(discount._id))).toMatchObject({ invoices: 2 });
+  const after = await invoiceOf('PLAIN', issued);
+  expect(after.concessions).toHaveLength(0);
+  expect(after.totalMinor - before.totalMinor).toBe(100_000 + 18_000);
+  expect(after.balanceMinor).toBe(after.totalMinor);
+  await expect(withdrawStudentDiscount(ctx, String(discount._id))).rejects.toMatchObject({ code: 'BUSINESS_RULE' });
+  expect((await getDiscountRules(ctx)).students.find((row) => row.id === String(discount._id))?.status).toBe('withdrawn');
+});
+
+it('imports opening balances as one invoice per student, once', async () => {
+  const file = (...rows: string[]) => [OPENING_BALANCE_COLUMNS.join(','), ...rows].join('\n');
+  const count = () => Invoice.countDocuments({ schoolId: ctx.schoolId });
+  const before = await count();
+
+  const bad = await importOpeningBalances(ctx, file('NOBODY,500,2026-04-01', 'ELDER,0,2026-04-01', 'WARD,750.50,soon', 'WARD,10,2026-04-01'), false, 'Opening balance');
+  expect(bad.errors.map((error) => [error.row, error.field])).toEqual([
+    [2, 'admissionNo'],
+    [3, 'amount'],
+    [4, 'dueDate'],
+    [5, 'admissionNo'],
+  ]);
+  expect(await count()).toBe(before);
+
+  const good = file('ELDER,1250.50,2026-04-01', 'WARD,300,2026-04-01');
+  expect(await importOpeningBalances(ctx, good, true, 'Opening balance')).toMatchObject({ total: 2, imported: 0, errors: [] });
+  expect(await count()).toBe(before);
+  expect(await importOpeningBalances(ctx, good, false, 'Opening balance')).toMatchObject({ imported: 2 });
+  expect(await count()).toBe(before + 2);
+
+  const elder = await Student.findOne({ schoolId: ctx.schoolId, admissionNo: 'ELDER' }).orFail().lean();
+  const invoice = await Invoice.findOne({ schoolId: ctx.schoolId, studentId: elder._id, installmentId: null }).orFail().lean();
+  expect(invoice).toMatchObject({ installmentLabel: 'Opening balance', totalMinor: 125_050, balanceMinor: 125_050, status: 'issued' });
+  expect(invoice.invoiceNo).toMatch(/^INV\/2026-27\/\d{6}$/);
+
+  const again = await importOpeningBalances(ctx, good, false, 'Opening balance');
+  expect(again.imported).toBe(0);
+  expect(again.errors).toHaveLength(2);
 });

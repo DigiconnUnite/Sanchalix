@@ -32,6 +32,7 @@ type ModuleKey =
   | 'feeReports'
   | 'feeDiscounts'
   | 'attendanceReport'
+  | 'reports'
   | 'announcements'
   | 'calendarEvents'
   | 'promotion'
@@ -94,6 +95,7 @@ const MODULES: (Omit<NavItem, 'text' | 'group' | 'banner'> & { key: ModuleKey; g
     permission: 'comms.announcement.read',
   },
   { key: 'calendarEvents', group: 'communication', href: '/calendar/events', icon: 'calendar', permission: 'calendar.event.read' },
+  { key: 'reports', group: 'admin', href: '/reports', icon: 'reports', permission: 'sis.admission.read' },
   { key: 'promotion', group: 'admin', href: '/promotion', icon: 'promote', permission: 'sis.enrollment.update' },
   { key: 'users', group: 'admin', href: '/users', icon: 'users', permission: 'users.user.read' },
   { key: 'outbox', group: 'admin', href: '/outbox', icon: 'sms', permission: 'messaging.outbox.read' },

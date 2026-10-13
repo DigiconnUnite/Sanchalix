@@ -2,6 +2,7 @@ import 'server-only';
 import { Types } from 'mongoose';
 import { z } from 'zod';
 import { AppError } from '@/lib/appError';
+import { AcademicYear } from '@/server/models/academicYear';
 import type { RequestContext } from '@/server/auth/context';
 import { can } from '@/server/auth/permissions';
 import { Class } from '@/server/models/class';
@@ -38,6 +39,7 @@ export const ExamInput = z.object({
   name: z.string().trim().min(1, `${E}.name`).max(80, `${E}.name`),
   type: z.enum(EXAM_TYPES, `${E}.type`),
   classIds: z.array(Id('classes')).min(1, `${E}.classes`).max(30, `${E}.classes`),
+  termId: z.union([z.literal('').transform(() => undefined), Id('term')]).optional(),
 });
 export type ExamInput = z.infer<typeof ExamInput>;
 
@@ -78,6 +80,8 @@ export type ExamRow = {
   name: string;
   type: (typeof EXAM_TYPES)[number];
   classes: string;
+  /** The term the exam counts towards, if the school uses terms. */
+  term: string | null;
   papers: number;
   published: boolean;
 };
@@ -112,12 +116,22 @@ const namesOf = async (ctx: RequestContext, classIds: unknown[]) => {
   return classes.map((schoolClass) => ({ id: String(schoolClass._id), name: schoolClass.name }));
 };
 
+/** The names of the current year's terms by id, for labelling exams. */
+export async function termNames(ctx: RequestContext) {
+  const year = await AcademicYear.findOne({ schoolId: ctx.schoolId, status: 'current' }).select('terms').lean();
+  return new Map((year?.terms ?? []).map((term) => [String(term._id), term.name]));
+}
+
+export const listTerms = async (ctx: RequestContext) =>
+  [...(await termNames(ctx))].map(([id, name]) => ({ id, name }));
+
 export async function listExams(ctx: RequestContext): Promise<ExamRow[]> {
   const { schoolId } = ctx;
   const academicYearId = await getCurrentYearId(ctx);
   if (!academicYearId) return [];
   const exams = await Exam.find({ schoolId, academicYearId }).sort({ createdAt: -1 }).limit(100).lean();
-  const [classes, papers] = await Promise.all([
+  const [terms, classes, papers] = await Promise.all([
+    termNames(ctx),
     namesOf(
       ctx,
       exams.flatMap((exam) => exam.classIds),
@@ -137,6 +151,7 @@ export async function listExams(ctx: RequestContext): Promise<ExamRow[]> {
       .filter(({ id }) => exam.classIds.some((classId) => String(classId) === id))
       .map(({ id }) => nameOf.get(id))
       .join(', '),
+    term: terms.get(String(exam.termId)) ?? null,
     papers: papersOf.get(String(exam._id)) ?? 0,
     published: exam.status === 'results_published',
   }));
@@ -149,7 +164,16 @@ export async function createExam(ctx: RequestContext, input: ExamInput) {
     ? await Class.countDocuments({ schoolId, academicYearId, _id: { $in: input.classIds } })
     : 0;
   if (!academicYearId || valid !== new Set(input.classIds).size) throw new AppError('NOT_FOUND', `${E}.classes`);
-  const exam = await Exam.create({ schoolId, academicYearId, ...input, createdBy: ctx.userId, updatedBy: ctx.userId });
+  if (input.termId && !(await termNames(ctx)).has(input.termId)) throw new AppError('NOT_FOUND', `${E}.term`);
+  const { termId, ...details } = input;
+  const exam = await Exam.create({
+    schoolId,
+    academicYearId,
+    ...details,
+    ...(termId && { termId }),
+    createdBy: ctx.userId,
+    updatedBy: ctx.userId,
+  });
   return { id: exam._id, name: exam.name };
 }
 
@@ -174,6 +198,7 @@ export async function getExam(ctx: RequestContext, id: string): Promise<ExamDeta
     name: exam.name,
     type: exam.type,
     classes: classOptions.map(({ name }) => name).join(', '),
+    term: (await termNames(ctx)).get(String(exam.termId)) ?? null,
     papers: schedules.length,
     published: exam.status === 'results_published',
     classOptions,
@@ -384,6 +409,7 @@ export async function publishResults(ctx: RequestContext, examId: string) {
 export type StudentResult = {
   examId: string;
   exam: string;
+  term?: string | null;
   papers: { subject: string; marks: number | null; maxMarks: number; isAbsent: boolean; grade: string | null; passed: boolean }[];
   total: number;
   maxTotal: number;
@@ -410,7 +436,7 @@ export async function getStudentResults(
       ...(academicYearId && { academicYearId }),
     })
       .sort({ createdAt: -1 })
-      .select('name')
+      .select('name termId')
       .lean(),
     Subject.find({ schoolId, _id: { $in: schedules.map((schedule) => schedule.subjectId) } })
       .setOptions({ withDeleted: true })
@@ -418,6 +444,7 @@ export async function getStudentResults(
       .lean(),
   ]);
   const subjectName = new Map(subjects.map((subject) => [String(subject._id), subject.name]));
+  const terms = await termNames(ctx);
   const markOf = new Map(marks.map((mark) => [String(mark.examScheduleId), mark]));
   return exams.map((exam): StudentResult => {
     const papers = schedules
@@ -439,6 +466,7 @@ export async function getStudentResults(
     return {
       examId: String(exam._id),
       exam: exam.name,
+      term: terms.get(String(exam.termId)) ?? null,
       papers,
       total,
       maxTotal,

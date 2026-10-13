@@ -224,6 +224,7 @@ export async function getReceipt(ctx: RequestContext, paymentId: string): Promis
 
   return {
     id: String(payment._id),
+    studentId: String(payment.studentId),
     receiptNo: payment.receiptNo,
     collectedAt: payment.createdAt.toISOString(),
     collectedBy: collector?.name ?? '',
