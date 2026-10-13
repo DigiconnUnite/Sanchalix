@@ -6,6 +6,7 @@ import Button from '@cloudscape-design/components/button';
 import ColumnLayout from '@cloudscape-design/components/column-layout';
 import Container from '@cloudscape-design/components/container';
 import ContentLayout from '@cloudscape-design/components/content-layout';
+import DatePicker from '@cloudscape-design/components/date-picker';
 import Form from '@cloudscape-design/components/form';
 import FormField from '@cloudscape-design/components/form-field';
 import Header from '@cloudscape-design/components/header';
@@ -19,7 +20,7 @@ import { useTranslations } from 'next-intl';
 import { type ReactNode, useState } from 'react';
 import { usePathname, useRouter } from '@/i18n/navigation';
 import type { ActionResult } from '@/lib/appError';
-import { updatePeriods, updateSchoolSettings } from '@/server/modules/settings/actions';
+import { updatePeriods, updateSchoolSettings, updateTerms } from '@/server/modules/settings/actions';
 import type { SchoolSettings } from '@/server/modules/settings/service';
 
 const DAYS = [1, 2, 3, 4, 5, 6, 0];
@@ -89,6 +90,7 @@ export function Settings({ settings, tab }: { settings: SchoolSettings; tab: str
   });
   const [workingDays, setWorkingDays] = useState(settings.workingDays);
   const [periods, setPeriods] = useState(settings.periods);
+  const [terms, setTerms] = useState(settings.year?.terms ?? []);
   const dayOptions = DAYS.map((value) => ({ value: String(value), label: t(`days.${value}`) }));
 
   const field = (name: keyof typeof school, errors: Record<string, string>, path: string = name) => (
@@ -116,7 +118,7 @@ export function Settings({ settings, tab }: { settings: SchoolSettings; tab: str
   return (
     <ContentLayout>
       <Tabs
-        activeTabId={tab === 'periods' ? 'periods' : 'school'}
+        activeTabId={tab === 'periods' || tab === 'terms' ? tab : 'school'}
         onChange={({ detail }) => router.replace(`${pathname}?tab=${detail.activeTabId}`)}
         tabs={[
           {
@@ -188,6 +190,69 @@ export function Settings({ settings, tab }: { settings: SchoolSettings; tab: str
                   </SpaceBetween>
                 )}
               </SettingsForm>
+            ),
+          },
+          {
+            id: 'terms',
+            label: t('tabs.terms'),
+            content: settings.year ? (
+              <SettingsForm submit={t('save')} saved={t('terms.saved')} save={() => updateTerms(terms)}>
+                {(errors) => (
+                  <Container
+                    header={
+                      <Header variant="h2" description={t('terms.description', { year: settings.year?.label ?? '' })}>
+                        {t('terms.title')}
+                      </Header>
+                    }
+                  >
+                    <AttributeEditor
+                      items={terms}
+                      addButtonText={t('terms.add')}
+                      removeButtonText={t('terms.remove')}
+                      removeButtonAriaLabel={(item) => t('terms.removeLabel', { name: item.name || t('terms.unnamed') })}
+                      disableAddButton={terms.length >= 6}
+                      empty={t('terms.empty')}
+                      onAddButtonClick={() => setTerms([...terms, { name: '', startDate: '', endDate: '' }])}
+                      onRemoveButtonClick={({ detail }) => setTerms(terms.filter((_, index) => index !== detail.itemIndex))}
+                      definition={[
+                        {
+                          label: t('terms.name'),
+                          errorText: (_, index) => errors[`${index}.name`],
+                          control: (term, index) => (
+                            <Input
+                              value={term.name}
+                              autoComplete={false}
+                              placeholder={t('terms.namePlaceholder')}
+                              onChange={({ detail }) =>
+                                setTerms(terms.map((item, at) => (at === index ? { ...item, name: detail.value } : item)))
+                              }
+                            />
+                          ),
+                        },
+                        ...(['startDate', 'endDate'] as const).map((key) => ({
+                          label: t(`terms.${key}`),
+                          errorText: (_: unknown, index: number) => errors[`${index}.${key}`],
+                          control: (term: (typeof terms)[number], index: number) => (
+                            <DatePicker
+                              value={term[key]}
+                              placeholder="YYYY/MM/DD"
+                              isDateEnabled={(date) => {
+                                const day = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+                                return day >= (settings.year?.startDate ?? '') && day <= (settings.year?.endDate ?? '9');
+                              }}
+                              onChange={({ detail }) =>
+                                setTerms(terms.map((item, at) => (at === index ? { ...item, [key]: detail.value } : item)))
+                              }
+                            />
+                          ),
+                        })),
+                      ]}
+                    />
+                  </Container>
+                )}
+              </SettingsForm>
+            ) : (
+              <Alert type="info">{t('terms.noYear')}</Alert>
             ),
           },
           {

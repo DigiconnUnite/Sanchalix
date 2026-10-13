@@ -169,6 +169,21 @@ export async function changePassword(input: unknown) {
   });
 }
 
+const SessionId = z.string().regex(/^[0-9a-f]{24}$/);
+
+/** Signs one of your other devices out. The device you are using is signed out with Sign out, not here. */
+export async function signOutSession(input: unknown) {
+  return withAction('auth.signOutSession', async () => {
+    const ctx = await getContext();
+    const session = await readSession();
+    if (!ctx || !session) throw new AppError('UNAUTHENTICATED', 'errors.unauthenticated');
+    const id = SessionId.parse(input);
+    const { deletedCount } = await Session.deleteOne({ userId: ctx.userId, _id: { $eq: id, $ne: session._id } });
+    if (deletedCount === 1) await audit(ctx, 'auth.session.signOut', { type: USER, id: ctx.userId });
+    return { signedOut: deletedCount === 1 };
+  });
+}
+
 export async function signOutOtherSessions() {
   return withAction('auth.signOutOthers', async () => {
     const ctx = await getContext();

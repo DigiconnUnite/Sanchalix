@@ -4,6 +4,8 @@ import Alert from '@cloudscape-design/components/alert';
 import Box from '@cloudscape-design/components/box';
 import Button from '@cloudscape-design/components/button';
 import Checkbox from '@cloudscape-design/components/checkbox';
+import ColumnLayout from '@cloudscape-design/components/column-layout';
+import DatePicker from '@cloudscape-design/components/date-picker';
 import Container from '@cloudscape-design/components/container';
 import ContentLayout from '@cloudscape-design/components/content-layout';
 import Form from '@cloudscape-design/components/form';
@@ -31,6 +33,7 @@ const LIST = '/communication/announcements';
 const NEW = `${LIST}/new`;
 const STAFF_ROLES: RoleKey[] = ['school_admin', 'principal', 'teacher', 'accountant', 'librarian', 'transport_manager'];
 const dateTime = new Intl.DateTimeFormat('en-IN', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Kolkata' });
+const day = new Intl.DateTimeFormat('en-IN', { dateStyle: 'medium', timeZone: 'Asia/Kolkata' });
 
 function useAudienceLabel() {
   const t = useTranslations('comms.audience');
@@ -48,11 +51,13 @@ export function AnnouncementsTable({
   canCreate,
   published,
   recipients,
+  scheduled,
 }: {
   announcements: AnnouncementRow[];
   canCreate: boolean;
   published: string | null;
   recipients: number;
+  scheduled: boolean;
 }) {
   const t = useTranslations('comms');
   const router = useRouter();
@@ -86,7 +91,7 @@ export function AnnouncementsTable({
           </Header>
           {published && (
             <Alert type="success" dismissible dismissAriaLabel={t('dismiss')} onDismiss={() => router.replace(pathname)}>
-              {t('announcements.published', { title: published, count: recipients })}
+              {t(scheduled ? 'announcements.scheduledNotice' : 'announcements.published', { title: published, count: recipients })}
             </Alert>
           )}
         </SpaceBetween>
@@ -116,7 +121,23 @@ export function AnnouncementsTable({
         {
           id: 'published',
           header: t('announcements.columns.published'),
-          cell: (row) => dateTime.format(new Date(row.publishedAt)),
+          cell: (row) =>
+            row.scheduled ? (
+              <StatusIndicator type="pending">
+                {t('announcements.scheduledFor', { date: day.format(new Date(row.publishedAt)) })}
+              </StatusIndicator>
+            ) : (
+              <SpaceBetween size="xxxs">
+                <span>{dateTime.format(new Date(row.publishedAt))}</span>
+                {row.expiresOn && (
+                  <Box color="text-body-secondary" fontSize="body-s">
+                    {t(new Date(row.expiresOn) < new Date() ? 'announcements.expired' : 'announcements.until', {
+                      date: day.format(new Date(row.expiresOn)),
+                    })}
+                  </Box>
+                )}
+              </SpaceBetween>
+            ),
         },
       ]}
     />
@@ -204,6 +225,8 @@ export function AnnouncementForm({ sections }: { sections: { id: string; name: s
   const [roles, setRoles] = useState<RoleKey[]>([]);
   const [sectionIds, setSectionIds] = useState<string[]>([]);
   const [requiresAck, setRequiresAck] = useState(false);
+  const [publishOn, setPublishOn] = useState('');
+  const [expiresOn, setExpiresOn] = useState('');
   const sectionOptions = sections.map(({ id, name }) => ({ value: id, label: name }));
   const sectionsKey = sectionIds.join(',');
   const [reach, setReach] = useState<number | null>(null);
@@ -252,9 +275,15 @@ export function AnnouncementForm({ sections }: { sections: { id: string; name: s
       body,
       audience,
       requiresAck,
+      publishOn,
+      expiresOn,
     });
     if (result.ok) {
-      const params = new URLSearchParams({ published: result.data.title, recipients: String(result.data.recipients) });
+      const params = new URLSearchParams({
+        published: result.data.title,
+        recipients: String(result.data.recipients),
+        ...(result.data.scheduled && { scheduled: '1' }),
+      });
       return router.push(`${LIST}?${params}`);
     }
     setError(result.error);
@@ -358,6 +387,32 @@ export function AnnouncementForm({ sections }: { sections: { id: string; name: s
                 >
                   {t('announcements.form.ack')}
                 </Checkbox>
+                <ColumnLayout columns={2}>
+                  <FormField
+                    label={t('announcements.form.publishOn')}
+                    constraintText={t('announcements.form.publishOnHint')}
+                    errorText={error?.fieldErrors?.publishOn}
+                  >
+                    <DatePicker
+                      value={publishOn}
+                      placeholder="YYYY/MM/DD"
+                      isDateEnabled={(date) => date >= new Date(new Date().setHours(0, 0, 0, 0))}
+                      onChange={({ detail }) => setPublishOn(detail.value)}
+                    />
+                  </FormField>
+                  <FormField
+                    label={t('announcements.form.expiresOn')}
+                    constraintText={t('announcements.form.expiresOnHint')}
+                    errorText={error?.fieldErrors?.expiresOn}
+                  >
+                    <DatePicker
+                      value={expiresOn}
+                      placeholder="YYYY/MM/DD"
+                      isDateEnabled={(date) => date >= new Date(new Date().setHours(0, 0, 0, 0))}
+                      onChange={({ detail }) => setExpiresOn(detail.value)}
+                    />
+                  </FormField>
+                </ColumnLayout>
                 <FormField label={t('announcements.form.channels')}>
                   <Checkbox checked disabled description={t('announcements.form.inAppReason')}>
                     {t('announcements.form.inApp')}

@@ -1,6 +1,7 @@
 import { getTranslations } from 'next-intl/server';
 import { AppError } from '@/lib/appError';
 import { audit } from '@/server/audit';
+import { fileFormat, tableResponse } from '@/server/csv';
 import { type RequestContext, requirePermission } from '@/server/auth/context';
 import type { Permission } from '@/server/auth/permissions';
 import { listDues, listPayments } from '@/server/modules/fees/queries';
@@ -76,14 +77,7 @@ const EXPORTS: Record<string, Export> = {
   },
 };
 
-// A cell starting with = + - or @ would run as a formula in a spreadsheet, so it is made plain text.
-const cell = (value: Cell) => {
-  const text = value === null ? '' : String(value);
-  const safe = typeof value === 'string' && /^[=+\-@]/.test(text) ? `'${text}` : text;
-  return /[",\r\n]/.test(safe) ? `"${safe.replaceAll('"', '""')}"` : safe;
-};
-
-export async function GET(_request: Request, { params }: { params: Promise<{ kind: string }> }) {
+export async function GET(request: Request, { params }: { params: Promise<{ kind: string }> }) {
   const { kind } = await params;
   const definition = EXPORTS[kind];
   if (!definition) return Response.json({ error: { code: 'NOT_FOUND' } }, { status: 404 });
@@ -93,24 +87,17 @@ export async function GET(_request: Request, { params }: { params: Promise<{ kin
     if (ctx.scope === 'assigned') throw new AppError('FORBIDDEN', 'errors.forbidden');
     const t = await getTranslations('export.columns');
 
-    const lines = [definition.columns.map((column) => cell(t(column))).join(',')];
+    const rows: Cell[][] = [definition.columns.map((column) => t(column))];
     let cursor: string | undefined;
     do {
       const page = await definition.page(ctx, cursor);
-      for (const row of page.rows) lines.push(row.map(cell).join(','));
+      rows.push(...page.rows);
       cursor = page.nextCursor ?? undefined;
-    } while (cursor && lines.length <= MAX_ROWS);
+    } while (cursor && rows.length <= MAX_ROWS);
 
-    await audit(ctx, 'data.export', { type: 'school', id: ctx.schoolId }, { after: { kind, rows: lines.length - 1 } });
-    const date = new Date().toISOString().slice(0, 10);
-    // The BOM makes Excel read the file as UTF-8, so names and the rupee sign survive.
-    return new Response(`﻿${lines.join('\r\n')}\r\n`, {
-      headers: {
-        'Content-Type': 'text/csv; charset=utf-8',
-        'Content-Disposition': `attachment; filename="${kind}-${date}.csv"`,
-        'Cache-Control': 'no-store',
-      },
-    });
+    const format = fileFormat(new URL(request.url).searchParams.get('format'));
+    await audit(ctx, 'data.export', { type: 'school', id: ctx.schoolId }, { after: { kind, format, rows: rows.length - 1 } });
+    return await tableResponse(format, `${kind}-${new Date().toISOString().slice(0, 10)}`, rows);
   } catch (error) {
     if (error instanceof AppError && (error.code === 'UNAUTHENTICATED' || error.code === 'FORBIDDEN')) {
       return Response.json({ error: { code: error.code } }, { status: STATUS[error.code] });

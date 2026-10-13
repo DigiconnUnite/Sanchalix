@@ -3,6 +3,7 @@ import { afterAll, beforeAll, expect, it } from 'vitest';
 import type { RequestContext } from '@/server/auth/context';
 import type { RoleKey } from '@/server/auth/permissions';
 import { connectDb } from '@/server/db/connect';
+import { Announcement } from '@/server/models/announcement';
 import { Notification } from '@/server/models/notification';
 import { User } from '@/server/models/user';
 import { AnnouncementInput } from './schemas';
@@ -14,6 +15,7 @@ import {
   listNotifications,
   markRead,
   publishAnnouncement,
+  publishDueAnnouncements,
 } from './service';
 
 const schoolA = new Types.ObjectId();
@@ -105,4 +107,35 @@ it('marks one notification read, then all, and never another user’s', async ()
   expect(await markRead(as('teacher'), 'all')).toEqual({ marked: 1 });
   expect(await countUnread(as('teacher'))).toBe(0);
   expect(await countUnread(as('accountant'))).toBe(1);
+});
+
+it('holds a scheduled announcement until its day, then tells the audience once, and hides it after its last day', async () => {
+  const unreadBefore = await countUnread(as('teacher'));
+  const held = await publishAnnouncement(as('principal'), {
+    title: 'Sports day',
+    body: 'Sports day is on the 20th.',
+    audience: { type: 'school' },
+    publishOn: '2099-01-01',
+    expiresOn: '2099-01-05',
+  });
+  const id = String(held.id);
+  expect(held).toMatchObject({ scheduled: true, recipients: 2 });
+  expect(await countUnread(as('teacher'))).toBe(unreadBefore);
+  expect(await getAnnouncement(as('teacher'), id)).toBeNull();
+  expect(await getAnnouncement(as('principal'), id)).toMatchObject({ scheduled: true });
+  expect(await publishDueAnnouncements(schoolA)).toBe(0);
+
+  await Announcement.updateOne({ schoolId: schoolA, _id: id }, { publishAt: new Date(Date.now() - 1000) });
+  expect(await publishDueAnnouncements(schoolB)).toBe(0);
+  expect(await publishDueAnnouncements(schoolA)).toBe(1);
+  expect(await publishDueAnnouncements(schoolA)).toBe(0);
+  expect(await countUnread(as('teacher'))).toBe(unreadBefore + 1);
+  expect(await getAnnouncement(as('teacher'), id)).toMatchObject({ scheduled: false });
+
+  await Announcement.updateOne({ schoolId: schoolA, _id: id }, { expiresAt: new Date(Date.now() - 1000) });
+  expect(await getAnnouncement(as('teacher'), id)).toBeNull();
+  expect(await getAnnouncement(as('principal'), id)).not.toBeNull();
+  await expect(
+    publishAnnouncement(as('principal'), { title: 'x', body: 'x', audience: { type: 'school' }, publishOn: '2099-02-02', expiresOn: '2099-02-01' }),
+  ).rejects.toMatchObject({ code: 'VALIDATION' });
 });

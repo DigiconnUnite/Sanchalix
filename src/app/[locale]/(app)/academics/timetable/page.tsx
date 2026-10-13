@@ -1,7 +1,7 @@
 import { getTranslations } from 'next-intl/server';
 import { TimetableGrid } from '@/features/academics/Timetable';
 import { can } from '@/server/auth/permissions';
-import { listCurrentSections } from '@/server/modules/academics/queries';
+import { getSectionSubjectIds, listCurrentSections } from '@/server/modules/academics/queries';
 import { listTeachers } from '@/server/modules/hr/service';
 import { getTimetable, listSubjects } from '@/server/modules/timetable/service';
 import { pageContext } from '../../pageContext';
@@ -21,10 +21,11 @@ export default async function TimetablePage({
   const sections = await listCurrentSections(ctx);
   const sectionId = sections.find(({ id }) => id === section)?.id ?? null;
   const canEdit = can(ctx.role, 'academics.timetable.update');
-  const [timetable, subjects, teachers] = await Promise.all([
+  const [timetable, subjects, teachers, classSubjects] = await Promise.all([
     getTimetable(ctx, sectionId ?? ''),
     canEdit ? listSubjects(ctx) : [],
     canEdit ? listTeachers(ctx) : [],
+    canEdit ? getSectionSubjectIds(ctx, sectionId) : null,
   ]);
 
   return (
@@ -33,7 +34,7 @@ export default async function TimetablePage({
       sections={sections}
       sectionId={sectionId}
       timetable={timetable}
-      subjects={subjects}
+      subjects={classSubjects ? subjects.filter((subject) => classSubjects.includes(subject.id)) : subjects}
       teachers={teachers}
       canEdit={canEdit}
     />

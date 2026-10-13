@@ -14,7 +14,16 @@ import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { svg } from '@/components/icons';
 import { useRouter } from '@/i18n/navigation';
+import { importOpeningBalances } from '@/server/modules/fees/actions';
+import { importStaff } from '@/server/modules/hr/actions';
 import { importStudents } from '@/server/modules/sis/actions';
+
+// What differs between the three imports: the action, the file the template is saved as, and where "View" leads.
+const KINDS = {
+  students: { run: importStudents, file: 'students-template.csv', list: '/students' },
+  staff: { run: importStaff, file: 'staff-template.csv', list: '/staff' },
+  openingBalances: { run: importOpeningBalances, file: 'opening-balances-template.csv', list: '/fees/invoices' },
+};
 
 type Report = {
   total: number;
@@ -23,8 +32,23 @@ type Report = {
   errors: { row: number; field: string; message: string }[];
 };
 
-export function ImportStudents({ columns, sections }: { columns: readonly string[]; sections: string[] }) {
-  const t = useTranslations('sis.import');
+export function ImportStudents({
+  columns,
+  sections,
+  kind = 'students',
+}: {
+  columns: readonly string[];
+  /** Students only: the section names a row may use. */
+  sections?: string[];
+  kind?: keyof typeof KINDS;
+}) {
+  const shared = useTranslations('sis.import');
+  // The words that name what is being imported come from the kind; everything else is the same for all three.
+  const own = useTranslations(kind === 'students' ? 'sis.import' : `sis.import.kinds.${kind}`);
+  const OWN = ['title', 'description', 'columns', 'constraint', 'import', 'ready', 'imported', 'view'];
+  const t = ((key: string, values?: Record<string, string | number>) =>
+    (OWN.includes(key) ? own : shared)(key, values)) as typeof shared;
+  const { run: importFile, file: templateName, list } = KINDS[kind];
   const router = useRouter();
   const [files, setFiles] = useState<File[]>([]);
   const [report, setReport] = useState<Report | null>(null);
@@ -38,7 +62,7 @@ export function ImportStudents({ columns, sections }: { columns: readonly string
     if (!file) return setFailure(t('errors.noFile'));
     setBusy(true);
     setFailure(null);
-    const result = await importStudents({ csv: await file.text(), dryRun });
+    const result = await importFile({ csv: await file.text(), dryRun });
     setBusy(false);
     if (!result.ok) {
       setReport(null);
@@ -55,7 +79,7 @@ export function ImportStudents({ columns, sections }: { columns: readonly string
           variant="h1"
           description={t('description')}
           actions={
-            <Button href={template} download="students-template.csv" iconSvg={svg('download')}>
+            <Button href={template} download={templateName} iconSvg={svg('download')}>
               {t('template')}
             </Button>
           }
@@ -71,13 +95,13 @@ export function ImportStudents({ columns, sections }: { columns: readonly string
             type="success"
             action={
               <Button
-                href="/students"
+                href={list}
                 onFollow={(event) => {
                   event.preventDefault();
-                  router.push('/students');
+                  router.push(list);
                 }}
               >
-                {t('viewStudents')}
+                {t('view')}
               </Button>
             }
           >
@@ -88,7 +112,7 @@ export function ImportStudents({ columns, sections }: { columns: readonly string
         <Container header={<Header variant="h2">{t('file')}</Header>}>
           <SpaceBetween size="l">
             <Box>{t('columns', { columns: columns.join(', ') })}</Box>
-            <Box>{t(sections.length ? 'sections' : 'noSections', { sections: sections.join(', ') })}</Box>
+            {sections && <Box>{t(sections.length ? 'sections' : 'noSections', { sections: sections.join(', ') })}</Box>}
             <FormField label={t('choose')} constraintText={t('constraint')}>
               <FileUpload
                 value={files}

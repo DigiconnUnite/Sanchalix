@@ -8,14 +8,16 @@ import Form from '@cloudscape-design/components/form';
 import FormField from '@cloudscape-design/components/form-field';
 import Header from '@cloudscape-design/components/header';
 import Input from '@cloudscape-design/components/input';
+import Checkbox from '@cloudscape-design/components/checkbox';
 import Select from '@cloudscape-design/components/select';
+import Toggle from '@cloudscape-design/components/toggle';
 import SpaceBetween from '@cloudscape-design/components/space-between';
 import Table from '@cloudscape-design/components/table';
 import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 import { EmptyState } from '@/components/EmptyState';
 import { usePathname, useRouter } from '@/i18n/navigation';
-import { upsertFeeHead } from '@/server/modules/fees/actions';
+import { setFeeHeadDiscountable, upsertFeeHead } from '@/server/modules/fees/actions';
 import type { FeeHeadRow } from '@/server/modules/fees/schemas';
 
 const LIST = '/fees/heads';
@@ -82,6 +84,24 @@ export function FeeHeadsTable({
           header: t('heads.columns.gst'),
           cell: (head) => (head.gstRate ? `${head.gstRate}%` : t('heads.gstNone')),
         },
+        {
+          id: 'discountable',
+          header: t('heads.columns.discountable'),
+          cell: (head) =>
+            canEdit ? (
+              <Toggle
+                checked={head.discountable}
+                ariaLabel={t('heads.discountableLabel', { name: head.name })}
+                onChange={({ detail }) =>
+                  void setFeeHeadDiscountable({ id: head.id, discountable: detail.checked }).then(() => router.refresh())
+                }
+              >
+                {t(head.discountable ? 'heads.discountableYes' : 'heads.discountableNo')}
+              </Toggle>
+            ) : (
+              t(head.discountable ? 'heads.discountableYes' : 'heads.discountableNo')
+            ),
+        },
       ]}
     />
   );
@@ -90,7 +110,7 @@ export function FeeHeadsTable({
 export function FeeHeadForm() {
   const t = useTranslations('fees');
   const router = useRouter();
-  const [values, setValues] = useState({ name: '', code: '', gstRate: '0' });
+  const [values, setValues] = useState({ name: '', code: '', gstRate: '0', discountable: false });
   const [error, setError] = useState<{ message: string; fieldErrors?: Record<string, string> } | null>(null);
   const [busy, setBusy] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
@@ -165,6 +185,13 @@ export function FeeHeadForm() {
                   }
                 />
               </FormField>
+              <Checkbox
+                checked={values.discountable}
+                description={t('heads.form.discountableHint')}
+                onChange={({ detail }) => setValues((current) => ({ ...current, discountable: detail.checked }))}
+              >
+                {t('heads.form.discountable')}
+              </Checkbox>
             </SpaceBetween>
           </Container>
         </Form>

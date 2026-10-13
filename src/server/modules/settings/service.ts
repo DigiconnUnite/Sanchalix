@@ -2,6 +2,8 @@ import 'server-only';
 import { z } from 'zod';
 import { AppError } from '@/lib/appError';
 import type { RequestContext } from '@/server/auth/context';
+import { AcademicYear } from '@/server/models/academicYear';
+import { Exam } from '@/server/models/exam';
 import { PeriodDefinition } from '@/server/models/periodDefinition';
 import { School } from '@/server/models/school';
 import { TimetableSlot } from '@/server/models/timetableSlot';
@@ -45,12 +47,43 @@ export const PeriodsInput = z
   });
 export type PeriodsInput = z.infer<typeof PeriodsInput>;
 
-export type SchoolSettings = SchoolInput & { code: string; board: string; periods: { start: string; end: string }[] };
+const Day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, `${E}.date`);
+export const TermsInput = z
+  .array(
+    z.object({
+      // The id of a term that already exists, so exams tied to it stay tied when its name or dates change.
+      id: z.string().regex(/^[0-9a-f]{24}$/).optional(),
+      name: text('termName', 40),
+      startDate: Day,
+      endDate: Day,
+    }),
+  )
+  .max(6, `${E}.tooManyTerms`)
+  .superRefine((terms, issue) => {
+    terms.forEach((term, index) => {
+      // YYYY-MM-DD compares correctly as text. A term ends after it starts, and starts after the one before it ended.
+      if (term.endDate <= term.startDate) issue.addIssue({ code: 'custom', path: [index, 'endDate'], message: `${E}.termEnd` });
+      const previous = terms[index - 1];
+      if (previous && term.startDate <= previous.endDate) {
+        issue.addIssue({ code: 'custom', path: [index, 'startDate'], message: `${E}.termOverlap` });
+      }
+    });
+  });
+export type TermsInput = z.infer<typeof TermsInput>;
+
+export type SchoolSettings = SchoolInput & {
+  code: string;
+  board: string;
+  periods: { start: string; end: string }[];
+  /** The current academic year and its terms. Null until a year is set up. */
+  year: { label: string; startDate: string; endDate: string; terms: TermsInput } | null;
+};
 
 export async function getSettings(ctx: RequestContext): Promise<SchoolSettings | null> {
-  const [school, periods] = await Promise.all([
+  const [school, periods, year] = await Promise.all([
     School.findById(ctx.schoolId).select('name code board affiliationNo logoUrl address settings.workingDays').lean(),
     getPeriods(ctx),
+    AcademicYear.findOne({ schoolId: ctx.schoolId, status: 'current' }).select('label startDate endDate terms').lean(),
   ]);
   if (!school) return null;
   return {
@@ -67,6 +100,17 @@ export async function getSettings(ctx: RequestContext): Promise<SchoolSettings |
     },
     workingDays: school.settings?.workingDays ?? [1, 2, 3, 4, 5, 6],
     periods: periods.map(({ start, end }) => ({ start, end })),
+    year: year && {
+      label: year.label,
+      startDate: year.startDate,
+      endDate: year.endDate,
+      terms: year.terms.map((term) => ({
+        id: String(term._id),
+        name: term.name,
+        startDate: term.startDate ?? '',
+        endDate: term.endDate ?? '',
+      })),
+    },
   };
 }
 
@@ -90,6 +134,26 @@ export async function updateSchool(ctx: RequestContext, input: SchoolInput) {
     .lean();
   if (!before) throw new AppError('NOT_FOUND', `${E}.notFound`);
   return { name: input.name, before: { name: before.name, workingDays: before.settings?.workingDays ?? [] } };
+}
+
+/** Replaces the terms of the current academic year. Every term has to fall inside the year. */
+export async function saveTerms(ctx: RequestContext, terms: TermsInput) {
+  const { schoolId } = ctx;
+  const year = await AcademicYear.findOne({ schoolId, status: 'current' }).select('startDate endDate terms').lean();
+  if (!year) throw new AppError('BUSINESS_RULE', `${E}.noYear`);
+  if (terms.some((term) => term.startDate < year.startDate || term.endDate > year.endDate)) {
+    throw new AppError('BUSINESS_RULE', `${E}.termOutsideYear`);
+  }
+  const kept = new Set(terms.flatMap((term) => term.id ?? []));
+  const removed = year.terms.filter((term) => !kept.has(String(term._id))).map((term) => term._id);
+  if (removed.length > 0 && (await Exam.exists({ schoolId, termId: { $in: removed } }))) {
+    throw new AppError('BUSINESS_RULE', `${E}.termInUse`);
+  }
+  await AcademicYear.updateOne(
+    { schoolId, _id: year._id },
+    { terms: terms.map(({ id, ...term }) => ({ ...(id && { _id: id }), ...term })), updatedBy: ctx.userId },
+  );
+  return { id: year._id, count: terms.length, before: year.terms.length };
 }
 
 export async function savePeriods(ctx: RequestContext, periods: PeriodsInput) {

@@ -32,6 +32,7 @@ import type { StaffMember, StaffProfile, StaffRow } from '@/server/modules/hr/sc
 
 const LIST = '/staff';
 const NEW = '/staff/new';
+const IMPORT = '/staff/import';
 const PAGE_SIZES = [10, 25, 50, 100];
 const TYPES = ['teaching', 'non_teaching'];
 const STATUSES = ['active', 'on_leave', 'resigned', 'terminated'];
@@ -113,7 +114,26 @@ export function StaffTable({
     stickyHeader: true,
     header: (
       <SpaceBetween size="m">
-        <Header variant="h2" actions={canCreate && addButton(true)}>
+        <Header
+          variant="h2"
+          actions={
+            canCreate && (
+              <SpaceBetween direction="horizontal" size="xs">
+                <Button
+                  href={IMPORT}
+                  iconSvg={svg('import')}
+                  onFollow={(event) => {
+                    event.preventDefault();
+                    router.push(IMPORT);
+                  }}
+                >
+                  {t('import.action')}
+                </Button>
+                {addButton(true)}
+              </SpaceBetween>
+            )
+          }
+        >
           {t('title')}
         </Header>
         {(created ?? updated) && (

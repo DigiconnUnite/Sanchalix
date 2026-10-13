@@ -39,7 +39,7 @@ export function PublicHeader({
   return (
     <div className="vw-top-nav vw-public-nav">
       <span
-        className="vw-platform-logo awsui-context-top-navigation"
+        className="vw-platform-logo vw-maker-logo awsui-context-top-navigation"
         role="img"
         aria-label={builtBy}
         title={builtBy}

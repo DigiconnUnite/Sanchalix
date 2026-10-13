@@ -29,9 +29,15 @@ export async function publishAnnouncement(input: unknown) {
         audience: data.audience.type,
         requiresAck: data.requiresAck,
         recipients: announcement.recipients,
+        ...(announcement.scheduled && { publishOn: data.publishOn }),
       },
     });
-    return { id: String(announcement.id), title: announcement.title, recipients: announcement.recipients };
+    return {
+      id: String(announcement.id),
+      title: announcement.title,
+      recipients: announcement.recipients,
+      scheduled: announcement.scheduled,
+    };
   });
 }
 

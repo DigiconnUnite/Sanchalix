@@ -88,6 +88,12 @@ export function AppShell({
     setIconLogo(`data:image/svg+xml,${encodeURIComponent(markup)}`);
   }, []);
   const logo = schoolLogo ?? iconLogo;
+  // On desktop the content area scrolls, not the window (ADR-020), and it outlives a navigation because the shell
+  // is a layout. Next.js only resets the window, so a new page would open as far down as the last one was left.
+  const topRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    topRef.current?.closest('main > div')?.scrollTo(0, 0);
+  }, [pathname]);
 
   // Breadcrumbs follow the URL: home, the module, then one crumb per deeper segment. A record's id shows the name
   // its page gave through useCrumb.
@@ -125,6 +131,12 @@ export function AppShell({
           style: { '--vw-school-logo': `url(${JSON.stringify(logo)})` } as CSSProperties,
         })}
       >
+        <span
+          className="vw-platform-logo vw-maker-logo awsui-context-top-navigation"
+          role="img"
+          aria-label={t('makerLogoAlt')}
+          title={t('makerLogoAlt')}
+        />
         <a
           // Cloudscape's own header context, so the box takes the header's dark colours in both light and dark mode.
           className="vw-platform-logo awsui-context-top-navigation"
@@ -249,33 +261,36 @@ export function AppShell({
           />
         }
         content={
-          banner ? (
-            <div
-              className="vw-page-banner"
-              {...(banner.banner.image && {
-                'data-image': true,
-                style: { '--vw-banner-image': `url(${JSON.stringify(banner.banner.image)})` } as CSSProperties,
-              })}
-            >
-              <ContentLayout
-                defaultPadding
-                disableOverlap
-                headerVariant="high-contrast"
-                headerBackgroundStyle="var(--vw-banner-background)"
-                header={
-                  <div className="vw-page-banner-title">
-                    <Header variant="h1" description={banner.banner.description}>
-                      {banner.banner.title}
-                    </Header>
-                  </div>
-                }
+          <>
+            <div ref={topRef} />
+            {banner ? (
+              <div
+                className="vw-page-banner"
+                {...(banner.banner.image && {
+                  'data-image': true,
+                  style: { '--vw-banner-image': `url(${JSON.stringify(banner.banner.image)})` } as CSSProperties,
+                })}
               >
-                <div className="vw-page-banner-body">{children}</div>
-              </ContentLayout>
-            </div>
-          ) : (
-            children
-          )
+                <ContentLayout
+                  defaultPadding
+                  disableOverlap
+                  headerVariant="high-contrast"
+                  headerBackgroundStyle="var(--vw-banner-background)"
+                  header={
+                    <div className="vw-page-banner-title">
+                      <Header variant="h1" description={banner.banner.description}>
+                        {banner.banner.title}
+                      </Header>
+                    </div>
+                  }
+                >
+                  <div className="vw-page-banner-body">{children}</div>
+                </ContentLayout>
+              </div>
+            ) : (
+              children
+            )}
+          </>
         }
       />
     </CrumbContext>

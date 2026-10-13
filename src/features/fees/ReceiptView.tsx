@@ -48,6 +48,14 @@ export function ReceiptView({ receipt, created }: { receipt: Receipt; created: b
                 {t('another')}
               </Button>
               <Button
+                href={`/api/v1/payments/${receipt.id}/receipt`}
+                target="_blank"
+                iconSvg={svg('download')}
+                ariaLabel={t('pdfLabel', { receiptNo: receipt.receiptNo })}
+              >
+                {t('pdfButton')}
+              </Button>
+              <Button
                 variant="primary"
                 iconSvg={svg('print')}
                 ariaLabel={t('printLabel', { receiptNo: receipt.receiptNo })}

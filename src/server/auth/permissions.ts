@@ -43,6 +43,9 @@ export type Permission =
   | 'fees.structure.update'
   | 'fees.structure.approve'
   | 'fees.invoice.read'
+  | 'fees.discount.read'
+  | 'fees.discount.update'
+  | 'fees.discount.approve'
   | 'fees.payment.read'
   | 'fees.payment.create'
   | 'comms.announcement.read'
@@ -119,6 +122,7 @@ const ROLE_PERMISSIONS: Record<RoleKey, readonly Permission[]> = {
     'calendar.holiday.read',
     'calendar.holiday.update',
     'fees.structure.read',
+    'fees.discount.read',
     'fees.invoice.read',
     'fees.payment.read',
     'audit.log.read',
@@ -154,6 +158,8 @@ const ROLE_PERMISSIONS: Record<RoleKey, readonly Permission[]> = {
     'calendar.holiday.update',
     'fees.structure.read',
     'fees.structure.approve',
+    'fees.discount.read',
+    'fees.discount.approve',
     'fees.invoice.read',
     'fees.payment.read',
     'audit.log.read',
@@ -179,6 +185,8 @@ const ROLE_PERMISSIONS: Record<RoleKey, readonly Permission[]> = {
     ...OWN_LEAVE,
     'fees.structure.read',
     'fees.structure.update',
+    'fees.discount.read',
+    'fees.discount.update',
     'fees.invoice.read',
     'fees.payment.read',
     'fees.payment.create',

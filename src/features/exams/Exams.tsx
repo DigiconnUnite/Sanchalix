@@ -77,11 +77,22 @@ function Dialog({
   );
 }
 
-export function ExamsTable({ exams, classes, canEdit }: { exams: ExamRow[]; classes: Option[]; canEdit: boolean }) {
+export function ExamsTable({
+  exams,
+  classes,
+  terms,
+  canEdit,
+}: {
+  exams: ExamRow[];
+  classes: Option[];
+  terms: Option[];
+  canEdit: boolean;
+}) {
   const t = useTranslations('exams');
   const router = useRouter();
   const [adding, setAdding] = useState(false);
-  const [values, setValues] = useState({ name: '', type: 'unit_test' });
+  const [values, setValues] = useState({ name: '', type: 'unit_test', termId: '' });
+  const termOptions = [{ value: '', label: t('noTerm') }, ...options(terms)];
   const [classIds, setClassIds] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<Failure | null>(null);
@@ -124,6 +135,7 @@ export function ExamsTable({ exams, classes, canEdit }: { exams: ExamRow[]; clas
             cell: (exam) => <AppLink href={`/exams/${exam.id}`}>{exam.name}</AppLink>,
           },
           { id: 'type', header: t('columns.type'), cell: (exam) => t(`type.${exam.type}`) },
+          { id: 'term', header: t('columns.term'), cell: (exam) => exam.term ?? '—' },
           { id: 'classes', header: t('columns.classes'), cell: (exam) => exam.classes },
           { id: 'papers', header: t('columns.papers'), cell: (exam) => exam.papers },
           {
@@ -159,6 +171,15 @@ export function ExamsTable({ exams, classes, canEdit }: { exams: ExamRow[]; clas
               onChange={({ detail }) => setValues({ ...values, type: detail.selectedOption.value ?? 'other' })}
             />
           </FormField>
+          {terms.length > 0 && (
+            <FormField label={t('columns.term')} errorText={error?.fieldErrors?.termId}>
+              <Select
+                selectedOption={termOptions.find((option) => option.value === values.termId) ?? null}
+                options={termOptions}
+                onChange={({ detail }) => setValues({ ...values, termId: detail.selectedOption.value ?? '' })}
+              />
+            </FormField>
+          )}
           <FormField label={t('columns.classes')} errorText={error?.fieldErrors?.classIds}>
             <Multiselect
               placeholder={t('classesPlaceholder')}

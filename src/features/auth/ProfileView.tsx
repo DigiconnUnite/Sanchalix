@@ -18,7 +18,7 @@ import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { DENSITIES, type Density } from '@/lib/visualMode';
 import { useRouter } from '@/i18n/navigation';
-import { changePassword, setDensity, signOutOtherSessions } from '@/server/auth/actions';
+import { changePassword, setDensity, signOutOtherSessions, signOutSession } from '@/server/auth/actions';
 
 const BLANK = { current: '', next: '', confirm: '' };
 const dateTime = new Intl.DateTimeFormat('en-IN', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Kolkata' });
@@ -47,6 +47,14 @@ export function ProfileView({
   const router = useRouter();
   const [signingOut, setSigningOut] = useState(false);
   const [notice, setNotice] = useState<Notice | null>(null);
+
+  async function signOutOne(row: SessionRow) {
+    const result = await signOutSession(row.id);
+    setNotice(
+      result.ok ? { type: 'success', text: t('sessions.signedOutOne') } : { type: 'error', text: result.error.message },
+    );
+    router.refresh();
+  }
 
   async function signOutOthers() {
     setSigningOut(true);
@@ -183,6 +191,20 @@ export function ProfileView({
             },
             { id: 'ip', header: t('sessions.ip'), cell: (row) => row.ip ?? '—' },
             { id: 'signedIn', header: t('sessions.signedIn'), cell: (row) => dateTime.format(new Date(row.signedInAt)) },
+            {
+              id: 'actions',
+              header: t('sessions.actions'),
+              cell: (row) =>
+                !row.current && (
+                  <Button
+                    variant="inline-link"
+                    ariaLabel={t('sessions.signOutLabel', { device: row.device ?? t('sessions.unknown') })}
+                    onClick={() => void signOutOne(row)}
+                  >
+                    {t('sessions.signOut')}
+                  </Button>
+                ),
+            },
           ]}
         />
       </SpaceBetween>

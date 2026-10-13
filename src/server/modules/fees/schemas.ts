@@ -14,7 +14,9 @@ export const FeeHeadInput = z.object({
     .toUpperCase()
     .regex(/^[A-Z0-9]{2,10}$/, `${E}.headCode`),
   gstRate: z.enum(['0', '5', '12', '18'], `${E}.gstRate`).transform((rate) => Number(rate) as 0 | 5 | 12 | 18),
+  discountable: z.boolean().default(false),
 });
+export const FeeHeadDiscountable = z.object({ id: Id(`${E}.lineHead`), discountable: z.boolean() });
 export type FeeHeadInput = z.infer<typeof FeeHeadInput>;
 
 export const FeeStructureInput = z.object({
@@ -101,6 +103,7 @@ export type StudentMatch = { id: string; name: string; admissionNo: string; clas
 
 export type Receipt = {
   id: string;
+  studentId: string;
   receiptNo: string;
   collectedAt: string;
   collectedBy: string;
@@ -116,7 +119,7 @@ export type Receipt = {
   allocations: { invoiceNo: string; installment: string; amountMinor: number }[];
 };
 
-export type FeeHeadRow = { id: string; name: string; code: string; gstRate: number };
+export type FeeHeadRow = { id: string; name: string; code: string; gstRate: number; discountable: boolean };
 
 export type FeeStructureRow = {
   id: string;

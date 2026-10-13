@@ -20,9 +20,22 @@ export async function listClasses(ctx: RequestContext) {
   if (!academicYearId) return [];
   const classes = await Class.find({ schoolId: ctx.schoolId, academicYearId, ...branchFilter(ctx) })
     .sort({ order: 1 })
-    .select('name order')
+    .select('name order subjectIds')
     .lean();
-  return classes.map((schoolClass) => ({ id: String(schoolClass._id), name: schoolClass.name, order: schoolClass.order }));
+  return classes.map((schoolClass) => ({
+    id: String(schoolClass._id),
+    name: schoolClass.name,
+    order: schoolClass.order,
+    subjectIds: schoolClass.subjectIds.map(String),
+  }));
+}
+
+/** The subjects set for the section's class, or null when none are set and every subject is on offer. */
+export async function getSectionSubjectIds(ctx: RequestContext, sectionId: string | null) {
+  if (!sectionId) return null;
+  const section = await Section.findOne({ schoolId: ctx.schoolId, _id: sectionId }).select('classId').lean();
+  const schoolClass = section && (await Class.findOne({ schoolId: ctx.schoolId, _id: section.classId }).select('subjectIds').lean());
+  return schoolClass?.subjectIds.length ? schoolClass.subjectIds.map(String) : null;
 }
 
 export async function listSections(ctx: RequestContext): Promise<SectionRow[]> {

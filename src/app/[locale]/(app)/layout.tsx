@@ -30,6 +30,9 @@ type ModuleKey =
   | 'payments'
   | 'dues'
   | 'feeReports'
+  | 'feeDiscounts'
+  | 'attendanceReport'
+  | 'reports'
   | 'announcements'
   | 'calendarEvents'
   | 'promotion'
@@ -60,6 +63,13 @@ const MODULES: (Omit<NavItem, 'text' | 'group' | 'banner'> & { key: ModuleKey; g
     permission: 'academics.timetable.read',
   },
   { key: 'attendance', group: 'academics', href: '/attendance/take', icon: 'attendance', permission: 'attendance.record.read' },
+  {
+    key: 'attendanceReport',
+    group: 'academics',
+    href: '/attendance/report',
+    icon: 'reports',
+    permission: 'attendance.record.read',
+  },
   { key: 'exams', group: 'academics', href: '/exams', icon: 'exams', permission: 'exams.exam.read' },
   {
     key: 'reportCards',
@@ -72,6 +82,7 @@ const MODULES: (Omit<NavItem, 'text' | 'group' | 'banner'> & { key: ModuleKey; g
   { key: 'calendar', group: 'academics', href: '/calendar/holidays', icon: 'holiday', permission: 'calendar.holiday.read' },
   { key: 'feeCounter', group: 'fees', href: '/fees/counter', icon: 'collectPayment', permission: 'fees.payment.create' },
   { key: 'feeStructures', group: 'fees', href: '/fees/structures', icon: 'fees', permission: 'fees.structure.read' },
+  { key: 'feeDiscounts', group: 'fees', href: '/fees/discounts', icon: 'concession', permission: 'fees.discount.read' },
   { key: 'invoices', group: 'fees', href: '/fees/invoices', icon: 'invoice', permission: 'fees.invoice.read' },
   { key: 'payments', group: 'fees', href: '/fees/payments', icon: 'receipt', permission: 'fees.payment.read' },
   { key: 'dues', group: 'fees', href: '/fees/dues', icon: 'dues', permission: 'fees.invoice.read' },
@@ -84,6 +95,7 @@ const MODULES: (Omit<NavItem, 'text' | 'group' | 'banner'> & { key: ModuleKey; g
     permission: 'comms.announcement.read',
   },
   { key: 'calendarEvents', group: 'communication', href: '/calendar/events', icon: 'calendar', permission: 'calendar.event.read' },
+  { key: 'reports', group: 'admin', href: '/reports', icon: 'reports', permission: 'sis.admission.read' },
   { key: 'promotion', group: 'admin', href: '/promotion', icon: 'promote', permission: 'sis.enrollment.update' },
   { key: 'users', group: 'admin', href: '/users', icon: 'users', permission: 'users.user.read' },
   { key: 'outbox', group: 'admin', href: '/outbox', icon: 'sms', permission: 'messaging.outbox.read' },
@@ -112,12 +124,16 @@ const ILLUSTRATED = new Set<ModuleKey>([
 
 export default async function AppGroupLayout({ children }: { children: ReactNode }) {
   const ctx = await pageContext();
-  const [t, tDashboard, school] = await Promise.all([
+  // Everything the shell needs is asked for at once; one after another, each page waited on five round trips.
+  const [t, tDashboard, school, account, unread, notifications, cookieStore] = await Promise.all([
     getTranslations('shell'),
     getTranslations('dashboard'),
     getSchoolBrand(ctx.schoolId),
+    User.findById(ctx.userId).select('roles').lean(),
+    countUnread(ctx),
+    listNotifications(ctx, 5),
+    cookies(),
   ]);
-  const account = await User.findById(ctx.userId).select('roles').lean();
   const otherRoles = (account?.roles ?? [])
     .filter((assignment) => assignment.schoolId?.equals(ctx.schoolId) && assignment.role !== ctx.role)
     .map((assignment) => ({ role: assignment.role, label: t(`roles.${assignment.role}`) }));
@@ -155,10 +171,10 @@ export default async function AppGroupLayout({ children }: { children: ReactNode
       signOut={signOut}
       otherRoles={otherRoles}
       switchRole={switchRole}
-      visualMode={parseVisualMode((await cookies()).get(MODE_COOKIE)?.value)}
+      visualMode={parseVisualMode(cookieStore.get(MODE_COOKIE)?.value)}
       setVisualMode={setVisualMode}
-      unread={await countUnread(ctx)}
-      notifications={await listNotifications(ctx, 5)}
+      unread={unread}
+      notifications={notifications}
     >
       {children}
     </AppShell>

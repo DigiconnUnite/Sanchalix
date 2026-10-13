@@ -21,7 +21,7 @@ import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 import { EmptyState } from '@/components/EmptyState';
 import { usePathname, useRouter } from '@/i18n/navigation';
-import { addUserRole, createUser, resetUserPassword, setUserStatus } from '@/server/modules/users/actions';
+import { addUserRole, createUser, removeUserRole, resetUserPassword, setUserStatus } from '@/server/modules/users/actions';
 import type { UserRow } from '@/server/modules/users/service';
 
 const LIST = '/users';
@@ -35,7 +35,7 @@ const STATUS_TYPE: Record<UserRow['status'], StatusIndicatorProps.Type> = {
   disabled: 'stopped',
 };
 type Data = { rows: UserRow[]; page: number; nextCursor: string | null; prevCursor: string | null };
-type Pending = { row: UserRow; action: 'reset' | 'disable' | 'enable' | 'addRole' };
+type Pending = { row: UserRow; action: 'reset' | 'disable' | 'enable' | 'addRole' | 'removeRole' };
 type Credentials = { name: string; email?: string; password: string };
 const dateTime = new Intl.DateTimeFormat('en-IN', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Kolkata' });
 
@@ -103,11 +103,11 @@ export function UsersTable({ data, canEdit }: { data: Data | null; canEdit: bool
       const response = await resetUserPassword(row.id);
       if (response.ok) setCredentials(response.data);
       else setResult({ type: 'error', text: response.error.message });
-    } else if (action === 'addRole') {
-      const response = await addUserRole({ id: row.id, role: newRole });
+    } else if (action === 'addRole' || action === 'removeRole') {
+      const response = await (action === 'addRole' ? addUserRole : removeUserRole)({ id: row.id, role: newRole });
       setResult(
         response.ok
-          ? { type: 'success', text: t('done.addRole', { name: row.name, role: tRole(newRole) }) }
+          ? { type: 'success', text: t(`done.${action}`, { name: row.name, role: tRole(newRole) }) }
           : { type: 'error', text: response.error.message },
       );
     } else {
@@ -198,6 +198,7 @@ export function UsersTable({ data, canEdit }: { data: Data | null; canEdit: bool
                       <SpaceBetween direction="horizontal" size="s">
                         {row.status !== 'disabled' && action(row, 'reset')}
                         {row.status !== 'disabled' && ROLES.some((role) => !row.roles.includes(role)) && action(row, 'addRole')}
+                        {row.roles.length > 1 && action(row, 'removeRole')}
                         {action(row, row.status === 'disabled' ? 'enable' : 'disable')}
                       </SpaceBetween>
                     ),
@@ -220,7 +221,7 @@ export function UsersTable({ data, canEdit }: { data: Data | null; canEdit: bool
               <Button
                 variant="primary"
                 loading={busy}
-                disabled={pending?.action === 'addRole' && !newRole}
+                disabled={(pending?.action === 'addRole' || pending?.action === 'removeRole') && !newRole}
                 onClick={() => void confirm()}
               >
                 {pending ? t(`action.${pending.action}`) : ''}
@@ -229,12 +230,14 @@ export function UsersTable({ data, canEdit }: { data: Data | null; canEdit: bool
           </Box>
         }
       >
-        {pending?.action === 'addRole' ? (
-          <FormField label={t('addRole.role')} description={t('addRole.hint')}>
+        {pending?.action === 'addRole' || pending?.action === 'removeRole' ? (
+          <FormField label={t(`${pending.action}.role`)} description={t(`${pending.action}.hint`)}>
             <Select
               placeholder={t('addRole.placeholder')}
               selectedOption={newRole ? { value: newRole, label: tRole(newRole) } : null}
-              options={ROLES.filter((role) => !pending.row.roles.includes(role)).map((value) => ({
+              options={ROLES.filter(
+                (role) => pending.row.roles.includes(role) === (pending.action === 'removeRole'),
+              ).map((value) => ({
                 value,
                 label: tRole(value),
               }))}

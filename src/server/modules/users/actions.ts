@@ -6,6 +6,7 @@ import { audit } from '@/server/audit';
 import { getTranslations } from 'next-intl/server';
 import { requirePermission } from '@/server/auth/context';
 import { requestPasswordReset } from '@/server/auth/recovery';
+import { removeUserRole as removeRole } from './service';
 import { addUserRole as addRole, createUser as create, resetUserPassword as reset, setUserStatus as setStatus } from './service';
 import { AddRole, UserId, UserInput, UserStatus } from './service';
 
@@ -47,6 +48,16 @@ export async function addUserRole(input: unknown) {
     const { id, role } = AddRole.parse(input);
     const user = await addRole(ctx, id, role);
     await audit(ctx, 'users.user.addRole', { type: 'user', id: user.id }, { after: { role } });
+    return { name: user.name, role };
+  });
+}
+
+export async function removeUserRole(input: unknown) {
+  return withAction('users.user.removeRole', async () => {
+    const ctx = await requirePermission('users.user.update');
+    const { id, role } = AddRole.parse(input);
+    const user = await removeRole(ctx, id, role);
+    await audit(ctx, 'users.user.removeRole', { type: 'user', id: user.id }, { before: { role } });
     return { name: user.name, role };
   });
 }

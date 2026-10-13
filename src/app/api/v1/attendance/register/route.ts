@@ -2,7 +2,7 @@ import { getTranslations } from 'next-intl/server';
 import { AppError } from '@/lib/appError';
 import { audit } from '@/server/audit';
 import { requirePermission } from '@/server/auth/context';
-import { csvResponse } from '@/server/csv';
+import { fileFormat, tableResponse } from '@/server/csv';
 import { getRegister } from '@/server/modules/attendance/queries';
 
 const STATUS: Partial<Record<string, number>> = { UNAUTHENTICATED: 401, FORBIDDEN: 403 };
@@ -34,10 +34,10 @@ export async function GET(request: Request) {
       ]),
     ];
     await audit(ctx, 'data.export', { type: 'school', id: ctx.schoolId }, {
-      after: { kind: 'register', section: register.section.name, month: register.month, rows: register.students.length },
+      after: { kind: 'register', format: fileFormat(params.get('format')), section: register.section.name, month: register.month, rows: register.students.length },
     });
     const suffix = register.period ? `-period-${register.period}` : '';
-    return csvResponse(`register-${register.section.name}-${register.month}${suffix}.csv`, rows);
+    return await tableResponse(fileFormat(params.get('format')), `register-${register.section.name}-${register.month}${suffix}`, rows);
   } catch (error) {
     if (error instanceof AppError && STATUS[error.code]) {
       return Response.json({ error: { code: error.code } }, { status: STATUS[error.code] ?? 400 });

@@ -342,7 +342,7 @@ Indexes: `{ schoolId: 1, homeworkId: 1, studentId: 1 } unique`.
 ## Fees and finance
 
 ### feeHeads
-`schoolId`, `name`, `code` (unique per school), `taxable: boolean`, `gstRate` (0, 5, 12 or 18), `refundable: boolean`.
+`schoolId`, `name`, `code` (unique per school), `taxable: boolean`, `gstRate` (0, 5, 12 or 18), `refundable: boolean`, `discountable: boolean` (default false; discounts reduce only the heads with this on, usually tuition).
 Indexes: `{ schoolId: 1, code: 1 } unique`.
 
 ### feeStructures
@@ -350,7 +350,10 @@ Indexes: `{ schoolId: 1, code: 1 } unique`.
 Indexes: `{ schoolId: 1, academicYearId: 1 }` (the structures list).
 
 ### discounts
-`schoolId`, `name`, `kind: 'sibling' | 'staff_ward' | 'early_payment' | 'custom'`, `type: 'percent' | 'fixed'`, `value`, `feeHeadIds`, `rule` (e.g. `{ siblingOrder: 2 }`), `active`.
+`schoolId`, `name`, `kind: 'sibling' | 'staff_ward' | 'early_payment' | 'custom'`, `type: 'percent' | 'fixed'`, `value` (a percentage, or for `fixed` the amount off for the year in minor units), `active`, `status: 'pending' | 'approved' | 'rejected'`, `approvedBy`, and for `custom` the `studentId`, `academicYearId` and `reason`.
+
+A school has at most one `sibling` and one `staff_ward` document (both `percent`). A `custom` discount belongs to one student for one year and starts `pending`. Which fee heads a discount reduces is decided by `feeHeads.discountable`, not stored on the discount.
+Indexes: `{ schoolId: 1, kind: 1, status: 1 }`, `{ schoolId: 1, studentId: 1, academicYearId: 1 }`.
 
 ### scholarships
 `schoolId`, `studentId`, `academicYearId`, `name`, `type: 'percent' | 'fixed'`, `value`, `feeHeadIds`, `status: 'nominated' | 'applied' | 'approved' | 'rejected'`, `nominatedBy`, `approvedBy`, `documents`.
@@ -361,7 +364,7 @@ Indexes: `{ schoolId: 1, academicYearId: 1 }` (the structures list).
 | schoolId, branchId, academicYearId | | |
 | invoiceNo | string | unique per school, `INV/{YYYY-YY}/{000000}` |
 | studentId | ObjectId | |
-| feeStructureId, installmentId | ObjectId | |
+| feeStructureId, installmentId | ObjectId | both absent on an opening balance (an amount owed from before the school used the system); the unique index on `studentId, installmentId` then allows one per student |
 | installmentLabel | string | copied from the installment at issue time, so lists don't need the structure |
 | lines | `{ feeHeadId, description, amountMinor, taxMinor }[]` | |
 | concessions | `{ source: 'discount' \| 'scholarship', refId, description, amountMinor }[]` | |
