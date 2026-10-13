@@ -11,6 +11,7 @@ import { FeeHead } from '@/server/models/feeHead';
 import { FeeStructure } from '@/server/models/feeStructure';
 import { Invoice } from '@/server/models/invoice';
 import { getCurrentYearId } from '@/server/modules/academics/queries';
+import { discountsFor, priceInvoice } from './discounts';
 import type { FeeHeadInput, FeeStructureInput } from './schemas';
 
 const isDuplicateKey = (error: unknown) => error instanceof Error && 'code' in error && error.code === 11000;
@@ -29,6 +30,14 @@ export async function createFeeHead(ctx: RequestContext, input: FeeHeadInput) {
     if (isDuplicateKey(error)) throw new AppError('CONFLICT', 'fees.errors.headCodeTaken', { code: input.code });
     throw error;
   }
+}
+
+export async function setFeeHeadDiscountable(ctx: RequestContext, id: string, discountable: boolean) {
+  const head = await FeeHead.findOneAndUpdate({ schoolId: ctx.schoolId, _id: id }, { discountable, updatedBy: ctx.userId })
+    .select('name discountable')
+    .lean();
+  if (!head) throw new AppError('NOT_FOUND', 'fees.errors.lineHead');
+  return { id: head._id, name: head.name, before: head.discountable };
 }
 
 /** Saves a new draft, or with an id replaces a draft. An approved structure has invoices, so it can't change. */
@@ -86,7 +95,7 @@ export async function approveFeeStructure(ctx: RequestContext, id: string) {
   const [year, heads, enrollments] = await Promise.all([
     AcademicYear.findOne({ schoolId, _id: structure.academicYearId }).select('label').lean(),
     FeeHead.find({ schoolId, _id: { $in: structure.lines.map((line) => line.feeHeadId) } })
-      .select('name gstRate')
+      .select('name gstRate discountable')
       .lean(),
     Enrollment.find({
       schoolId,
@@ -103,6 +112,11 @@ export async function approveFeeStructure(ctx: RequestContext, id: string) {
   const percents = structure.installments.map((installment) => installment.percent);
   const shares = structure.lines.map((line) => splitByPercent(line.amountMinor, percents));
   const invoiceCount = enrollments.length * structure.installments.length;
+  const discounts = await discountsFor(
+    ctx,
+    enrollments.map((enrollment) => enrollment.studentId),
+    structure.academicYearId,
+  );
 
   return withTransaction(async (session) => {
     const approved = await FeeStructure.updateOne(
@@ -123,17 +137,16 @@ export async function approveFeeStructure(ctx: RequestContext, id: string) {
 
     const invoices = enrollments.flatMap((enrollment) =>
       structure.installments.map((installment, index) => {
-        const lines = structure.lines.map((line, lineIndex) => {
-          const head = headById.get(String(line.feeHeadId));
-          const amountMinor = shares[lineIndex]?.[index] ?? 0;
-          return {
+        const { lines, concessions, totalMinor } = priceInvoice(
+          structure.lines.map((line, lineIndex) => ({
             feeHeadId: line.feeHeadId,
-            description: head?.name ?? '',
-            amountMinor,
-            taxMinor: Math.round((amountMinor * (head?.gstRate ?? 0)) / 100),
-          };
-        });
-        const totalMinor = lines.reduce((sum, line) => sum + line.amountMinor + line.taxMinor, 0);
+            description: headById.get(String(line.feeHeadId))?.name ?? '',
+            amountMinor: shares[lineIndex]?.[index] ?? 0,
+          })),
+          (headId) => headById.get(String(headId)),
+          discounts.get(String(enrollment.studentId)) ?? [],
+          installment.percent,
+        );
         seq += 1;
         return {
           schoolId,
@@ -145,6 +158,7 @@ export async function approveFeeStructure(ctx: RequestContext, id: string) {
           installmentId: installment._id,
           installmentLabel: installment.label,
           lines,
+          concessions,
           totalMinor,
           balanceMinor: totalMinor,
           dueDate: installment.dueDate,

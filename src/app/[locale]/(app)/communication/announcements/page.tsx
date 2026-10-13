@@ -15,13 +15,14 @@ export default async function AnnouncementsPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const ctx = await pageContext('comms.announcement.read');
-  const { published, recipients } = await searchParams;
+  const { published, recipients, scheduled } = await searchParams;
   return (
     <AnnouncementsTable
       announcements={await listAnnouncements(ctx)}
       canCreate={can(ctx.role, 'comms.announcement.create')}
       published={typeof published === 'string' ? published.slice(0, 120) : null}
       recipients={Number(recipients) || 0}
+      scheduled={scheduled === '1'}
     />
   );
 }

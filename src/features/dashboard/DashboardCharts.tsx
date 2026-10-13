@@ -23,13 +23,18 @@ const PieChart = dynamic(() => import('@cloudscape-design/components/pie-chart')
 const HEIGHT = 220;
 const shortDate = new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'short', timeZone: 'UTC' });
 const day = (value: string) => shortDate.format(new Date(`${value}T00:00:00Z`));
-const compact = new Intl.NumberFormat('en-IN', {
-  style: 'currency',
-  currency: 'INR',
-  notation: 'compact',
-  maximumFractionDigits: 1,
-});
-const compactMoney = (minor: number) => compact.format(minor / 100);
+// The short Indian form (₹46.5L). Written out by hand because Node and browsers disagree on Intl's compact notation
+// (₹0 on one, ₹0.0 on the other), and a label that differs between server and browser breaks hydration.
+const UNITS = [
+  [1e7, 'Cr'],
+  [1e5, 'L'],
+  [1e3, 'K'],
+] as const;
+function compactMoney(minor: number) {
+  const rupees = minor / 100;
+  const unit = UNITS.find(([size]) => Math.abs(rupees) >= size);
+  return `₹${Number((unit ? rupees / unit[0] : rupees).toFixed(1))}${unit?.[1] ?? ''}`;
+}
 const percent = (value: number) => `${value}%`;
 
 type Row = { label: string; value: string; href?: string };

@@ -7,6 +7,7 @@ import FormField from '@cloudscape-design/components/form-field';
 import Header from '@cloudscape-design/components/header';
 import Input from '@cloudscape-design/components/input';
 import Modal from '@cloudscape-design/components/modal';
+import Multiselect from '@cloudscape-design/components/multiselect';
 import Select from '@cloudscape-design/components/select';
 import SpaceBetween from '@cloudscape-design/components/space-between';
 import Table from '@cloudscape-design/components/table';
@@ -14,6 +15,7 @@ import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { EmptyState } from '@/components/EmptyState';
 import { usePathname, useRouter } from '@/i18n/navigation';
+import { setClassSubjects } from '@/server/modules/academics/actions';
 import { clearTimetableSlot, upsertSubject, upsertTimetableSlot } from '@/server/modules/timetable/actions';
 import type { Period, SubjectRow, Timetable } from '@/server/modules/timetable/schemas';
 
@@ -298,6 +300,116 @@ export function TimetableGrid({
             />
           </FormField>
         </SpaceBetween>
+      </Modal>
+    </>
+  );
+}
+
+type ClassRow = { id: string; name: string; subjectIds: string[] };
+
+export function ClassSubjects({ classes, subjects, canEdit }: { classes: ClassRow[]; subjects: SubjectRow[]; canEdit: boolean }) {
+  const t = useTranslations('academics.classSubjects');
+  const router = useRouter();
+  const [editing, setEditing] = useState<ClassRow | null>(null);
+  const [chosen, setChosen] = useState<string[]>([]);
+  const [busy, setBusy] = useState(false);
+  const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const subjectOptions = subjects.map(({ id, name }) => ({ value: id, label: name }));
+  const nameOf = new Map(subjects.map(({ id, name }) => [id, name]));
+
+  async function save() {
+    if (!editing) return;
+    setBusy(true);
+    const result = await setClassSubjects({ classId: editing.id, subjectIds: chosen });
+    setBusy(false);
+    setEditing(null);
+    setFeedback(
+      result.ok
+        ? { type: 'success', text: t('saved', { name: result.data.name, count: result.data.count }) }
+        : { type: 'error', text: result.error.message },
+    );
+    router.refresh();
+  }
+
+  return (
+    <>
+      <Table
+        variant="container"
+        trackBy="id"
+        wrapLines
+        items={classes}
+        header={
+          <SpaceBetween size="m">
+            <Header variant="h2" counter={`(${classes.length})`} description={t('description')}>
+              {t('title')}
+            </Header>
+            {feedback && (
+              <Alert type={feedback.type} dismissible dismissAriaLabel={t('dismiss')} onDismiss={() => setFeedback(null)}>
+                {feedback.text}
+              </Alert>
+            )}
+          </SpaceBetween>
+        }
+        empty={<EmptyState icon="classes" heading={t('empty.heading')} body={t('empty.body')} />}
+        columnDefinitions={[
+          { id: 'name', header: t('class'), cell: (row) => row.name, isRowHeader: true, width: 160 },
+          {
+            id: 'subjects',
+            header: t('subjects'),
+            cell: (row) =>
+              row.subjectIds.length
+                ? row.subjectIds.map((id) => nameOf.get(id)).filter(Boolean).join(', ')
+                : t('all'),
+          },
+          ...(canEdit
+            ? [
+                {
+                  id: 'actions',
+                  header: t('actions'),
+                  width: 120,
+                  cell: (row: ClassRow) => (
+                    <Button
+                      variant="inline-link"
+                      ariaLabel={t('editLabel', { name: row.name })}
+                      onClick={() => {
+                        setChosen(row.subjectIds);
+                        setEditing(row);
+                      }}
+                    >
+                      {t('edit')}
+                    </Button>
+                  ),
+                },
+              ]
+            : []),
+        ]}
+      />
+      <Modal
+        visible={editing !== null}
+        header={t('editTitle', { name: editing?.name ?? '' })}
+        closeAriaLabel={t('cancel')}
+        onDismiss={() => setEditing(null)}
+        footer={
+          <Box float="right">
+            <SpaceBetween direction="horizontal" size="xs">
+              <Button variant="link" onClick={() => setEditing(null)}>
+                {t('cancel')}
+              </Button>
+              <Button variant="primary" loading={busy} onClick={() => void save()}>
+                {t('save')}
+              </Button>
+            </SpaceBetween>
+          </Box>
+        }
+      >
+        <FormField label={t('subjects')} description={t('hint')}>
+          <Multiselect
+            selectedOptions={subjectOptions.filter((option) => chosen.includes(option.value))}
+            options={subjectOptions}
+            placeholder={t('placeholder')}
+            onChange={({ detail }) => setChosen(detail.selectedOptions.map((option) => option.value ?? ''))}
+          />
+        </FormField>
       </Modal>
     </>
   );

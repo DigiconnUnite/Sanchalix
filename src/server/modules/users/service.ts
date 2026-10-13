@@ -164,6 +164,23 @@ export async function addUserRole(ctx: RequestContext, id: string, role: (typeof
     : new AppError('NOT_FOUND', `${E}.notFound`);
 }
 
+/**
+ * Takes one of a person's roles in this school away. They keep at least one, and anything they have open under the
+ * removed role is signed out.
+ */
+export async function removeUserRole(ctx: RequestContext, id: string, role: (typeof STAFF_ROLES)[number]) {
+  if (ctx.userId.equals(id)) throw new AppError('BUSINESS_RULE', `${E}.selfRole`);
+  const { schoolId } = ctx;
+  const user = await User.findOne({ ...inSchool(ctx), _id: id }).select('name roles').lean();
+  if (!user) throw new AppError('NOT_FOUND', `${E}.notFound`);
+  const here = user.roles.filter((assignment) => assignment.schoolId?.equals(schoolId));
+  if (!here.some((assignment) => assignment.role === role)) throw new AppError('NOT_FOUND', `${E}.roleNotHeld`);
+  if (here.length < 2) throw new AppError('BUSINESS_RULE', `${E}.lastRole`);
+  await User.updateOne({ _id: user._id }, { $pull: { roles: { role, schoolId } } });
+  await Session.deleteMany({ userId: user._id, activeRole: role, activeSchoolId: schoolId });
+  return { id: user._id, name: user.name };
+}
+
 /** Gives the user a new temporary password and signs them out everywhere. The password is returned once. */
 export async function resetUserPassword(ctx: RequestContext, id: string) {
   if (ctx.userId.equals(id)) throw new AppError('BUSINESS_RULE', `${E}.selfReset`);

@@ -5,6 +5,7 @@ import ContentLayout from '@cloudscape-design/components/content-layout';
 import Link from '@cloudscape-design/components/link';
 import SpaceBetween from '@cloudscape-design/components/space-between';
 import { getTranslations } from 'next-intl/server';
+import type { CSSProperties } from 'react';
 import { PublicPage } from '@/features/marketing/PublicPage';
 import { postDate, POSTS } from '@/features/marketing/posts';
 
@@ -38,8 +39,21 @@ export default async function BlogPage() {
       >
         <Box padding={{ vertical: 'xl' }}>
           <ColumnLayout columns={3} minColumnWidth={280}>
-            {POSTS.map(({ slug, date, minutes, topic }) => (
-              <Container key={slug} fitHeight>
+            {POSTS.map(({ slug, date, minutes, topic, cover }) => (
+              <Container
+                key={slug}
+                fitHeight
+                media={{
+                  position: 'top',
+                  height: 180,
+                  content: (
+                    <div
+                      className="vw-blog-cover"
+                      style={{ '--vw-blog-cover-image': `url(/banners/${cover}.svg)` } as CSSProperties}
+                    />
+                  ),
+                }}
+              >
                 <SpaceBetween size="xs">
                   <Box variant="awsui-key-label">{t(`topics.${topic}`)}</Box>
                   <Box variant="h2" fontSize="heading-m">

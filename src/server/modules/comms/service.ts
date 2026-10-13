@@ -1,12 +1,14 @@
 import 'server-only';
 import { Types } from 'mongoose';
 import { AppError } from '@/lib/appError';
+import { startOfDayIn, todayIn } from '@/lib/dates';
 import type { RequestContext } from '@/server/auth/context';
 import { can, type RoleKey } from '@/server/auth/permissions';
 import { Announcement } from '@/server/models/announcement';
 import { Enrollment } from '@/server/models/enrollment';
 import { Guardian } from '@/server/models/guardian';
 import { Notification } from '@/server/models/notification';
+import { School } from '@/server/models/school';
 import { Section } from '@/server/models/section';
 import { User } from '@/server/models/user';
 import { ownStudentIds } from '@/server/modules/portal/own';
@@ -21,7 +23,7 @@ import type {
 const EXCERPT = 140;
 
 /** Accounts tied to the sections: their students, those students' guardians, and the class teachers. */
-async function sectionRecipientIds(ctx: RequestContext, sectionIds: string[]) {
+async function sectionRecipientIds(ctx: Pick<RequestContext, 'schoolId'>, sectionIds: string[]) {
   const { schoolId } = ctx;
   const [students, sections] = await Promise.all([
     Enrollment.distinct('studentId', { schoolId, sectionId: { $in: sectionIds }, status: 'active' }),
@@ -43,7 +45,7 @@ async function sectionRecipientIds(ctx: RequestContext, sectionIds: string[]) {
 }
 
 /** The active users of this school that an audience reaches. */
-async function recipientIds(ctx: RequestContext, audience: Audience) {
+async function recipientIds(ctx: Pick<RequestContext, 'schoolId'>, audience: Audience) {
   if (audience.type === 'section') return sectionRecipientIds(ctx, audience.sectionIds);
   const users = await User.find({
     status: 'active',
@@ -59,11 +61,64 @@ async function recipientIds(ctx: RequestContext, audience: Audience) {
 export const countRecipients = async (ctx: RequestContext, audience: Audience) =>
   (await recipientIds(ctx, audience)).length;
 
+type Published = { _id: Types.ObjectId; title: string; body: string; authorId: Types.ObjectId };
+
+// ponytail: written in the request because there is no queue. Fine for a school-sized audience; batch it when one
+// announcement reaches tens of thousands of accounts.
+async function notify(schoolId: Types.ObjectId, announcement: Published, recipients: Types.ObjectId[]) {
+  const others = recipients.filter((userId) => !userId.equals(announcement.authorId));
+  if (others.length > 0) {
+    await Notification.insertMany(
+      others.map((userId) => ({
+        schoolId,
+        userId,
+        category: 'announcements' as const,
+        title: announcement.title,
+        body: announcement.body.slice(0, EXCERPT),
+        link: `/communication/announcements/${announcement._id.toString()}`,
+        deliveries: [{ channel: 'in_app' as const, status: 'sent' as const, at: new Date() }],
+        dedupeKey: `announcement:${announcement._id.toString()}:${userId.toString()}`,
+      })),
+    );
+  }
+  return others.length;
+}
+
+/**
+ * Publishes the school's announcements whose day has come and tells their audience, worked out now, not when it
+ * was written. Each one is claimed first, so two runs at once can't both send it.
+ */
+export async function publishDueAnnouncements(schoolId: Types.ObjectId) {
+  let published = 0;
+  for (;;) {
+    const due = await Announcement.findOneAndUpdate(
+      { schoolId, status: 'scheduled', publishAt: { $lte: new Date() } },
+      { status: 'published' },
+    ).lean();
+    if (!due) return published;
+    const audience: Audience =
+      due.audience?.type === 'role'
+        ? { type: 'role', roles: due.audience.roles as RoleKey[] }
+        : due.audience?.type === 'section'
+          ? { type: 'section', sectionIds: due.audience.ids.map(String) }
+          : { type: 'school' };
+    await notify(schoolId, due, await recipientIds({ schoolId }, audience));
+    published += 1;
+  }
+}
+
 export async function publishAnnouncement(
   ctx: RequestContext,
   input: Omit<AnnouncementInput, 'requiresAck'> & { requiresAck?: boolean },
 ) {
   const { schoolId } = ctx;
+  const school = await School.findById(schoolId).select('timezone').lean();
+  const timezone = school?.timezone ?? 'Asia/Kolkata';
+  const today = todayIn(timezone);
+  const scheduled = Boolean(input.publishOn && input.publishOn > today);
+  if (input.expiresOn && input.expiresOn < (input.publishOn && scheduled ? input.publishOn : today)) {
+    throw new AppError('VALIDATION', 'comms.errors.expiresBeforePublish');
+  }
   const recipients = await recipientIds(ctx, input.audience);
   const announcement = await Announcement.create({
     schoolId,
@@ -78,31 +133,18 @@ export async function publishAnnouncement(
           ? { type: 'section', ids: input.audience.sectionIds, roles: [] }
           : { type: 'school', roles: [] },
     channels: ['in_app'],
-    status: 'published',
-    publishAt: new Date(),
+    status: scheduled ? 'scheduled' : 'published',
+    publishAt: scheduled && input.publishOn ? startOfDayIn(timezone, input.publishOn) : new Date(),
+    // Shown through the end of that day, so the stored moment is the start of the next one.
+    ...(input.expiresOn && { expiresAt: new Date(startOfDayIn(timezone, input.expiresOn).getTime() + 86_400_000) }),
     authorId: ctx.userId,
     createdBy: ctx.userId,
     updatedBy: ctx.userId,
   });
 
-  // ponytail: written in the request because there is no worker yet. Fine for staff-sized audiences; move to the
-  // notifications queue before parents (thousands of recipients) get accounts.
-  const others = recipients.filter((userId) => !userId.equals(ctx.userId));
-  if (others.length > 0) {
-    await Notification.insertMany(
-      others.map((userId) => ({
-        schoolId,
-        userId,
-        category: 'announcements' as const,
-        title: input.title,
-        body: input.body.slice(0, EXCERPT),
-        link: `/communication/announcements/${announcement._id.toString()}`,
-        deliveries: [{ channel: 'in_app' as const, status: 'sent' as const, at: new Date() }],
-        dedupeKey: `announcement:${announcement._id.toString()}:${userId.toString()}`,
-      })),
-    );
-  }
-  return { id: announcement._id, title: announcement.title, recipients: others.length };
+  const others = recipients.filter((userId) => !userId.equals(ctx.userId)).length;
+  if (!scheduled) await notify(schoolId, announcement, recipients);
+  return { id: announcement._id, title: announcement.title, recipients: others, scheduled };
 }
 
 /** The sections a person belongs to: their own or their children's, or the ones they are class teacher of. */
@@ -121,14 +163,17 @@ async function visibleTo(ctx: RequestContext) {
   const everything = can(ctx.role, 'comms.announcement.create');
   return {
     schoolId: ctx.schoolId,
-    status: 'published' as const,
+    // A scheduled or expired announcement is the publishers' business only.
+    ...(everything
+      ? { status: { $in: ['published' as const, 'scheduled' as const] } }
+      : { status: 'published' as const, $and: [{ $or: [{ expiresAt: null }, { expiresAt: { $gt: new Date() } }] }] }),
     $or: [
       { 'audience.type': 'school' as const },
       { 'audience.type': 'role' as const, 'audience.roles': ctx.role },
       { 'audience.type': 'section' as const, 'audience.ids': { $in: everything ? [] : await ownSectionIds(ctx) } },
       { authorId: ctx.userId },
       // Always true for publishers, so the list is the whole school's.
-      ...(everything ? [{ status: 'published' as const }] : []),
+      ...(everything ? [{ schoolId: ctx.schoolId }] : []),
     ],
   };
 }
@@ -139,6 +184,8 @@ type Stored = {
   body: string;
   authorId: Types.ObjectId;
   publishAt?: Date | null;
+  expiresAt?: Date | null;
+  status?: string | null;
   audience?: { type: string; roles?: string[] | null; ids?: Types.ObjectId[] | null } | null;
   requiresAck?: boolean | null;
 };
@@ -170,6 +217,9 @@ async function toRows(ctx: RequestContext, announcements: Stored[]): Promise<(An
             }
           : { type: 'school' },
     requiresAck: Boolean(announcement.requiresAck),
+    scheduled: announcement.status === 'scheduled',
+    // Stored as the start of the day after; the day shown is the one before that moment.
+    expiresOn: announcement.expiresAt ? new Date(announcement.expiresAt.getTime() - 1).toISOString() : null,
   }));
 }
 
