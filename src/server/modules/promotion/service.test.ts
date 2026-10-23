@@ -110,6 +110,10 @@ it('promotes, detains and releases students, and does nothing on a repeat', asyn
   expect(sheet.promoteTo.map(({ name }) => name)).toEqual(['10-A']);
   expect(sheet.detainIn.map(({ name }) => name)).toEqual(['9-A']);
   const [asha = '', bela = '', chitra = ''] = students;
+  const [kept, dropped] = [new Types.ObjectId(), new Types.ObjectId()];
+  await Enrollment.updateOne({ schoolId: ctx.schoolId, studentId: asha, status: 'active' }, { optionalSubjectIds: [kept, dropped] });
+  const destination = await Section.findOne({ schoolId: ctx.schoolId, _id: sheet.promoteTo[0]?.id }).select('classId').lean();
+  await Class.updateOne({ schoolId: ctx.schoolId, _id: destination?.classId }, { subjectIds: [kept] });
   const decisions = [
     { studentId: asha, action: 'promote' as const, toSectionId: sheet.promoteTo[0]?.id },
     { studentId: bela, action: 'detain' as const, toSectionId: sheet.detainIn[0]?.id },
@@ -129,6 +133,8 @@ it('promotes, detains and releases students, and does nothing on a repeat', asyn
   const enrollments = await Enrollment.find({ schoolId: ctx.schoolId, studentId: asha }).sort({ createdAt: 1 }).lean();
   expect(enrollments.map(({ status }) => status)).toEqual(['promoted', 'active']);
   expect(String(enrollments[1]?.sectionId)).toBe(sheet.promoteTo[0]?.id);
+  expect(enrollments[1]?.optionalSubjectIds.map(String)).toEqual([String(kept)]);
+  await Class.updateOne({ schoolId: ctx.schoolId, _id: destination?.classId }, { subjectIds: [] });
   expect((await Student.findOne({ schoolId: ctx.schoolId, _id: chitra }).lean())?.status).toBe('withdrawn');
   expect((await Student.findOne({ schoolId: ctx.schoolId, _id: bela }).lean())?.status).toBe('active');
 });

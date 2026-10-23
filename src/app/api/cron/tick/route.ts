@@ -2,8 +2,10 @@ import { timingSafeEqual } from 'node:crypto';
 import { connectDb } from '@/server/db/connect';
 import { logger } from '@/server/logger';
 import { School } from '@/server/models/school';
+import { releaseHeldMessages } from '@/server/messaging/send';
 import { publishDueAnnouncements } from '@/server/modules/comms/service';
 import { runFeeUpkeep } from '@/server/modules/fees/discounts';
+import { reconcileOrders } from '@/server/modules/fees/online';
 
 const same = (a: string, b: string) => a.length === b.length && timingSafeEqual(Buffer.from(a), Buffer.from(b));
 
@@ -23,13 +25,15 @@ export async function GET(request: Request) {
 
   await connectDb();
   const schools = await School.find({ status: { $ne: 'suspended' } }).select('_id').lean();
-  const totals = { schools: schools.length, overdue: 0, lateFees: 0, announcements: 0, failed: 0 };
+  const totals = { schools: schools.length, overdue: 0, lateFees: 0, announcements: 0, texts: 0, payments: 0, failed: 0 };
   for (const school of schools) {
     try {
       const fees = await runFeeUpkeep(school._id);
       totals.overdue += fees.overdue;
       totals.lateFees += fees.lateFees;
       totals.announcements += await publishDueAnnouncements(school._id);
+      totals.texts += await releaseHeldMessages(school._id);
+      totals.payments += await reconcileOrders(school._id);
     } catch (error) {
       // One school's failure must not stop the others; the next run tries it again.
       totals.failed += 1;

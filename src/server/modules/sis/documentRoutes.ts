@@ -7,7 +7,16 @@ import type { Permission } from '@/server/auth/permissions';
 import { addDocument, type DocumentOwner, MAX_BYTES, readDocument } from './documents';
 
 const STATUS: Partial<Record<string, number>> = { UNAUTHENTICATED: 401, FORBIDDEN: 403, NOT_FOUND: 404, VALIDATION: 422 };
-const WRITE: Record<DocumentOwner, Permission> = { student: 'sis.student.update', admission: 'sis.admission.update' };
+const WRITE: Record<DocumentOwner, Permission> = {
+  student: 'sis.student.update',
+  admission: 'sis.admission.update',
+  staff: 'hr.staff.update',
+};
+const READ: Record<DocumentOwner, Permission> = {
+  student: 'sis.document.read',
+  admission: 'sis.document.read',
+  staff: 'hr.staff.update',
+};
 
 // Uploads come here, not through a Server Action: an action's body is capped at 1 MB and a scan is often larger.
 export const uploadDocument =
@@ -48,10 +57,10 @@ export const downloadDocument =
   (owner: DocumentOwner) =>
   async (_request: Request, { params }: { params: Promise<{ id: string; documentId: string }> }) => {
     try {
-      const ctx = await requirePermission('sis.document.read');
+      const ctx = await requirePermission(READ[owner]);
       const { id, documentId } = await params;
       const document = await readDocument(ctx, id, documentId, owner);
-      // A child's documents (Aadhaar, medical) are sensitive, so every time one is opened is on the record.
+      // A child's documents (Aadhaar, medical) and a staff member's ID are sensitive, so every time one is opened is on the record.
       await audit(ctx, 'sis.document.read', { type: owner, id: document.ownerId }, {
         after: { documentId: String(document.id), type: document.type },
       });

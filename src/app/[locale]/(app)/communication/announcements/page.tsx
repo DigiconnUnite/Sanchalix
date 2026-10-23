@@ -15,7 +15,7 @@ export default async function AnnouncementsPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const ctx = await pageContext('comms.announcement.read');
-  const { published, recipients, scheduled } = await searchParams;
+  const { published, recipients, scheduled, filesFailed } = await searchParams;
   return (
     <AnnouncementsTable
       announcements={await listAnnouncements(ctx)}
@@ -23,6 +23,7 @@ export default async function AnnouncementsPage({
       published={typeof published === 'string' ? published.slice(0, 120) : null}
       recipients={Number(recipients) || 0}
       scheduled={scheduled === '1'}
+      filesFailed={Number(filesFailed) || 0}
     />
   );
 }

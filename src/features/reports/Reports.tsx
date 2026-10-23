@@ -3,14 +3,18 @@
 import Box from '@cloudscape-design/components/box';
 import ColumnLayout from '@cloudscape-design/components/column-layout';
 import Container from '@cloudscape-design/components/container';
+import FormField from '@cloudscape-design/components/form-field';
 import Header from '@cloudscape-design/components/header';
 import SpaceBetween from '@cloudscape-design/components/space-between';
+import Select from '@cloudscape-design/components/select';
 import Table from '@cloudscape-design/components/table';
 import { useTranslations } from 'next-intl';
 import type { ReactNode } from 'react';
 import { AppLink } from '@/components/AppLink';
+import { usePathname, useRouter } from '@/i18n/navigation';
 import { EmptyState } from '@/components/EmptyState';
 import type { IconKey } from '@/components/icons';
+import type { ExamResultsReport } from '@/server/modules/exams/results';
 import type { AdmissionsReport, StaffReport } from '@/server/modules/reports/service';
 
 type Row = { key: string; label: ReactNode; count: number };
@@ -18,16 +22,21 @@ type Row = { key: string; label: ReactNode; count: number };
 export function Reports({
   admissions,
   staff,
+  results,
   links,
 }: {
   /** Undefined when the person may not see it; null when there is no academic year to report on. */
   admissions?: AdmissionsReport | null;
   staff?: StaffReport;
+  /** Undefined when the person may not see exams. */
+  results?: ExamResultsReport;
   links: { href: string; text: string }[];
 }) {
   const t = useTranslations('reports');
   const tAdmissions = useTranslations('admissions');
   const tStaff = useTranslations('hr');
+  const router = useRouter();
+  const pathname = usePathname();
 
   const total = (label: string, value: number, note?: string) => (
     <div>
@@ -123,6 +132,46 @@ export function Reports({
             </Container>
           )}
         </SpaceBetween>
+      )}
+      {results && (
+        <Table
+          variant="container"
+          trackBy="id"
+          items={results.papers}
+          header={
+            <SpaceBetween size="m">
+              <Header variant="h2" description={t('exams.description')}>
+                {t('exams.title')}
+              </Header>
+              {results.exams.length > 0 && (
+                <FormField label={t('exams.exam')}>
+                  <Select
+                    selectedOption={
+                      results.exams
+                        .map((exam) => ({ value: exam.id, label: exam.name, description: exam.published ? t('exams.published') : t('exams.notPublished') }))
+                        .find((option) => option.value === results.selected) ?? null
+                    }
+                    options={results.exams.map((exam) => ({
+                      value: exam.id,
+                      label: exam.name,
+                      description: exam.published ? t('exams.published') : t('exams.notPublished'),
+                    }))}
+                    onChange={({ detail }) => router.replace(`${pathname}?exam=${detail.selectedOption.value}`)}
+                  />
+                </FormField>
+              )}
+            </SpaceBetween>
+          }
+          empty={<EmptyState icon="exams" heading={t('exams.empty.heading')} body={t('exams.empty.body')} />}
+          columnDefinitions={[
+            { id: 'class', header: t('exams.class'), cell: (row) => row.className, isRowHeader: true },
+            { id: 'subject', header: t('exams.subject'), cell: (row) => row.subject },
+            { id: 'appeared', header: t('exams.appeared'), cell: (row) => row.appeared },
+            { id: 'absent', header: t('exams.absent'), cell: (row) => row.absent },
+            { id: 'pass', header: t('exams.pass'), cell: (row) => (row.passPercent === null ? '—' : `${row.passPercent}%`) },
+            { id: 'average', header: t('exams.average'), cell: (row) => (row.averagePercent === null ? '—' : `${row.averagePercent}%`) },
+          ]}
+        />
       )}
       {staff && (
         <SpaceBetween size="l">

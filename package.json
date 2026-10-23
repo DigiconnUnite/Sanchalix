@@ -17,10 +17,12 @@
     "e2e": "playwright test",
     "seed": "tsx --conditions=react-server --env-file=.env.local scripts/seed.ts",
     "totp": "tsx scripts/totp.ts",
+    "superadmin": "tsx --conditions=react-server --env-file=.env.local scripts/createSuperAdmin.ts",
     "db:up": "docker compose up -d --wait",
     "db:down": "docker compose down"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1154.0",
     "@cloudscape-design/components": "^3.0.1391",
     "@cloudscape-design/global-styles": "^1.0.71",
     "@node-rs/argon2": "^2.2.1",

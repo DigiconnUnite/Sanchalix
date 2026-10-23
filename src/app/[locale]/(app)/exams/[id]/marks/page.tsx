@@ -2,6 +2,8 @@ import { notFound } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 import { MarksSheet } from '@/features/exams/Exams';
 import { AppError } from '@/lib/appError';
+import { can } from '@/server/auth/permissions';
+import { listHistory } from '@/server/modules/audit/history';
 import { getMarksSheet } from '@/server/modules/exams/service';
 import { pageContext } from '../../../pageContext';
 
@@ -28,5 +30,6 @@ export default async function MarksPage({
     throw error;
   });
   if (!sheet || sheet.exam.id !== id) notFound();
-  return <MarksSheet key={`${sheet.paper.id}:${sheet.section?.id}:${sheet.paper.locked}`} sheet={sheet} />;
+  const history = can(ctx.role, 'audit.log.read') ? await listHistory(ctx, 'examSchedule', sheet.paper.id) : null;
+  return <MarksSheet key={`${sheet.paper.id}:${sheet.section?.id}:${sheet.paper.locked}`} sheet={sheet} history={history} />;
 }

@@ -1,6 +1,7 @@
 'use client';
 
 import Alert from '@cloudscape-design/components/alert';
+import Checkbox from '@cloudscape-design/components/checkbox';
 import Box from '@cloudscape-design/components/box';
 import Button from '@cloudscape-design/components/button';
 import FormField from '@cloudscape-design/components/form-field';
@@ -16,7 +17,7 @@ import { useState } from 'react';
 import { EmptyState } from '@/components/EmptyState';
 import { usePathname, useRouter } from '@/i18n/navigation';
 import { setClassSubjects } from '@/server/modules/academics/actions';
-import { clearTimetableSlot, upsertSubject, upsertTimetableSlot } from '@/server/modules/timetable/actions';
+import { clearTimetableSlot, publishTimetable, upsertSubject, upsertTimetableSlot } from '@/server/modules/timetable/actions';
 import type { Period, SubjectRow, Timetable } from '@/server/modules/timetable/schemas';
 
 type Option = { id: string; name: string };
@@ -28,7 +29,7 @@ export function SubjectsTable({ subjects, canCreate }: { subjects: SubjectRow[];
   const t = useTranslations('academics.subjects');
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [values, setValues] = useState({ name: '', code: '', type: 'scholastic' });
+  const [values, setValues] = useState({ name: '', code: '', type: 'scholastic', isOptional: false });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<Failure | null>(null);
   const [added, setAdded] = useState<string | null>(null);
@@ -46,7 +47,7 @@ export function SubjectsTable({ subjects, canCreate }: { subjects: SubjectRow[];
     setBusy(false);
     if (!result.ok) return setError(result.error);
     setOpen(false);
-    setValues({ name: '', code: '', type: 'scholastic' });
+    setValues({ name: '', code: '', type: 'scholastic', isOptional: false });
     setAdded(result.data.name);
     router.refresh();
   }
@@ -82,6 +83,7 @@ export function SubjectsTable({ subjects, canCreate }: { subjects: SubjectRow[];
           { id: 'name', header: t('name'), cell: (subject) => subject.name, isRowHeader: true },
           { id: 'code', header: t('code'), cell: (subject) => subject.code },
           { id: 'type', header: t('typeLabel'), cell: (subject) => t(`type.${subject.type}`) },
+          { id: 'optional', header: t('optional.column'), cell: (subject) => t(subject.isOptional ? 'optional.yes' : 'optional.no') },
         ]}
       />
       <Modal
@@ -125,6 +127,13 @@ export function SubjectsTable({ subjects, canCreate }: { subjects: SubjectRow[];
               onChange={({ detail }) => setValues({ ...values, type: detail.selectedOption.value ?? 'scholastic' })}
             />
           </FormField>
+          <Checkbox
+            checked={values.isOptional}
+            description={t('optional.hint')}
+            onChange={({ detail }) => setValues({ ...values, isOptional: detail.checked })}
+          >
+            {t('optional.label')}
+          </Checkbox>
         </SpaceBetween>
       </Modal>
     </>
@@ -154,6 +163,7 @@ export function TimetableGrid({
   const [teacherId, setTeacherId] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const options = (items: Option[]) => items.map(({ id, name }) => ({ value: id, label: name }));
   const sectionOptions = options(sections);
   const current = editing ? timetable.cells[`${editing.day}-${editing.period.number}`] : undefined;
@@ -164,6 +174,18 @@ export function TimetableGrid({
     setTeacherId(cell?.teacherId ?? '');
     setError(null);
     setEditing({ day, period });
+  }
+
+  async function notify() {
+    if (!sectionId) return;
+    setBusy(true);
+    const result = await publishTimetable({ sectionId });
+    setBusy(false);
+    setNotice(
+      result.ok
+        ? { type: 'success', text: t('notice.sent', { section: result.data.sectionName, count: result.data.recipients }) }
+        : { type: 'error', text: result.error.message },
+    );
   }
 
   async function run(action: 'save' | 'clear') {
@@ -188,9 +210,27 @@ export function TimetableGrid({
         trackBy="number"
         items={sectionId ? timetable.periods : []}
         header={
-          <Header variant="h2" description={t('description')}>
-            {t('title')}
-          </Header>
+          <SpaceBetween size="m">
+            <Header
+              variant="h2"
+              description={t('description')}
+              actions={
+                canEdit &&
+                sectionId && (
+                  <Button loading={busy} onClick={() => void notify()}>
+                    {t('notice.action')}
+                  </Button>
+                )
+              }
+            >
+              {t('title')}
+            </Header>
+            {notice && (
+              <Alert type={notice.type} dismissible dismissAriaLabel={t('notice.dismiss')} onDismiss={() => setNotice(null)}>
+                {notice.text}
+              </Alert>
+            )}
+          </SpaceBetween>
         }
         filter={
           <Select

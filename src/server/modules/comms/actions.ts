@@ -28,6 +28,7 @@ export async function publishAnnouncement(input: unknown) {
         title: data.title,
         audience: data.audience.type,
         requiresAck: data.requiresAck,
+        channels: data.channels,
         recipients: announcement.recipients,
         ...(announcement.scheduled && { publishOn: data.publishOn }),
       },

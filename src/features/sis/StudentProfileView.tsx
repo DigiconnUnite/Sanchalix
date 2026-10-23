@@ -14,6 +14,7 @@ import Header from '@cloudscape-design/components/header';
 import KeyValuePairs from '@cloudscape-design/components/key-value-pairs';
 import Link from '@cloudscape-design/components/link';
 import Modal from '@cloudscape-design/components/modal';
+import Multiselect from '@cloudscape-design/components/multiselect';
 import SpaceBetween from '@cloudscape-design/components/space-between';
 import StatusIndicator, { type StatusIndicatorProps } from '@cloudscape-design/components/status-indicator';
 import Table from '@cloudscape-design/components/table';
@@ -33,7 +34,7 @@ import { formatPhone } from '@/lib/phone';
 import type { StudentResult } from '@/server/modules/exams/service';
 import type { PortalAccountRow } from '@/server/modules/portal/service';
 import type { DocumentRow } from '@/server/modules/sis/documents';
-import { transferOutStudent, transferStudent, withdrawStudent } from '@/server/modules/sis/actions';
+import { setStudentOptionalSubjects, transferOutStudent, transferStudent, withdrawStudent } from '@/server/modules/sis/actions';
 import type { HistoryEntry, StudentAttendance, StudentFees, StudentProfile } from '@/server/modules/sis/schemas';
 import { GuardianEdit } from './GuardianEdit';
 import { StudentDocuments } from './StudentDocuments';
@@ -94,6 +95,9 @@ export function StudentProfileView({
   const tMethod = useTranslations('fees.counter.methods');
   const router = useRouter();
   const pathname = usePathname();
+  const [chosen, setChosen] = useState(student.optionalSubjects.chosen);
+  const [savingSubjects, setSavingSubjects] = useState(false);
+  const [subjectsSaved, setSubjectsSaved] = useState<string | null>(null);
   const [leaving, setLeaving] = useState<'withdraw' | 'transferOut' | null>(null);
   const leave = leaving ?? 'withdraw';
   const [moving, setMoving] = useState(false);
@@ -117,6 +121,15 @@ export function StudentProfileView({
     translate.has(key) ? translate(key) : key;
   const editHref = `${pathname}/edit`;
   const certificateHref = `${pathname}/transfer-certificate`;
+
+  async function saveSubjects() {
+    setSavingSubjects(true);
+    setSubjectsSaved(null);
+    const result = await setStudentOptionalSubjects({ studentId: student.id, subjectIds: chosen });
+    setSavingSubjects(false);
+    setSubjectsSaved(result.ok ? t('profile.optional.saved') : result.error.message);
+    if (result.ok) router.refresh();
+  }
 
   async function withdraw() {
     setBusy(true);
@@ -225,6 +238,7 @@ export function StudentProfileView({
               id: 'overview',
               label: t('profile.tabs.overview'),
               content: (
+                <SpaceBetween size="l">
                 <Container>
                   <KeyValuePairs
                     columns={3}
@@ -257,6 +271,40 @@ export function StudentProfileView({
                     ]}
                   />
                 </Container>
+                {student.optionalSubjects.options.length > 0 && (
+                  <Container
+                    header={
+                      <Header
+                        variant="h2"
+                        description={t('profile.optional.description')}
+                        actions={
+                          canEdit && (
+                            <Button loading={savingSubjects} onClick={() => void saveSubjects()}>
+                              {t('profile.optional.save')}
+                            </Button>
+                          )
+                        }
+                      >
+                        {t('profile.optional.title')}
+                      </Header>
+                    }
+                  >
+                    <SpaceBetween size="s">
+                      {subjectsSaved && <Alert type="info">{subjectsSaved}</Alert>}
+                      <Multiselect
+                        disabled={!canEdit}
+                        ariaLabel={t('profile.optional.title')}
+                        placeholder={t('profile.optional.none')}
+                        selectedOptions={student.optionalSubjects.options
+                          .filter((option) => chosen.includes(option.id))
+                          .map(({ id, name }) => ({ value: id, label: name }))}
+                        options={student.optionalSubjects.options.map(({ id, name }) => ({ value: id, label: name }))}
+                        onChange={({ detail }) => setChosen(detail.selectedOptions.map((option) => option.value ?? ''))}
+                      />
+                    </SpaceBetween>
+                  </Container>
+                )}
+                </SpaceBetween>
               ),
             },
             {

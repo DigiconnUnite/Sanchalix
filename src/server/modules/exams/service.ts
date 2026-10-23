@@ -275,12 +275,14 @@ export async function getMarksSheet(ctx: RequestContext, scheduleId: string, sec
   const section = sections.find((candidate) => String(candidate._id) === sectionId) ?? sections[0] ?? null;
   const [paperClass, subject, enrollments] = await Promise.all([
     Class.findOne({ schoolId, _id: schedule.classId }).select('name').lean(),
-    Subject.findOne({ schoolId, _id: schedule.subjectId }).setOptions({ withDeleted: true }).select('name').lean(),
-    section
-      ? Enrollment.find({ schoolId, sectionId: section._id, status: 'active' }).sort({ rollNo: 1 }).select('studentId rollNo').lean()
-      : [],
+    Subject.findOne({ schoolId, _id: schedule.subjectId }).setOptions({ withDeleted: true }).select('name isOptional').lean(),
+    section ? Enrollment.find({ schoolId, sectionId: section._id, status: 'active' }).sort({ rollNo: 1 }).select('studentId rollNo optionalSubjectIds').lean() : [],
   ]);
-  const ids = enrollments.map((enrollment) => enrollment.studentId);
+  // An optional subject is sat only by the students who were given it.
+  const takers = subject?.isOptional
+    ? enrollments.filter((enrollment) => enrollment.optionalSubjectIds.some((id) => id.equals(schedule.subjectId)))
+    : enrollments;
+  const ids = takers.map((enrollment) => enrollment.studentId);
   const [students, marks] = await Promise.all([
     Student.find({ schoolId, _id: { $in: ids } }).select('firstName lastName').lean(),
     Mark.find({ schoolId, examScheduleId: schedule._id, studentId: { $in: ids } }).select('studentId total isAbsent grade').lean(),
@@ -304,7 +306,7 @@ export async function getMarksSheet(ctx: RequestContext, scheduleId: string, sec
     sections: sections.map(option),
     section: section && option(section),
     canEdit: can(ctx.role, 'exams.mark.update') && Boolean(section) && !locked && !published,
-    students: enrollments.map((enrollment) => {
+    students: takers.map((enrollment) => {
       const id = String(enrollment.studentId);
       const mark = markOf.get(id);
       return {
@@ -327,7 +329,13 @@ export async function saveMarks(ctx: RequestContext, { examScheduleId, sectionId
   if (schedule.status === 'locked' || exam.status === 'results_published') {
     throw new AppError('BUSINESS_RULE', `${E}.locked`);
   }
-  const enrolled = await Enrollment.distinct('studentId', { schoolId, sectionId: section._id, status: 'active' });
+  const optional = (await Subject.findOne({ schoolId, _id: schedule.subjectId }).select('isOptional').lean())?.isOptional;
+  const enrolled = await Enrollment.distinct('studentId', {
+    schoolId,
+    sectionId: section._id,
+    status: 'active',
+    ...(optional && { optionalSubjectIds: schedule.subjectId }),
+  });
   const roster = new Set(enrolled.map(String));
   const seen = new Set(entries.map((entry) => entry.studentId));
   if (seen.size !== entries.length || entries.some((entry) => !roster.has(entry.studentId))) {

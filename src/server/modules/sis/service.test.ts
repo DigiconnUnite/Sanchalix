@@ -11,7 +11,8 @@ import { Student } from '@/server/models/student';
 import { Invoice } from '@/server/models/invoice';
 import { getStudent, getTransferCertificate } from './queries';
 import { GuardianUpdate, StudentInput, StudentUpdate } from './schemas';
-import { createStudent, transferStudent, updateGuardian, updateStudent, withdrawStudent } from './service';
+import { Subject } from '@/server/models/subject';
+import { createStudent, setOptionalSubjects, transferStudent, updateGuardian, updateStudent, withdrawStudent } from './service';
 
 const ADDRESS = { line1: '12 School Road', city: 'Bhopal', state: 'Madhya Pradesh', pincode: '462001' };
 let ctx: RequestContext;
@@ -215,4 +216,19 @@ it('transfers a student out with a certificate number, and leaves unpaid fees to
   expect(await getStudent(ctx, id)).toMatchObject({ status: 'transferred', tcNo: `TC/${year}/0001` });
   expect(await getTransferCertificate(ctx, id)).toMatchObject({ reason: 'Moved city', duesCleared: false });
   expect(await getTransferCertificate(otherSchool, id)).toBeNull();
+});
+
+it('gives a student only the optional subjects their class offers', async () => {
+  const student = await Student.findOne({ schoolId: ctx.schoolId, firstName: 'Aarav' }).orFail().lean();
+  const id = String(student._id);
+  const optional = await Subject.create({ schoolId: ctx.schoolId, name: 'Sanskrit', code: 'SKT', type: 'scholastic', isOptional: true });
+  const compulsory = await Subject.create({ schoolId: ctx.schoolId, name: 'English', code: 'ENG', type: 'scholastic' });
+
+  expect((await getStudent(ctx, id))?.optionalSubjects).toEqual({ options: [{ id: String(optional._id), name: 'Sanskrit' }], chosen: [] });
+  await expect(setOptionalSubjects(ctx, id, [String(compulsory._id)])).rejects.toMatchObject({ code: 'VALIDATION' });
+  await expect(setOptionalSubjects(otherSchool, id, [String(optional._id)])).rejects.toMatchObject({ code: 'NOT_FOUND' });
+  expect(await setOptionalSubjects(ctx, id, [String(optional._id), String(optional._id)])).toMatchObject({ before: 0, after: 1 });
+  expect((await getStudent(ctx, id))?.optionalSubjects.chosen).toEqual([String(optional._id)]);
+  await setOptionalSubjects(ctx, id, []);
+  expect((await getStudent(ctx, id))?.optionalSubjects.chosen).toEqual([]);
 });

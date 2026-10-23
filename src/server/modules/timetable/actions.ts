@@ -1,11 +1,13 @@
 'use server';
 
 import 'server-only';
+import { Types } from 'mongoose';
 import { withAction } from '@/server/action';
 import { audit } from '@/server/audit';
 import { requirePermission } from '@/server/auth/context';
-import { ClearSlot, SlotInput, SubjectInput } from './schemas';
-import { clearSlot, createSubject, setSlot } from './service';
+import { getTranslations } from 'next-intl/server';
+import { ClearSlot, NotifySection, SlotInput, SubjectInput } from './schemas';
+import { clearSlot, createSubject, notifyTimetable, setSlot } from './service';
 
 export async function upsertSubject(input: unknown) {
   return withAction('academics.subject.create', async () => {
@@ -24,6 +26,19 @@ export async function upsertTimetableSlot(input: unknown) {
     const slot = await setSlot(ctx, data);
     await audit(ctx, 'academics.timetable.update', { type: 'section', id: slot.sectionId }, { after: data });
     return { section: slot.section, subject: slot.subject, teacher: slot.teacher };
+  });
+}
+
+export async function publishTimetable(input: unknown) {
+  return withAction('academics.timetable.publish', async () => {
+    const ctx = await requirePermission('academics.timetable.update');
+    const { sectionId } = NotifySection.parse(input);
+    const t = await getTranslations('academics.timetable.notice');
+    const result = await notifyTimetable(ctx, sectionId, t('title', { section: '' }).trim());
+    await audit(ctx, 'academics.timetable.publish', { type: 'section', id: new Types.ObjectId(sectionId) }, {
+      after: { recipients: result.recipients },
+    });
+    return result;
   });
 }
 

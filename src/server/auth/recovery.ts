@@ -8,6 +8,7 @@ import { sendMessages } from '@/server/messaging/send';
 import { OtpChallenge } from '@/server/models/outboundMessage';
 import { Session } from '@/server/models/session';
 import { User } from '@/server/models/user';
+import { isBreached } from './breached';
 import { hashPassword } from './service';
 
 const MINUTE = 60_000;
@@ -72,6 +73,7 @@ export async function requestPasswordReset(
 
 export async function resetPassword(token: string, next: string) {
   await connectDb();
+  if (await isBreached(next)) throw new AppError('VALIDATION', 'auth.password.breached');
   const passwordHash = await hashPassword(next);
   // The token is matched and removed in one step, so a link can't be used twice even by two requests at once.
   const user = await User.findOneAndUpdate(
@@ -107,7 +109,7 @@ export async function requestOtp(phone: string, text: (code: string) => string) 
   const code = String(randomInt(0, 1_000_000)).padStart(6, '0');
   await OtpChallenge.deleteMany({ phone, purpose: 'login' });
   await OtpChallenge.create({ phone, purpose: 'login', codeHash: codeHash(phone, code), expiresAt: new Date(Date.now() + OTP_TTL) });
-  await sendMessages([{ schoolId: assignment.schoolId, channel: 'sms', to: phone, template: 'otp', body: text(code) }]);
+  await sendMessages([{ schoolId: assignment.schoolId, channel: 'sms', to: phone, template: 'otp', urgent: true, body: text(code) }]);
 }
 
 export async function verifyOtp(phone: string, code: string) {

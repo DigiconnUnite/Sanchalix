@@ -16,6 +16,14 @@ const schema = new Schema(
       roles: [{ type: String, enum: ROLE_KEYS }],
     },
     channels: { type: [String], enum: ['in_app', 'email', 'sms', 'push'], default: ['in_app'] },
+    attachments: [
+      {
+        key: { type: String, required: true },
+        fileName: { type: String, required: true },
+        mime: { type: String, required: true, enum: ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'] },
+        size: { type: Number, required: true, max: 5 * 1024 * 1024 },
+      },
+    ],
     requiresAck: { type: Boolean, default: false },
     acks: [{ _id: false, userId: { type: ObjectId, ref: 'User', required: true }, at: { type: Date, required: true } }],
     publishAt: Date,

@@ -5,9 +5,11 @@ import type { RoleKey } from '@/server/auth/permissions';
 import { connectDb } from '@/server/db/connect';
 import { Announcement } from '@/server/models/announcement';
 import { Notification } from '@/server/models/notification';
+import { OutboundMessage } from '@/server/models/outboundMessage';
 import { User } from '@/server/models/user';
 import { AnnouncementInput } from './schemas';
 import {
+  addAnnouncementAttachment,
   countRecipients,
   countUnread,
   getAnnouncement,
@@ -16,6 +18,7 @@ import {
   markRead,
   publishAnnouncement,
   publishDueAnnouncements,
+  readAnnouncementAttachment,
 } from './service';
 
 const schoolA = new Types.ObjectId();
@@ -138,4 +141,57 @@ it('holds a scheduled announcement until its day, then tells the audience once, 
   await expect(
     publishAnnouncement(as('principal'), { title: 'x', body: 'x', audience: { type: 'school' }, publishOn: '2099-02-02', expiresOn: '2099-02-01' }),
   ).rejects.toMatchObject({ code: 'VALIDATION' });
+});
+
+it('also sends email and text copies, skipping people who switched that channel off or have no address', async () => {
+  const phones = new Map([
+    ['teacher', '+9198000' + String(Date.now()).slice(-5)],
+    ['accountant', '+9197000' + String(Date.now()).slice(-5)],
+  ]);
+  await User.updateOne({ _id: as('teacher').userId }, { phone: phones.get('teacher') });
+  await User.updateOne(
+    { _id: as('accountant').userId },
+    { phone: phones.get('accountant'), notificationPrefs: [{ channel: 'email', category: 'announcements', enabled: false }] },
+  );
+  const published = await publishAnnouncement(as('principal'), {
+    title: 'Sports day',
+    body: 'Friday, 8 AM.',
+    audience: { type: 'school' },
+    channels: ['email', 'sms'],
+  });
+  const sent = await OutboundMessage.find({ schoolId: schoolA, dedupeKey: new RegExp(`^announcement:${String(published.id)}:`) }).lean();
+  const summary = sent.map((message) => `${message.channel}:${message.to}`).sort();
+  expect(summary).toEqual(
+    [
+      `email:teacher-${schoolA.toString()}@school.example`,
+      `sms:${phones.get('teacher')}`,
+      `sms:${phones.get('accountant')}`,
+    ].sort(),
+  );
+  expect(sent.find((message) => message.channel === 'email')).toMatchObject({ subject: 'Sports day', template: 'announcement' });
+});
+
+it('lets only the author attach files, and only people who can see the announcement open them', async () => {
+  const pdf = new Uint8Array([0x25, 0x50, 0x44, 0x46, 0x2d, 0x31, 0x2e, 0x34, 0x0a]);
+  const published = await publishAnnouncement(as('principal'), {
+    title: 'Circular',
+    body: 'See the attached circular.',
+    audience: { type: 'role', roles: ['teacher'] },
+  });
+  const id = String(published.id);
+  await expect(addAnnouncementAttachment(as('teacher'), id, { fileName: 'a.pdf', bytes: pdf })).rejects.toMatchObject({ code: 'NOT_FOUND' });
+  await expect(addAnnouncementAttachment(as('principal'), id, { fileName: 'a.txt', bytes: new Uint8Array([1, 2, 3]) })).rejects.toMatchObject({
+    code: 'VALIDATION',
+  });
+  for (const name of ['a', 'b', 'c']) await addAnnouncementAttachment(as('principal'), id, { fileName: `${name}.pdf`, bytes: pdf });
+  await expect(addAnnouncementAttachment(as('principal'), id, { fileName: 'd.pdf', bytes: pdf })).rejects.toMatchObject({
+    code: 'BUSINESS_RULE',
+  });
+
+  const detail = await getAnnouncement(as('teacher'), id);
+  expect(detail?.attachments.map((file) => file.fileName)).toEqual(['a.pdf', 'b.pdf', 'c.pdf']);
+  const first = detail?.attachments[0]?.id ?? '';
+  expect(Array.from((await readAnnouncementAttachment(as('teacher'), id, first)).bytes)).toEqual(Array.from(pdf));
+  await expect(readAnnouncementAttachment(as('accountant'), id, first)).rejects.toMatchObject({ code: 'NOT_FOUND' });
+  await expect(readAnnouncementAttachment(as('outsider'), id, first)).rejects.toMatchObject({ code: 'NOT_FOUND' });
 });

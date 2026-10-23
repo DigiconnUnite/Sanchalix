@@ -7,6 +7,7 @@ import { withTransaction } from '@/server/db/transaction';
 import { AcademicYear } from '@/server/models/academicYear';
 import { Counter } from '@/server/models/counter';
 import { Enrollment } from '@/server/models/enrollment';
+import { optionalSubjectsOffered } from './queries';
 import { Guardian } from '@/server/models/guardian';
 import { Invoice } from '@/server/models/invoice';
 import { School } from '@/server/models/school';
@@ -218,6 +219,21 @@ export async function transferStudent(ctx: RequestContext, id: string, sectionId
  * Ends a student's time at the school. A transfer out also gives their transfer certificate its serial number, and
  * with fees unpaid it is the principal's call (US-2.4), so only a role that approves certificates may go ahead.
  */
+/** Gives a student the optional subjects they take this year. Only subjects their class offers are accepted. */
+export async function setOptionalSubjects(ctx: RequestContext, studentId: string, subjectIds: string[]) {
+  const student = await Student.findOne({ ...officeScope(ctx), _id: studentId, status: 'active' })
+    .select('currentEnrollmentId')
+    .lean();
+  const enrollment =
+    student && (await Enrollment.findOne({ schoolId: ctx.schoolId, _id: student.currentEnrollmentId }).select('classId optionalSubjectIds').lean());
+  if (!student || !enrollment) throw new AppError('NOT_FOUND', 'sis.students.errors.notFound');
+  const unique = [...new Set(subjectIds)];
+  const offered = new Set((await optionalSubjectsOffered(ctx, enrollment.classId)).map(({ id }) => id));
+  if (unique.some((id) => !offered.has(id))) throw new AppError('VALIDATION', 'sis.students.errors.optionalSubjects');
+  await Enrollment.updateOne({ schoolId: ctx.schoolId, _id: enrollment._id }, { optionalSubjectIds: unique, updatedBy: ctx.userId });
+  return { id: student._id, before: enrollment.optionalSubjectIds.length, after: unique.length };
+}
+
 export async function withdrawStudent(ctx: RequestContext, id: string, reason: string, transferOut = false) {
   const scope = officeScope(ctx);
   if (transferOut && !can(ctx.role, 'sis.certificate.approve')) {

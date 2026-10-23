@@ -10,6 +10,7 @@ import Header from '@cloudscape-design/components/header';
 import Input from '@cloudscape-design/components/input';
 import KeyValuePairs from '@cloudscape-design/components/key-value-pairs';
 import RadioGroup from '@cloudscape-design/components/radio-group';
+import Toggle from '@cloudscape-design/components/toggle';
 import SpaceBetween from '@cloudscape-design/components/space-between';
 import StatusIndicator from '@cloudscape-design/components/status-indicator';
 import Table from '@cloudscape-design/components/table';
@@ -18,7 +19,7 @@ import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { DENSITIES, type Density } from '@/lib/visualMode';
 import { useRouter } from '@/i18n/navigation';
-import { changePassword, setDensity, signOutOtherSessions, signOutSession } from '@/server/auth/actions';
+import { changePassword, setAnnouncementCopy, setDensity, setFeeTexts, signOutOtherSessions, signOutSession } from '@/server/auth/actions';
 
 const BLANK = { current: '', next: '', confirm: '' };
 const dateTime = new Intl.DateTimeFormat('en-IN', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Kolkata' });
@@ -31,12 +32,17 @@ export function ProfileView({
   email,
   density: initialDensity,
   sessions,
+  feeTexts: initialFeeTexts,
+  announcementCopy,
 }: {
   name: string;
   roleLabel: string;
   email: string | null;
   density: Density;
   sessions: SessionRow[];
+  /** A parent's fee text setting. Null for everyone who isn't a parent. */
+  feeTexts: boolean | null;
+  announcementCopy: { channel: 'email' | 'sms'; reachable: boolean; enabled: boolean }[];
 }) {
   const t = useTranslations('auth.profile');
   const [density, setChosenDensity] = useState(initialDensity);
@@ -46,6 +52,8 @@ export function ProfileView({
   const [changed, setChanged] = useState(false);
   const router = useRouter();
   const [signingOut, setSigningOut] = useState(false);
+  const [feeTexts, setFeeTextsChoice] = useState(initialFeeTexts);
+  const [copy, setCopy] = useState(announcementCopy);
   const [notice, setNotice] = useState<Notice | null>(null);
 
   async function signOutOne(row: SessionRow) {
@@ -122,6 +130,43 @@ export function ProfileView({
             />
           </FormField>
         </Container>
+        <Container header={<Header variant="h2" description={t('copy.description')}>{t('copy.title')}</Header>}>
+          <SpaceBetween size="m">
+            {copy.map((item) => (
+              <Toggle
+                key={item.channel}
+                checked={item.enabled && item.reachable}
+                disabled={!item.reachable}
+                description={item.reachable ? t(`copy.${item.channel}Hint`) : t(`copy.${item.channel}Missing`)}
+                onChange={({ detail }) => {
+                  setCopy(copy.map((entry) => (entry.channel === item.channel ? { ...entry, enabled: detail.checked } : entry)));
+                  void setAnnouncementCopy({ channel: item.channel, enabled: detail.checked });
+                }}
+              >
+                {t(`copy.${item.channel}`)}
+              </Toggle>
+            ))}
+          </SpaceBetween>
+        </Container>
+        {feeTexts !== null && (
+          <Container header={<Header variant="h2" description={t('texts.description')}>{t('texts.title')}</Header>}>
+            <SpaceBetween size="m">
+              <Toggle
+                checked={feeTexts}
+                description={t('texts.feeHint')}
+                onChange={({ detail }) => {
+                  setFeeTextsChoice(detail.checked);
+                  void setFeeTexts({ enabled: detail.checked });
+                }}
+              >
+                {t('texts.fee')}
+              </Toggle>
+              <Toggle checked disabled description={t('texts.alwaysHint')}>
+                {t('texts.always')}
+              </Toggle>
+            </SpaceBetween>
+          </Container>
+        )}
         <form
           noValidate
           onSubmit={(event) => {

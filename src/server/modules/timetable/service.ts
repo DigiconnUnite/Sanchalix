@@ -2,6 +2,7 @@ import 'server-only';
 import { AppError } from '@/lib/appError';
 import { todayIn, weekdayOf } from '@/lib/dates';
 import type { RequestContext } from '@/server/auth/context';
+import { Notification } from '@/server/models/notification';
 import { PeriodDefinition } from '@/server/models/periodDefinition';
 import { School } from '@/server/models/school';
 import { Section } from '@/server/models/section';
@@ -9,6 +10,8 @@ import { Staff } from '@/server/models/staff';
 import { Subject } from '@/server/models/subject';
 import { TimetableSlot } from '@/server/models/timetableSlot';
 import { getCurrentYearId } from '@/server/modules/academics/queries';
+import { sectionRecipientIds } from '@/server/modules/comms/service';
+import { User } from '@/server/models/user';
 import type { ClearSlot, Period, SlotInput, SubjectInput, SubjectRow, TeacherPeriod, Timetable } from './schemas';
 
 const isDuplicateKey = (error: unknown) => error instanceof Error && 'code' in error && error.code === 11000;
@@ -31,16 +34,17 @@ export async function getPeriods(ctx: RequestContext): Promise<Period[]> {
 }
 
 export async function listSubjects(ctx: RequestContext): Promise<SubjectRow[]> {
-  const subjects = await Subject.find({ schoolId: ctx.schoolId }).sort({ name: 1 }).select('name code type').lean();
+  const subjects = await Subject.find({ schoolId: ctx.schoolId }).sort({ name: 1 }).select('name code type isOptional').lean();
   return subjects.map((subject) => ({
     id: String(subject._id),
     name: subject.name,
     code: subject.code,
     type: subject.type,
+    isOptional: subject.isOptional,
   }));
 }
 
-export async function createSubject(ctx: RequestContext, input: SubjectInput) {
+export async function createSubject(ctx: RequestContext, input: Omit<SubjectInput, 'isOptional'> & { isOptional?: boolean }) {
   try {
     const subject = await Subject.create({
       schoolId: ctx.schoolId,
@@ -50,7 +54,7 @@ export async function createSubject(ctx: RequestContext, input: SubjectInput) {
     });
     return { id: subject._id, name: subject.name };
   } catch (error) {
-    if (isDuplicateKey(error)) throw new AppError('CONFLICT', 'academics.timetable.errors.codeTaken', input);
+    if (isDuplicateKey(error)) throw new AppError('CONFLICT', 'academics.timetable.errors.codeTaken', { code: input.code });
     throw error;
   }
 }
@@ -143,6 +147,44 @@ export async function listTaughtSectionIds(ctx: RequestContext) {
 }
 
 /** The signed-in teacher's periods today, in order. Empty on Sunday and for people who don't teach. */
+/**
+ * Tells a section's students, their parents, its class teacher and every teacher who teaches it that its timetable
+ * is ready or has changed. A person is told once a day however many times this is pressed, so a correction made
+ * ten minutes later doesn't send the same message again.
+ */
+export async function notifyTimetable(ctx: RequestContext, sectionId: string, title: string) {
+  const { schoolId } = ctx;
+  const section = await Section.findOne({ schoolId, _id: sectionId }).select('displayName').lean();
+  if (!section) throw new AppError('NOT_FOUND', 'academics.timetable.errors.section');
+  const [taught, learners] = await Promise.all([
+    TimetableSlot.distinct('teacherId', { schoolId, sectionId }),
+    sectionRecipientIds(ctx, [sectionId]),
+  ]);
+  const teachers = await User.find({ status: 'active', roles: { $elemMatch: { schoolId } }, staffId: { $in: taught } })
+    .select('_id')
+    .lean();
+  const people = new Map([...learners, ...teachers.map((teacher) => teacher._id)].map((id) => [String(id), id]));
+  people.delete(String(ctx.userId));
+  const day = todayIn((await School.findById(schoolId).select('timezone').lean())?.timezone ?? 'Asia/Kolkata');
+  const sent = await Notification.insertMany(
+    [...people.values()].map((userId) => ({
+      schoolId,
+      userId,
+      category: 'system' as const,
+      title,
+      link: `/academics/timetable?section=${sectionId}`,
+      deliveries: [{ channel: 'in_app' as const, status: 'sent' as const, at: new Date() }],
+      dedupeKey: `timetable:${sectionId}:${day}:${String(userId)}`,
+    })),
+    { ordered: false, throwOnValidationError: false },
+  ).catch((error: unknown) => {
+    // A duplicate key means this person was already told today. Everyone else in the batch was still written.
+    if (error instanceof Error && 'code' in error && error.code === 11000) return [];
+    throw error;
+  });
+  return { sectionName: section.displayName, recipients: people.size, told: Array.isArray(sent) ? sent.length : 0 };
+}
+
 export async function getTeacherDay(ctx: RequestContext): Promise<TeacherPeriod[]> {
   const { schoolId } = ctx;
   if (!ctx.staffId) return [];

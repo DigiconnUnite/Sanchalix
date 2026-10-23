@@ -11,8 +11,10 @@ import { assignClassTeacher } from '@/server/modules/academics/service';
 import { findAttendanceSection } from '@/server/modules/attendance/queries';
 import { importStaff, STAFF_IMPORT_COLUMNS } from './importService';
 import { StaffInput } from './schemas';
+import { AuditLog } from '@/server/models/auditLog';
+import { listHistory } from '@/server/modules/audit/history';
 import { getAdmissionsReport, getStaffReport } from '@/server/modules/reports/service';
-import { createStaff, getStaffProfile, listStaff, listTeachers } from './service';
+import { createStaff, getStaffMember, getStaffProfile, listStaff, listTeachers } from './service';
 
 const ADDRESS = { line1: '12 School Road', city: 'Bhopal', state: 'Madhya Pradesh', pincode: '462001', country: 'IN' };
 let ctx: RequestContext;
@@ -145,4 +147,36 @@ it('imports staff from a file only when every row is right, and never the same p
   expect(await importStaff(ctx, file(good), false)).toMatchObject({ imported: 1 });
   expect((await listStaff(ctx, { pageSize: 100 })).rows).toHaveLength(before + 1);
   expect((await importStaff(ctx, file(good), false)).errors).toMatchObject([{ row: 2, field: 'phone' }]);
+});
+
+it('lists who changed a record, newest first, and nothing from another school', async () => {
+  const id = (await listStaff(ctx, { pageSize: 10 })).rows[0]?.id ?? '';
+  const entity = { type: 'staff', id: new Types.ObjectId(id) };
+  const entry = (action: string, at: Date) =>
+    ({ schoolId: ctx.schoolId, actorId: ctx.userId, actorRole: ctx.role, action, entity, at }) as const;
+  await AuditLog.create([entry('hr.staff.create', new Date('2026-01-01')), entry('hr.staff.update', new Date('2026-02-01'))]);
+  expect((await listHistory(ctx, 'staff', id)).map((row) => row.action)).toEqual(['hr.staff.update', 'hr.staff.create']);
+  expect(await listHistory(other, 'staff', id)).toEqual([]);
+  expect(await listHistory(ctx, 'staff', 'not-an-id')).toEqual([]);
+});
+
+it('keeps a staff member’s qualifications, and refuses a bad year', async () => {
+  const qualifications = [
+    { degree: 'M.Sc. Mathematics', institution: 'Barkatullah University', year: '2014' },
+    { degree: 'B.Ed.', institution: '', year: '' },
+  ];
+  expect(StaffInput.safeParse({ ...input(), qualifications: [{ degree: 'B.Ed.', year: '1800' }] }).success).toBe(false);
+  expect(StaffInput.safeParse({ ...input(), qualifications: [{ degree: '', year: '' }] }).success).toBe(false);
+
+  const created = await createStaff(ctx, input({ name: 'Qualified Teacher', phone: '9876500099', qualifications }));
+  expect((await getStaffMember(ctx, String(created.id)))?.qualifications).toEqual([
+    { degree: 'M.Sc. Mathematics', institution: 'Barkatullah University', year: '2014' },
+    { degree: 'B.Ed.', institution: '', year: '' },
+  ]);
+  expect((await getStaffProfile(ctx, String(created.id)))?.qualifications[0]).toEqual({
+    degree: 'M.Sc. Mathematics',
+    institution: 'Barkatullah University',
+    year: 2014,
+  });
+  expect(await getStaffMember(other, String(created.id))).toBeNull();
 });

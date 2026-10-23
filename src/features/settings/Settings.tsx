@@ -3,6 +3,7 @@
 import Alert from '@cloudscape-design/components/alert';
 import AttributeEditor from '@cloudscape-design/components/attribute-editor';
 import Button from '@cloudscape-design/components/button';
+import Checkbox from '@cloudscape-design/components/checkbox';
 import ColumnLayout from '@cloudscape-design/components/column-layout';
 import Container from '@cloudscape-design/components/container';
 import ContentLayout from '@cloudscape-design/components/content-layout';
@@ -18,9 +19,10 @@ import Tabs from '@cloudscape-design/components/tabs';
 import TimeInput from '@cloudscape-design/components/time-input';
 import { useTranslations } from 'next-intl';
 import { type ReactNode, useState } from 'react';
+import { svg } from '@/components/icons';
 import { usePathname, useRouter } from '@/i18n/navigation';
 import type { ActionResult } from '@/lib/appError';
-import { updatePeriods, updateSchoolSettings, updateTerms } from '@/server/modules/settings/actions';
+import { updateAlertTime, updateLeaveQuotas, updatePeriods, updateQuietHours, updateSchoolSettings, updateTerms } from '@/server/modules/settings/actions';
 import type { SchoolSettings } from '@/server/modules/settings/service';
 
 const DAYS = [1, 2, 3, 4, 5, 6, 0];
@@ -89,8 +91,16 @@ export function Settings({ settings, tab }: { settings: SchoolSettings; tab: str
     ...settings.address,
   });
   const [workingDays, setWorkingDays] = useState(settings.workingDays);
+  const [shiftDueDates, setShiftDueDates] = useState(settings.shiftDueDates);
   const [periods, setPeriods] = useState(settings.periods);
   const [terms, setTerms] = useState(settings.year?.terms ?? []);
+  const [quiet, setQuiet] = useState(settings.quietHours);
+  const [alertTime, setAlertTime] = useState(settings.absenceAlertTime);
+  const [quotas, setQuotas] = useState(() => ({
+    CL: String(settings.leaveQuotas.CL),
+    SL: String(settings.leaveQuotas.SL),
+    EL: String(settings.leaveQuotas.EL),
+  }));
   const dayOptions = DAYS.map((value) => ({ value: String(value), label: t(`days.${value}`) }));
 
   const field = (name: keyof typeof school, errors: Record<string, string>, path: string = name) => (
@@ -118,7 +128,7 @@ export function Settings({ settings, tab }: { settings: SchoolSettings; tab: str
   return (
     <ContentLayout>
       <Tabs
-        activeTabId={tab === 'periods' || tab === 'terms' ? tab : 'school'}
+        activeTabId={tab === 'periods' || tab === 'terms' || tab === 'notifications' || tab === 'leave' || tab === 'attendance' || tab === 'data' ? tab : 'school'}
         onChange={({ detail }) => router.replace(`${pathname}?tab=${detail.activeTabId}`)}
         tabs={[
           {
@@ -135,6 +145,7 @@ export function Settings({ settings, tab }: { settings: SchoolSettings; tab: str
                     logoUrl: school.logoUrl,
                     address: { line1: school.line1, city: school.city, state: school.state, pincode: school.pincode },
                     workingDays,
+                    shiftDueDates,
                   })
                 }
               >
@@ -186,8 +197,92 @@ export function Settings({ settings, tab }: { settings: SchoolSettings; tab: str
                           onChange={({ detail }) => setWorkingDays(detail.selectedOptions.map((option) => Number(option.value)))}
                         />
                       </FormField>
+                      <Checkbox
+                        checked={shiftDueDates}
+                        description={t('workingDays.shiftHint')}
+                        onChange={({ detail }) => setShiftDueDates(detail.checked)}
+                      >
+                        {t('workingDays.shift')}
+                      </Checkbox>
                     </Container>
                   </SpaceBetween>
+                )}
+              </SettingsForm>
+            ),
+          },
+          {
+            id: 'data',
+            label: t('tabs.data'),
+            content: (
+              <Container
+                header={<Header variant="h2" description={t('data.description')}>{t('data.title')}</Header>}
+                footer={t('data.footer')}
+              >
+                <Button href="/api/v1/export/school" iconSvg={svg('download')}>
+                  {t('data.download')}
+                </Button>
+              </Container>
+            ),
+          },
+          {
+            id: 'attendance',
+            label: t('tabs.attendance'),
+            content: (
+              <SettingsForm submit={t('save')} saved={t('alertTime.saved')} save={() => updateAlertTime({ absenceAlertTime: alertTime })}>
+                {(errors) => (
+                  <Container header={<Header variant="h2" description={t('alertTime.description')}>{t('alertTime.title')}</Header>}>
+                    <FormField label={t('alertTime.label')} constraintText={t('alertTime.hint')} errorText={errors.absenceAlertTime}>
+                      <TimeInput format="hh:mm" placeholder="hh:mm" value={alertTime} onChange={({ detail }) => setAlertTime(detail.value)} />
+                    </FormField>
+                  </Container>
+                )}
+              </SettingsForm>
+            ),
+          },
+          {
+            id: 'leave',
+            label: t('tabs.leave'),
+            content: (
+              <SettingsForm submit={t('save')} saved={t('leave.saved')} save={() => updateLeaveQuotas(quotas)}>
+                {(errors) => (
+                  <Container header={<Header variant="h2" description={t('leave.description')}>{t('leave.title')}</Header>}>
+                    <ColumnLayout columns={3}>
+                      {(['CL', 'SL', 'EL'] as const).map((type) => (
+                        <FormField key={type} label={t(`leave.${type}`)} constraintText={t('leave.days')} errorText={errors[type]}>
+                          <Input
+                            value={quotas[type]}
+                            inputMode="numeric"
+                            autoComplete={false}
+                            onChange={({ detail }) => setQuotas({ ...quotas, [type]: detail.value })}
+                          />
+                        </FormField>
+                      ))}
+                    </ColumnLayout>
+                  </Container>
+                )}
+              </SettingsForm>
+            ),
+          },
+          {
+            id: 'notifications',
+            label: t('tabs.notifications'),
+            content: (
+              <SettingsForm submit={t('save')} saved={t('quiet.saved')} save={() => updateQuietHours(quiet)}>
+                {(errors) => (
+                  <Container header={<Header variant="h2" description={t('quiet.description')}>{t('quiet.title')}</Header>}>
+                    <ColumnLayout columns={2}>
+                      {(['start', 'end'] as const).map((key) => (
+                        <FormField key={key} label={t(`quiet.${key}`)} errorText={errors[key] ?? (key === 'end' ? errors[''] : undefined)}>
+                          <TimeInput
+                            format="hh:mm"
+                            placeholder="hh:mm"
+                            value={quiet[key]}
+                            onChange={({ detail }) => setQuiet({ ...quiet, [key]: detail.value })}
+                          />
+                        </FormField>
+                      ))}
+                    </ColumnLayout>
+                  </Container>
                 )}
               </SettingsForm>
             ),

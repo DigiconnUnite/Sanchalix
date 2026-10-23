@@ -6,6 +6,7 @@ import { can } from '@/server/auth/permissions';
 import { paginate } from '@/server/db/paginate';
 import { AcademicYear } from '@/server/models/academicYear';
 import { LEAVE_STATUSES, LEAVE_TYPES, LeaveRequest } from '@/server/models/leaveRequest';
+import { School } from '@/server/models/school';
 import { Staff } from '@/server/models/staff';
 
 const E = 'hr.leave.errors';
@@ -56,9 +57,8 @@ export type LeaveRow = {
   isMine: boolean;
 };
 
-// ponytail: the same yearly allowance at every school. Leave without pay has no limit. Read these from leaveTypes
-// once the school can set its own in Settings.
-export const LEAVE_QUOTAS: Partial<Record<(typeof LEAVE_TYPES)[number], number>> = { CL: 12, SL: 10, EL: 15 };
+export const PAID_LEAVE = ['CL', 'SL', 'EL'] as const;
+export const DEFAULT_LEAVE_QUOTAS: Record<(typeof PAID_LEAVE)[number], number> = { CL: 12, SL: 10, EL: 15 };
 
 export type LeaveBalance = { type: (typeof LEAVE_TYPES)[number]; quota: number; used: number; pending: number; left: number };
 
@@ -74,7 +74,10 @@ export async function getLeaveBalances(ctx: RequestContext): Promise<LeaveBalanc
   })
     .select('leaveTypeCode from to halfDay status')
     .lean();
-  return Object.entries(LEAVE_QUOTAS).map(([type, quota]) => {
+  const school = await School.findById(ctx.schoolId).select('settings.leaveQuotas').lean();
+  const quotas = { ...DEFAULT_LEAVE_QUOTAS, ...school?.settings?.leaveQuotas };
+  return PAID_LEAVE.map((type) => {
+    const quota = quotas[type];
     const days = (status: string) =>
       requests
         .filter((request) => request.leaveTypeCode === type && request.status === status)

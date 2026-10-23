@@ -33,6 +33,15 @@ export function TransferCertificateView({ certificate }: { certificate: Transfer
           description={[certificate.schoolName, certificate.schoolAddress].filter(Boolean).join(' · ')}
           actions={
             <div className="vw-no-print">
+              <SpaceBetween direction="horizontal" size="xs">
+              <Button
+                href={`/api/v1/students/${certificate.studentId}/transfer-certificate`}
+                target="_blank"
+                iconSvg={svg('download')}
+                ariaLabel={t('downloadLabel', { name: certificate.name })}
+              >
+                {t('download')}
+              </Button>
               <Button
                 variant="primary"
                 iconSvg={svg('print')}
@@ -41,6 +50,7 @@ export function TransferCertificateView({ certificate }: { certificate: Transfer
               >
                 {t('print')}
               </Button>
+              </SpaceBetween>
             </div>
           }
         >

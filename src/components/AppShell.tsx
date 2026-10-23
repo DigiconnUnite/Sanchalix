@@ -5,6 +5,7 @@ import BreadcrumbGroup from '@cloudscape-design/components/breadcrumb-group';
 import ContentLayout from '@cloudscape-design/components/content-layout';
 import Header from '@cloudscape-design/components/header';
 import Icon from '@cloudscape-design/components/icon';
+import Link from 'next/link';
 import SideNavigation from '@cloudscape-design/components/side-navigation';
 import TopNavigation from '@cloudscape-design/components/top-navigation';
 import { applyMode, Mode } from '@cloudscape-design/global-styles';
@@ -19,7 +20,7 @@ import { useIsMobile } from '@/lib/useIsMobile';
 import type { VisualMode } from '@/lib/visualMode';
 
 // Paths that are part of a URL but have no page of their own, so they get no crumb.
-const NO_PAGE = [/^\/fees\/structures\/[0-9a-f]{24}$/, /^\/academics\/sections$/, /^\/fees$/, /^\/academics$/, /^\/attendance$/, /^\/calendar$/, /^\/communication$/];
+const NO_PAGE = [/^\/staff\/attendance$/, /^\/fees\/structures\/[0-9a-f]{24}$/, /^\/academics\/sections$/, /^\/fees$/, /^\/academics$/, /^\/attendance$/, /^\/calendar$/, /^\/communication$/];
 
 const VIEW_ALL = 'view-all';
 
@@ -34,6 +35,8 @@ export function AppShell({
   signOut,
   otherRoles,
   switchRole,
+  otherSchools,
+  switchSchool,
   visualMode,
   setVisualMode,
   unread,
@@ -52,6 +55,8 @@ export function AppShell({
   signOut: () => Promise<unknown>;
   otherRoles: { role: string; label: string }[];
   switchRole: (role: string) => Promise<unknown>;
+  otherSchools: { id: string; name: string }[];
+  switchSchool: (schoolId: string) => Promise<unknown>;
   children: ReactNode;
 }) {
   const t = useTranslations('shell');
@@ -137,15 +142,11 @@ export function AppShell({
           aria-label={t('makerLogoAlt')}
           title={t('makerLogoAlt')}
         />
-        <a
+        <Link
           // Cloudscape's own header context, so the box takes the header's dark colours in both light and dark mode.
           className="vw-platform-logo awsui-context-top-navigation"
           href="/"
           aria-label={t('platformLogoAlt')}
-          onClick={(event) => {
-            event.preventDefault();
-            router.push('/');
-          }}
         />
         <TopNavigation
           identity={{
@@ -210,6 +211,11 @@ export function AppShell({
                   text: t('switchTo', { role: label }),
                   iconSvg: svg('switchRole'),
                 })),
+                ...otherSchools.map(({ id, name }) => ({
+                  id: `school:${id}`,
+                  text: t('switchSchool', { school: name }),
+                  iconSvg: svg('school'),
+                })),
                 { id: 'signOut', text: t('signOut'), iconSvg: svg('signOut') },
               ],
               onItemClick: ({ detail }) => {
@@ -217,6 +223,10 @@ export function AppShell({
                 // A different role means a different menu and home page, so the app is loaded afresh.
                 if (detail.id.startsWith('role:')) {
                   return void switchRole(detail.id.slice(5)).then(() => window.location.assign('/'));
+                }
+                // Another school is a different tenant, so everything is loaded afresh there too.
+                if (detail.id.startsWith('school:')) {
+                  return void switchSchool(detail.id.slice(7)).then(() => window.location.assign('/'));
                 }
                 void signOut().then(() => router.replace('/signin'));
               },

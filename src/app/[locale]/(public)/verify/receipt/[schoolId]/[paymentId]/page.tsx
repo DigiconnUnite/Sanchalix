@@ -12,6 +12,7 @@ import { connectDb } from '@/server/db/connect';
 import { Payment } from '@/server/models/payment';
 import { School } from '@/server/models/school';
 import { isReceiptLink } from '@/server/modules/fees/receiptPdf';
+import { clientIp, withinLimit } from '@/server/rateLimit';
 
 const ID = /^[0-9a-f]{24}$/;
 const date = new Intl.DateTimeFormat('en-IN', { dateStyle: 'long', timeZone: 'Asia/Kolkata' });
@@ -32,7 +33,9 @@ export default async function VerifyReceiptPage({
 }) {
   const [{ schoolId, paymentId }, { s }, t] = await Promise.all([params, searchParams, getTranslations('fees.verify')]);
   // The school id comes from the address, which is safe only because the signature covers it.
-  const genuine = ID.test(schoolId) && ID.test(paymentId) && typeof s === 'string' && isReceiptLink(schoolId, paymentId, s);
+  // Checking is open to anyone holding a receipt, so one caller can't be allowed to try links without end.
+  const allowed = await withinLimit('verifyReceipt', await clientIp(), 60, 60);
+  const genuine = allowed && ID.test(schoolId) && ID.test(paymentId) && typeof s === 'string' && isReceiptLink(schoolId, paymentId, s);
   await connectDb();
   const [payment, school] = genuine
     ? await Promise.all([
@@ -62,8 +65,8 @@ export default async function VerifyReceiptPage({
               </SpaceBetween>
             ) : (
               <SpaceBetween size="s">
-                <StatusIndicator type="error">{t('invalid')}</StatusIndicator>
-                <Box color="text-body-secondary">{t('invalidBody')}</Box>
+                <StatusIndicator type="error">{t(allowed ? 'invalid' : 'tooMany')}</StatusIndicator>
+                <Box color="text-body-secondary">{t(allowed ? 'invalidBody' : 'tooManyBody')}</Box>
               </SpaceBetween>
             )}
           </Container>

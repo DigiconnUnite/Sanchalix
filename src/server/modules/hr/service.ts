@@ -9,6 +9,7 @@ import { Section } from '@/server/models/section';
 import { Staff } from '@/server/models/staff';
 import { Subject } from '@/server/models/subject';
 import { TimetableSlot } from '@/server/models/timetableSlot';
+import { toDocumentRows } from '@/server/modules/sis/documents';
 import { getLeaveBalances } from './leave';
 import type { ListStaff, StaffInput, StaffMember, StaffProfile, StaffRow, StaffUpdate } from './schemas';
 
@@ -20,7 +21,7 @@ const scopeOf = (ctx: RequestContext) => ({
 export async function getStaffMember(ctx: RequestContext, id: string): Promise<StaffMember | null> {
   if (!/^[0-9a-f]{24}$/.test(id)) return null;
   const member = await Staff.findOne({ ...scopeOf(ctx), _id: id })
-    .select('name designation department type phone email joinedOn status')
+    .select('name designation department type phone email joinedOn status qualifications')
     .lean();
   return (
     member && {
@@ -33,6 +34,11 @@ export async function getStaffMember(ctx: RequestContext, id: string): Promise<S
       email: member.email ?? '',
       joinedOn: member.joinedOn,
       status: member.status,
+      qualifications: member.qualifications.map((item) => ({
+        degree: item.degree ?? '',
+        institution: item.institution ?? '',
+        year: item.year ? String(item.year) : '',
+      })),
     }
   );
 }
@@ -43,7 +49,7 @@ export async function getStaffProfile(ctx: RequestContext, id: string): Promise<
   const { schoolId } = ctx;
   const [member, year] = await Promise.all([
     Staff.findOne({ ...scopeOf(ctx), _id: id })
-      .select('name employeeNo designation department type phone email joinedOn status userId')
+      .select('name employeeNo designation department type phone email joinedOn status userId qualifications documents')
       .lean(),
     AcademicYear.findOne({ schoolId, status: 'current' }).select('_id').lean(),
   ]);
@@ -75,6 +81,12 @@ export async function getStaffProfile(ctx: RequestContext, id: string): Promise<
     joinedOn: member.joinedOn,
     status: member.status,
     hasAccount: Boolean(member.userId),
+    qualifications: member.qualifications.map((item) => ({
+      degree: item.degree ?? '',
+      institution: item.institution ?? '',
+      year: item.year ?? null,
+    })),
+    documents: toDocumentRows(member.documents),
     classTeacherOf: ownSections.map((section) => section.displayName),
     teaches: subjects.map((subject) => {
       const own = slots.filter((slot) => slot.subjectId.equals(subject._id));

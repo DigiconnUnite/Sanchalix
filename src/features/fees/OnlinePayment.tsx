@@ -10,13 +10,35 @@ import KeyValuePairs from '@cloudscape-design/components/key-value-pairs';
 import SpaceBetween from '@cloudscape-design/components/space-between';
 import StatusIndicator, { type StatusIndicatorProps } from '@cloudscape-design/components/status-indicator';
 import { useTranslations } from 'next-intl';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useCrumb } from '@/components/Crumb';
 import { svg } from '@/components/icons';
 import { useRouter } from '@/i18n/navigation';
 import { formatMoney } from '@/lib/money';
 import { createCheckout, payTestOrder } from '@/server/modules/fees/actions';
 import type { OrderView } from '@/server/modules/fees/online';
+
+type RazorpayCheckout = {
+  open: () => void;
+  on: (event: 'payment.failed', handler: () => void) => void;
+};
+type RazorpayWindow = {
+  Razorpay?: new (options: Record<string, unknown>) => RazorpayCheckout;
+};
+
+// Razorpay's own script draws the payment form (cards, UPI, netbanking), so no card detail ever touches this app.
+const CHECKOUT_SCRIPT = 'https://checkout.razorpay.com/v1/checkout.js';
+function loadCheckout() {
+  const win = window as unknown as RazorpayWindow;
+  if (win.Razorpay) return Promise.resolve(win.Razorpay);
+  return new Promise<NonNullable<RazorpayWindow['Razorpay']>>((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = CHECKOUT_SCRIPT;
+    script.onload = () => (win.Razorpay ? resolve(win.Razorpay) : reject(new Error('missing')));
+    script.onerror = () => reject(new Error('blocked'));
+    document.head.append(script);
+  });
+}
 
 const STATUS_TYPE: Record<OrderView['status'], StatusIndicatorProps.Type> = {
   created: 'pending',
@@ -55,8 +77,51 @@ export function OrderPage({ order }: { order: OrderView }) {
   const router = useRouter();
   const [busy, setBusy] = useState<'captured' | 'failed' | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // After the parent pays at Razorpay, the receipt is written when Razorpay's signed message reaches us, which can
+  // take a few seconds. The page asks again until it has.
+  const [confirming, setConfirming] = useState(false);
   const amount = formatMoney(order.amountMinor);
   useCrumb(t('crumb'));
+
+  useEffect(() => {
+    if (!confirming || order.status !== 'created') return;
+    let tries = 0;
+    const timer = setInterval(() => {
+      tries += 1;
+      router.refresh();
+      if (tries >= 20) {
+        clearInterval(timer);
+        setConfirming(false);
+      }
+    }, 3000);
+    return () => clearInterval(timer);
+  }, [confirming, order.status, router]);
+
+  async function payWithRazorpay() {
+    setError(null);
+    setBusy('captured');
+    try {
+      const Razorpay = await loadCheckout();
+      const checkout = new Razorpay({
+        key: order.keyId,
+        order_id: order.orderId,
+        amount: order.amountMinor,
+        currency: 'INR',
+        name: t('checkoutName'),
+        description: order.installments.join(', '),
+        handler: () => setConfirming(true),
+        modal: { ondismiss: () => setBusy(null) },
+      });
+      checkout.on('payment.failed', () => {
+        setBusy(null);
+        setError(t('razorpay.failed'));
+      });
+      checkout.open();
+    } catch {
+      setBusy(null);
+      setError(t('razorpay.blocked'));
+    }
+  }
 
   async function pay(outcome: 'captured' | 'failed') {
     setBusy(outcome);
@@ -92,6 +157,21 @@ export function OrderPage({ order }: { order: OrderView }) {
             ]}
           />
         </Container>
+        {confirming && order.status === 'created' && (
+          <Alert type="info">
+            <StatusIndicator type="loading">{t('razorpay.confirming')}</StatusIndicator>
+          </Alert>
+        )}
+        {order.status === 'created' && order.provider === 'razorpay' && order.keyId && !confirming && (
+          <Container header={<Header variant="h2">{t('razorpay.title')}</Header>}>
+            <SpaceBetween size="m">
+              <Box>{t('razorpay.body')}</Box>
+              <Button variant="primary" iconSvg={svg('onlinePayment')} loading={busy === 'captured'} onClick={() => void payWithRazorpay()}>
+                {t('razorpay.pay', { amount })}
+              </Button>
+            </SpaceBetween>
+          </Container>
+        )}
         {order.status === 'created' && order.provider === 'dev' && (
           <Container header={<Header variant="h2">{t('test.title')}</Header>}>
             <SpaceBetween size="m">

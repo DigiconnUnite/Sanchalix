@@ -4,9 +4,11 @@ import type { RequestContext } from '@/server/auth/context';
 import { connectDb } from '@/server/db/connect';
 import { LeaveRequest } from '@/server/models/leaveRequest';
 import { todayIn, weekdayOf } from '@/lib/dates';
+import { School } from '@/server/models/school';
 import { Staff } from '@/server/models/staff';
 import { StaffAttendance } from '@/server/models/staffAttendance';
 import { applyLeave, cancelLeave, decideLeave, getLeaveBalances, LeaveInput, listLeave } from './leave';
+import { LeaveQuotasInput, saveLeaveQuotas } from '@/server/modules/settings/service';
 import { getStaffSheet, saveStaffAttendance } from './staffAttendance';
 
 const schoolId = new Types.ObjectId();
@@ -150,4 +152,21 @@ it('counts approved and waiting days against the yearly allowance', async () => 
   await expect(
     applyLeave(fresh, LeaveInput.parse({ leaveTypeCode: 'LOP', from: '2027-01-05', to: '2027-02-20', reason: 'Long leave' })),
   ).resolves.toBeDefined();
+});
+
+it('uses the school’s own allowance when it sets one', async () => {
+  const school = await School.create({
+    organizationId: new Types.ObjectId(),
+    name: 'Quota School',
+    code: `Z${Date.now().toString(36).slice(-5).toUpperCase()}`,
+    board: 'CBSE',
+    address: { line1: '1 Road', city: 'Bhopal', state: 'MP', pincode: '462001', country: 'IN' },
+  });
+  const own = person('teacher', school._id);
+  expect((await getLeaveBalances(own)).map(({ quota }) => quota)).toEqual([12, 10, 15]);
+  await saveLeaveQuotas(person('school_admin', school._id), { CL: 3, SL: 4, EL: 5 });
+  expect((await getLeaveBalances(own)).map(({ quota }) => quota)).toEqual([3, 4, 5]);
+  expect(LeaveQuotasInput.safeParse({ CL: 400, SL: 1, EL: 1 }).success).toBe(false);
+  expect(LeaveQuotasInput.safeParse({ CL: '8', SL: 1, EL: 1 }).success).toBe(true);
+  await expect(applyLeave(own, request('2026-12-01', '2026-12-05'))).rejects.toMatchObject({ code: 'BUSINESS_RULE', details: { left: 3 } });
 });
