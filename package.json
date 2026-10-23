@@ -15,7 +15,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "e2e": "playwright test",
-    "seed": "tsx --conditions=react-server --env-file=.env.local scripts/seed.ts",
+    "seed": "node --conditions=react-server --env-file=.env.local node_modules/tsx/dist/cli.mjs scripts/seed.ts",
     "totp": "tsx scripts/totp.ts",
     "db:up": "docker compose up -d --wait",
     "db:down": "docker compose down"

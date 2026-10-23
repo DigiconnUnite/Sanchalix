@@ -30,6 +30,7 @@ import { FeeHeadInput, FeeStructureInput } from '@/server/modules/fees/schemas';
 import { approveFeeStructure, createFeeHead, createFeeStructure } from '@/server/modules/fees/service';
 import { StaffInput } from '@/server/modules/hr/schemas';
 import { createStaff } from '@/server/modules/hr/service';
+import { addDocument, verifyDocument } from '@/server/modules/sis/documents';
 import { createSubject } from '@/server/modules/timetable/service';
 
 const ADDRESS = { line1: '12 School Road', city: 'Bhopal', state: 'Madhya Pradesh', pincode: '462001' };
@@ -362,7 +363,14 @@ export async function seedGreenValleyDemo(schoolId: Types.ObjectId, domain: stri
     const reached = stage === 'rejected' || stage === 'withdrawn' ? 1 : (path as readonly string[]).indexOf(stage) + 1;
     for (const to of path.slice(0, reached)) await moveAdmission(admin, { id, to, note: '' });
     if (stage === 'rejected' || stage === 'withdrawn') await moveAdmission(admin, { id, to: stage, note: 'Seat not required' });
-    if (index === 5) await acceptAdmission(admin, { id, sectionId: String(firstSection._id), address: ADDRESS });
+    if (index === 5) {
+      const pdf = new TextEncoder().encode('%PDF-1.4\n% synthetic demo document\n');
+      for (const type of ['birth_certificate', 'photo'] as const) {
+        const document = await addDocument(admin, id, { type, fileName: `${type}.pdf`, bytes: pdf }, 'admission');
+        await verifyDocument(admin, id, String(document.id), 'admission');
+      }
+      await acceptAdmission(admin, { id, sectionId: String(firstSection._id), address: ADDRESS });
+    }
   }
 
   // Exams: a finished unit test with published results, and a half-yearly that is open for marks.
