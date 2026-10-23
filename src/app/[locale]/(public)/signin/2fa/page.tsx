@@ -5,7 +5,7 @@ import { TotpChallengeForm } from '@/features/auth/TotpChallengeForm';
 import { TotpSetupWizard } from '@/features/auth/TotpSetupWizard';
 import { redirect } from '@/i18n/navigation';
 import { safeNext } from '@/lib/safeNext';
-import { getContext, getPendingSession } from '@/server/auth/context';
+import { getContext, getPendingSession, getPlatformContext } from '@/server/auth/context';
 import { getTotpSetup } from '@/server/auth/twoFactor';
 
 export async function generateMetadata() {
@@ -21,7 +21,7 @@ export default async function TwoFactorPage({
 }) {
   const pending = await getPendingSession();
   if (!pending) {
-    const href = (await getContext()) ? safeNext((await searchParams).next) : '/signin';
+    const href = (await getContext()) || (await getPlatformContext()) ? safeNext((await searchParams).next) : '/signin';
     return redirect({ href, locale: await getLocale() });
   }
 

@@ -225,3 +225,31 @@ it('builds draft cards from published results, lets the class teacher remark, an
   await expect(saveRemarks(principal, { id, principalRemark: 'Changed' })).rejects.toMatchObject({ code: 'BUSINESS_RULE' });
   expect(await generateReportCards(admin, sectionA)).toMatchObject({ generated: 0, alreadyPublished: 3 });
 });
+
+it('lists and accepts marks for an optional subject only from the students who take it', async () => {
+  const sanskrit = await Subject.create({ schoolId, name: 'Sanskrit', code: 'SKT', type: 'scholastic', isOptional: true });
+  const year = await AcademicYear.findOne({ schoolId, status: 'current' }).orFail().lean();
+  await TimetableSlot.create({
+    schoolId,
+    branchId: new Types.ObjectId(),
+    academicYearId: year._id,
+    sectionId: sectionA,
+    day: 2,
+    period: 1,
+    subjectId: sanskrit._id,
+    teacherId: mathsTeacher.staffId ?? new Types.ObjectId(),
+  });
+  const exam = await createExam(admin, { name: 'Unit test 2', type: 'unit_test', classIds: [classId] });
+  await addSchedule(admin, ScheduleInput.parse({ examId: String(exam.id), classId, subjectId: String(sanskrit._id), date: '2026-12-02', maxMarks: '20', passMarks: '7' }));
+  const paper = (await getExam(admin, String(exam.id)))?.schedules[0]?.id ?? '';
+
+  expect((await getMarksSheet(admin, paper, sectionA)).students).toEqual([]);
+  await Enrollment.updateOne({ schoolId, studentId: students[1] ?? new Types.ObjectId() }, { optionalSubjectIds: [sanskrit._id] });
+  const sheet = await getMarksSheet(admin, paper, sectionA);
+  expect(sheet.students.map((student) => student.id)).toEqual([String(students[1])]);
+
+  const save = (studentId: Types.ObjectId | undefined) =>
+    saveMarks(mathsTeacher, { examScheduleId: paper, sectionId: sectionA, entries: [{ studentId: String(studentId), marks: 12, isAbsent: false }] });
+  await expect(save(students[0])).rejects.toMatchObject({ code: 'VALIDATION' });
+  expect(await save(students[1])).toMatchObject({ saved: 1 });
+});

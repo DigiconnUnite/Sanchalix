@@ -4,6 +4,7 @@ import { Types } from 'mongoose';
 import { AppError } from '@/lib/appError';
 import type { RequestContext } from '@/server/auth/context';
 import { Admission } from '@/server/models/admission';
+import { Staff } from '@/server/models/staff';
 import { Student } from '@/server/models/student';
 import { detectFileKind, getFile, MAX_FILE_BYTES, putFile, removeFile, safeFileName } from '@/server/storage/store';
 
@@ -17,13 +18,16 @@ export const DOCUMENT_TYPES = [
   'medical',
   'other',
 ] as const;
-export type DocumentType = (typeof DOCUMENT_TYPES)[number];
+export const STAFF_DOCUMENT_TYPES = ['qualification', 'id_proof', 'appointment_letter', 'experience_letter', 'other'] as const;
+export type DocumentType = (typeof DOCUMENT_TYPES)[number] | (typeof STAFF_DOCUMENT_TYPES)[number];
+const typesOf = (owner: DocumentOwner): readonly string[] => (owner === 'staff' ? STAFF_DOCUMENT_TYPES : DOCUMENT_TYPES);
 export const MAX_BYTES = MAX_FILE_BYTES;
 
 /** An applicant's documents are kept on the application until they are admitted, then move to the student. */
-export type DocumentOwner = 'student' | 'admission';
-// Both models keep the same `documents`, `branchId` and `updatedBy` fields, which is all that is touched here.
-const modelOf = (owner: DocumentOwner) => (owner === 'admission' ? Admission : Student) as unknown as typeof Student;
+export type DocumentOwner = 'student' | 'admission' | 'staff';
+// The models keep the same `documents`, `branchId` and `updatedBy` fields, which is all that is touched here.
+const MODELS = { student: Student, admission: Admission, staff: Staff };
+const modelOf = (owner: DocumentOwner) => MODELS[owner] as unknown as typeof Student;
 
 type Stored = { _id: unknown; type: string; fileName: string; size: number; verifiedAt?: Date | null };
 export const toDocumentRows = (documents: Stored[]): DocumentRow[] =>
@@ -49,9 +53,13 @@ const scopeOf = (ctx: RequestContext) => ({
 });
 const valid = (id: string) => Types.ObjectId.isValid(id);
 
-export async function listDocuments(ctx: RequestContext, studentId: string): Promise<DocumentRow[]> {
+export async function listDocuments(
+  ctx: RequestContext,
+  studentId: string,
+  owner: DocumentOwner = 'student',
+): Promise<DocumentRow[]> {
   const student = valid(studentId)
-    ? await Student.findOne({ ...scopeOf(ctx), _id: studentId }).select('documents').lean()
+    ? await modelOf(owner).findOne({ ...scopeOf(ctx), _id: studentId }).select('documents').lean()
     : null;
   return toDocumentRows(student?.documents ?? []);
 }
@@ -63,7 +71,7 @@ export async function addDocument(
   owner: DocumentOwner = 'student',
 ) {
   const Owner = modelOf(owner);
-  if (!DOCUMENT_TYPES.includes(input.type as DocumentType)) throw new AppError('VALIDATION', `${E}.type`);
+  if (!typesOf(owner).includes(input.type)) throw new AppError('VALIDATION', `${E}.type`);
   if (input.bytes.length === 0 || input.bytes.length > MAX_BYTES) throw new AppError('VALIDATION', `${E}.size`);
   const kind = detectFileKind(input.bytes);
   if (!kind) throw new AppError('VALIDATION', `${E}.kind`);

@@ -1,6 +1,8 @@
 import 'server-only';
+import { randomUUID } from 'node:crypto';
 import { Types } from 'mongoose';
 import { AppError } from '@/lib/appError';
+import { env } from '@/lib/env';
 import { startOfDayIn, todayIn } from '@/lib/dates';
 import type { RequestContext } from '@/server/auth/context';
 import { can, type RoleKey } from '@/server/auth/permissions';
@@ -11,7 +13,9 @@ import { Notification } from '@/server/models/notification';
 import { School } from '@/server/models/school';
 import { Section } from '@/server/models/section';
 import { User } from '@/server/models/user';
+import { sendMessages } from '@/server/messaging/send';
 import { ownStudentIds } from '@/server/modules/portal/own';
+import { detectFileKind, getFile, putFile, safeFileName } from '@/server/storage/store';
 import type {
   AnnouncementDetail,
   AnnouncementInput,
@@ -23,7 +27,7 @@ import type {
 const EXCERPT = 140;
 
 /** Accounts tied to the sections: their students, those students' guardians, and the class teachers. */
-async function sectionRecipientIds(ctx: Pick<RequestContext, 'schoolId'>, sectionIds: string[]) {
+export async function sectionRecipientIds(ctx: Pick<RequestContext, 'schoolId'>, sectionIds: string[]) {
   const { schoolId } = ctx;
   const [students, sections] = await Promise.all([
     Enrollment.distinct('studentId', { schoolId, sectionId: { $in: sectionIds }, status: 'active' }),
@@ -61,7 +65,13 @@ async function recipientIds(ctx: Pick<RequestContext, 'schoolId'>, audience: Aud
 export const countRecipients = async (ctx: RequestContext, audience: Audience) =>
   (await recipientIds(ctx, audience)).length;
 
-type Published = { _id: Types.ObjectId; title: string; body: string; authorId: Types.ObjectId };
+type Published = {
+  _id: Types.ObjectId;
+  title: string;
+  body: string;
+  authorId: Types.ObjectId;
+  channels?: string[] | null;
+};
 
 // ponytail: written in the request because there is no queue. Fine for a school-sized audience; batch it when one
 // announcement reaches tens of thousands of accounts.
@@ -81,7 +91,38 @@ async function notify(schoolId: Types.ObjectId, announcement: Published, recipie
       })),
     );
   }
+  await sendOutside(schoolId, announcement, others);
   return others.length;
+}
+
+/** Email and text copies for the people who have not switched that channel off. Texts wait out quiet hours. */
+async function sendOutside(schoolId: Types.ObjectId, announcement: Published, userIds: Types.ObjectId[]) {
+  const channels = (announcement.channels ?? []).filter((channel): channel is 'email' | 'sms' => channel === 'email' || channel === 'sms');
+  if (channels.length === 0 || userIds.length === 0) return;
+  const users = await User.find({ _id: { $in: userIds } }).select('email phone notificationPrefs').lean();
+  const id = announcement._id.toString();
+  const link = `${env.APP_URL}/communication/announcements/${id}`;
+  await sendMessages(
+    users.flatMap((user) =>
+      channels.flatMap((channel) => {
+        const to = channel === 'email' ? user.email : user.phone;
+        const off = user.notificationPrefs.some((pref) => pref.channel === channel && pref.category === 'announcements' && !pref.enabled);
+        if (!to || off) return [];
+        return [
+          {
+            schoolId,
+            channel,
+            to,
+            template: 'announcement',
+            dedupeKey: `announcement:${id}:${user._id.toString()}:${channel}`,
+            ...(channel === 'email'
+              ? { subject: announcement.title, body: `${announcement.body}\n\n${link}` }
+              : { body: `${announcement.title} ${link}` }),
+          },
+        ];
+      }),
+    ),
+  );
 }
 
 /**
@@ -109,7 +150,7 @@ export async function publishDueAnnouncements(schoolId: Types.ObjectId) {
 
 export async function publishAnnouncement(
   ctx: RequestContext,
-  input: Omit<AnnouncementInput, 'requiresAck'> & { requiresAck?: boolean },
+  input: Omit<AnnouncementInput, 'requiresAck' | 'channels'> & { requiresAck?: boolean; channels?: AnnouncementInput['channels'] },
 ) {
   const { schoolId } = ctx;
   const school = await School.findById(schoolId).select('timezone').lean();
@@ -132,7 +173,7 @@ export async function publishAnnouncement(
         : input.audience.type === 'section'
           ? { type: 'section', ids: input.audience.sectionIds, roles: [] }
           : { type: 'school', roles: [] },
-    channels: ['in_app'],
+    channels: ['in_app', ...(input.channels ?? [])],
     status: scheduled ? 'scheduled' : 'published',
     publishAt: scheduled && input.publishOn ? startOfDayIn(timezone, input.publishOn) : new Date(),
     // Shown through the end of that day, so the stored moment is the start of the next one.
@@ -188,6 +229,7 @@ type Stored = {
   status?: string | null;
   audience?: { type: string; roles?: string[] | null; ids?: Types.ObjectId[] | null } | null;
   requiresAck?: boolean | null;
+  attachments?: { _id: unknown; fileName: string }[] | null;
 };
 
 async function toRows(ctx: RequestContext, announcements: Stored[]): Promise<(AnnouncementRow & { body: string })[]> {
@@ -217,6 +259,7 @@ async function toRows(ctx: RequestContext, announcements: Stored[]): Promise<(An
             }
           : { type: 'school' },
     requiresAck: Boolean(announcement.requiresAck),
+    attachments: (announcement.attachments ?? []).map((file) => ({ id: String(file._id), fileName: file.fileName })),
     scheduled: announcement.status === 'scheduled',
     // Stored as the start of the day after; the day shown is the one before that moment.
     expiresOn: announcement.expiresAt ? new Date(announcement.expiresAt.getTime() - 1).toISOString() : null,
@@ -246,6 +289,41 @@ export async function getAnnouncement(ctx: RequestContext, id: string): Promise<
     acknowledged:
       announcement.requiresAck && !isAuthor ? acks.some((ack) => ack.userId.equals(ctx.userId)) : null,
   };
+}
+
+const MAX_ATTACHMENTS = 3;
+
+/** The author attaches a PDF or image (up to 5 MB) to their own announcement, up to three of them. */
+export async function addAnnouncementAttachment(ctx: RequestContext, id: string, input: { fileName: string; bytes: Uint8Array }) {
+  const kind = detectFileKind(input.bytes);
+  if (!kind) throw new AppError('VALIDATION', 'comms.errors.file');
+  const announcement = Types.ObjectId.isValid(id)
+    ? await Announcement.findOne({ schoolId: ctx.schoolId, _id: id, authorId: ctx.userId }).select('attachments').lean()
+    : null;
+  if (!announcement) throw new AppError('NOT_FOUND', 'comms.errors.notFound');
+  if ((announcement.attachments ?? []).length >= MAX_ATTACHMENTS) {
+    throw new AppError('BUSINESS_RULE', 'comms.errors.tooManyFiles', { max: MAX_ATTACHMENTS });
+  }
+  const key = `${ctx.schoolId.toString()}/${id}/${randomUUID()}.${kind.ext}`;
+  await putFile(key, input.bytes);
+  const fileName = safeFileName(input.fileName, kind.ext);
+  await Announcement.updateOne(
+    { schoolId: ctx.schoolId, _id: announcement._id },
+    { $push: { attachments: { key, fileName, mime: kind.mime, size: input.bytes.length } }, updatedBy: ctx.userId },
+  );
+  return { id: announcement._id, fileName };
+}
+
+/** A file of an announcement, for whoever can see the announcement. */
+export async function readAnnouncementAttachment(ctx: RequestContext, id: string, attachmentId: string) {
+  if (!Types.ObjectId.isValid(id) || !Types.ObjectId.isValid(attachmentId)) throw new AppError('NOT_FOUND', 'comms.errors.notFound');
+  const announcement = await Announcement.findOne(await visibleTo(ctx))
+    .and([{ _id: id, 'attachments._id': attachmentId }])
+    .select('attachments')
+    .lean();
+  const file = announcement?.attachments.find((candidate) => String(candidate._id) === attachmentId);
+  if (!announcement || !file) throw new AppError('NOT_FOUND', 'comms.errors.notFound');
+  return { fileName: file.fileName, mime: file.mime, bytes: await getFile(file.key) };
 }
 
 /** A recipient confirms they have read a notice. Confirming twice changes nothing. */

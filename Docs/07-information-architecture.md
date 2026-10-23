@@ -62,6 +62,9 @@ flowchart TD
 Items show the icon key in brackets. Items marked *(v1)* or *(v2)* are hidden until that release ([05-roadmap.md](05-roadmap.md)). A module a school has switched off in Settings is also hidden.
 
 ### super_admin
+
+Built so far (under `/platform`): Platform overview, Schools and Platform audit log. The rest of this list is not built.
+
 1. Dashboard [`dashboard`]
 2. Organizations [`organization`]
 3. Schools [`school`]

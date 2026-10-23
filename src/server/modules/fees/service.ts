@@ -1,5 +1,6 @@
 import 'server-only';
 import { AppError } from '@/lib/appError';
+import { nextWorkingDay } from '@/lib/dates';
 import { splitByPercent } from '@/lib/money';
 import type { RequestContext } from '@/server/auth/context';
 import { withTransaction } from '@/server/db/transaction';
@@ -9,7 +10,9 @@ import { Counter } from '@/server/models/counter';
 import { Enrollment } from '@/server/models/enrollment';
 import { FeeHead } from '@/server/models/feeHead';
 import { FeeStructure } from '@/server/models/feeStructure';
+import { Holiday } from '@/server/models/holiday';
 import { Invoice } from '@/server/models/invoice';
+import { School } from '@/server/models/school';
 import { getCurrentYearId } from '@/server/modules/academics/queries';
 import { discountsFor, priceInvoice } from './discounts';
 import type { FeeHeadInput, FeeStructureInput } from './schemas';
@@ -118,6 +121,13 @@ export async function approveFeeStructure(ctx: RequestContext, id: string) {
     structure.academicYearId,
   );
 
+  const school = await School.findById(schoolId).select('settings.workingDays settings.shiftDueDates').lean();
+  const holidays = school?.settings?.shiftDueDates
+    ? new Set((await Holiday.find({ schoolId }).select('date').lean()).map((holiday) => holiday.date))
+    : null;
+  const dueDateOf = (date: string) =>
+    holidays ? nextWorkingDay(date, holidays, school?.settings?.workingDays ?? [1, 2, 3, 4, 5, 6]) : date;
+
   return withTransaction(async (session) => {
     const approved = await FeeStructure.updateOne(
       { schoolId, _id: structure._id, status: 'draft' },
@@ -161,7 +171,7 @@ export async function approveFeeStructure(ctx: RequestContext, id: string) {
           concessions,
           totalMinor,
           balanceMinor: totalMinor,
-          dueDate: installment.dueDate,
+          dueDate: dueDateOf(installment.dueDate),
           status: 'issued' as const,
           createdBy: ctx.userId,
           updatedBy: ctx.userId,

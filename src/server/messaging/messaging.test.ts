@@ -1,5 +1,5 @@
 import mongoose, { Types } from 'mongoose';
-import { afterAll, beforeAll, expect, it } from 'vitest';
+import { afterAll, beforeAll, expect, it, vi } from 'vitest';
 import type { RequestContext } from '@/server/auth/context';
 import { requestOtp, requestPasswordReset, resetPassword, verifyOtp } from '@/server/auth/recovery';
 import { hashPassword, verifyPassword } from '@/server/auth/service';
@@ -15,7 +15,8 @@ import { User } from '@/server/models/user';
 import { StudentInput } from '@/server/modules/sis/schemas';
 import { createStudent } from '@/server/modules/sis/service';
 import { sendAbsenceAlerts, sendDuesReminders } from './alerts';
-import { listOutbox, sendMessages } from './send';
+import { quietUntil } from './quietHours';
+import { listOutbox, releaseHeldMessages, sendMessages } from './send';
 
 const ADDRESS = { line1: '12 School Road', city: 'Bhopal', state: 'Madhya Pradesh', pincode: '462001' };
 const stamp = Date.now();
@@ -58,6 +59,7 @@ async function seedSchool(code: string) {
 }
 
 beforeAll(async () => {
+  vi.spyOn(globalThis, 'fetch').mockImplementation(async () => new Response(''));
   await connectDb();
   await Promise.all([OutboundMessage, OtpChallenge, User, Invoice, AttendanceRecord].map((model) => model.init()));
   const code = stamp.toString(36).slice(-5).toUpperCase();
@@ -212,4 +214,65 @@ it('signs a parent in with a phone code, and nobody else', async () => {
     await expect(verifyOtp(phone, wrong)).rejects.toMatchObject({ code: 'UNAUTHENTICATED' });
   }
   await expect(verifyOtp(phone, codes[1] ?? '')).rejects.toMatchObject({ code: 'UNAUTHENTICATED' });
+});
+
+it('works out when quiet hours end, including a window that runs past midnight', () => {
+  const quiet = { start: '21:00', end: '07:00' };
+  const at = (iso: string) => quietUntil('Asia/Kolkata', quiet, new Date(iso))?.toISOString() ?? null;
+  expect(at('2026-10-10T08:30:00Z')).toBeNull();
+  // 21:30 the evening before, 01:30 and 03:30 after midnight: all wait for 07:00 on the 11th (01:30 UTC).
+  expect(at('2026-10-10T16:00:00Z')).toBe('2026-10-11T01:30:00.000Z');
+  expect(at('2026-10-10T20:00:00Z')).toBe('2026-10-11T01:30:00.000Z');
+  expect(at('2026-10-10T22:00:00Z')).toBe('2026-10-11T01:30:00.000Z');
+  expect(at('2026-10-11T01:30:00Z')).toBeNull();
+  expect(quietUntil('Asia/Kolkata', { start: '09:00', end: '09:00' }, new Date('2026-10-10T04:00:00Z'))).toBeNull();
+});
+
+it('holds a text that is not urgent through quiet hours, sends urgent ones and emails at once, and releases the rest later', async () => {
+  await School.updateOne({ _id: ctx.schoolId }, { 'settings.quietHours': { start: '00:00', end: '23:59' } });
+  const to = `+9197${String(stamp).slice(-8)}`;
+  const base = { schoolId: ctx.schoolId, to, body: 'hello' };
+  await sendMessages([
+    { ...base, channel: 'sms', template: 'dues', dedupeKey: `q1:${stamp}` },
+    { ...base, channel: 'sms', template: 'otp', urgent: true, dedupeKey: `q2:${stamp}` },
+    { ...base, channel: 'email', template: 'invite', dedupeKey: `q3:${stamp}` },
+  ]);
+  const status = async (key: string) => (await OutboundMessage.findOne({ schoolId: ctx.schoolId, dedupeKey: `${key}:${stamp}` }).lean())?.status;
+  expect([await status('q1'), await status('q2'), await status('q3')]).toEqual(['held', 'sent', 'sent']);
+
+  expect(await releaseHeldMessages(ctx.schoolId)).toBe(0);
+  await OutboundMessage.updateOne({ schoolId: ctx.schoolId, dedupeKey: `q1:${stamp}` }, { sendAfter: new Date(Date.now() - 1000) });
+  expect(await releaseHeldMessages(other.schoolId)).toBe(0);
+  expect(await releaseHeldMessages(ctx.schoolId)).toBe(1);
+  expect(await releaseHeldMessages(ctx.schoolId)).toBe(0);
+  expect(await status('q1')).toBe('sent');
+  await School.updateOne({ _id: ctx.schoolId }, { 'settings.quietHours': { start: '21:00', end: '07:00' } });
+});
+
+it('waits for the alert time, and drops the alert for a child marked present again', async () => {
+  const [ria, sam] = students;
+  const date = '2099-01-05';
+  const doc = await AttendanceRecord.create({
+    schoolId: ctx.schoolId,
+    branchId: new Types.ObjectId(),
+    academicYearId: new Types.ObjectId(),
+    sectionId,
+    date,
+    mode: 'daily',
+    period: null,
+    entries: [ria, sam].map((studentId) => ({ studentId, status: 'absent', source: 'manual', at: new Date() })),
+    submittedAt: new Date(),
+    idempotencyKey: `wait-${stamp}`,
+  });
+  const text = ({ student }: { student: string }) => `${student} was absent`;
+  expect(await sendAbsenceAlerts(ctx, String(sectionId), date, text)).toBe(2);
+  const held = await OutboundMessage.find({ schoolId: ctx.schoolId, template: 'absence', status: 'held', 'recheck.date': date }).lean();
+  expect(held).toHaveLength(2);
+  expect(await releaseHeldMessages(ctx.schoolId)).toBe(0);
+
+  await AttendanceRecord.updateOne({ schoolId: ctx.schoolId, _id: doc._id }, { 'entries.0.status': 'present' });
+  await OutboundMessage.updateMany({ schoolId: ctx.schoolId, 'recheck.date': date }, { sendAfter: new Date(Date.now() - 1000) });
+  expect(await releaseHeldMessages(ctx.schoolId)).toBe(1);
+  const left = await OutboundMessage.find({ schoolId: ctx.schoolId, 'recheck.date': date }).lean();
+  expect(left.map((message) => message.status).sort()).toEqual(['sent', 'skipped']);
 });

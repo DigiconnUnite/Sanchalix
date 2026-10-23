@@ -8,12 +8,13 @@ import { getTranslations } from 'next-intl/server';
 import { z } from 'zod';
 import { removeDocument, verifyDocument } from './documents';
 import { importStudents as importService } from './importService';
-import { GuardianUpdate, ImportStudents, StudentInput, StudentUpdate, TransferStudent, WithdrawStudent } from './schemas';
+import { GuardianUpdate, ImportStudents, OptionalSubjects, StudentInput, StudentUpdate, TransferStudent, WithdrawStudent } from './schemas';
 import {
   createStudent as create,
   transferStudent as transfer,
   updateGuardian as editGuardian,
   updateStudent as update,
+  setOptionalSubjects as setOptional,
   withdrawStudent as withdraw,
 } from './service';
 
@@ -111,6 +112,19 @@ export async function transferStudent(input: unknown) {
       after: { sectionId, rollNo: student.rollNo },
     });
     return { name: student.name, section: student.section, rollNo: student.rollNo };
+  });
+}
+
+export async function setStudentOptionalSubjects(input: unknown) {
+  return withAction('sis.student.update', async () => {
+    const ctx = await requirePermission('sis.student.update');
+    const { studentId, subjectIds } = OptionalSubjects.parse(input);
+    const result = await setOptional(ctx, studentId, subjectIds);
+    await audit(ctx, 'sis.student.update', { type: 'student', id: result.id }, {
+      before: { optionalSubjects: result.before },
+      after: { optionalSubjects: result.after },
+    });
+    return { count: result.after };
   });
 }
 

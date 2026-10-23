@@ -21,6 +21,8 @@ The payment gateway, SMS and email use **test/sandbox credentials** in every env
 
 ## CI/CD pipeline
 
+**Built so far:** `.github/workflows/ci.yml` runs typecheck, lint, tests, the production build and `npm audit` on every pull request and push to `main`. A `Dockerfile` builds one image of the web app (a standalone Next.js server, started with `BUILD_STANDALONE=1` in the build stage, running as a non-root user, with a health check on `/welcome`); `.dockerignore` keeps secrets and the working tree out. Everything else in this section (ECR, preview and staging deploys, migrations, blue/green) is not built, and neither is the worker: scheduled work runs through `GET /api/cron/tick` ([ADR-023](23-decision-log.md#adr-023-scheduled-jobs-through-one-route-not-a-worker)), which needs a timer to call it.
+
 GitHub Actions.
 
 ```mermaid
@@ -69,7 +71,7 @@ All secrets come from AWS Secrets Manager, injected as ECS secrets. Non-secrets 
 | `AUTH_GOOGLE_ID` / `AUTH_GOOGLE_SECRET` | yes | web | |
 | `OTP_PEPPER` | yes | web | |
 | `TWO_FACTOR_ENABLED` | no | web | `true` in staging and production. Defaults to `false` for local development (ADR-019) |
-| `S3_BUCKET_DOCUMENTS` | no | both | `vw-prod-documents` |
+| `S3_BUCKET_DOCUMENTS` | production: yes | both | `vw-prod-documents`. Every uploaded file goes here; without it the app stores files on its own disk (development only) and refuses to in production. Credentials come from the environment (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`) or the host's IAM role, which needs `s3:PutObject`, `s3:GetObject` and `s3:DeleteObject` on the bucket (ADR-025) |
 | `S3_BUCKET_EXPORTS` | no | worker | Lifecycle rule: delete after 7 days |
 | `AWS_REGION` | no | both | `ap-south-1` |
 | `RAZORPAY_KEY_ID` | no | web | Per school if the school has its own account (stored encrypted on `School.integrations`); a platform default otherwise |

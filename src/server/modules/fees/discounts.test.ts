@@ -24,6 +24,7 @@ import {
   withdrawStudentDiscount,
 } from './discounts';
 import { importOpeningBalances, OPENING_BALANCE_COLUMNS } from './openingBalances';
+import { getBillingReport } from './reports';
 import { FeeHeadInput, FeeStructureInput } from './schemas';
 import { approveFeeStructure, createFeeHead, createFeeStructure } from './service';
 
@@ -223,4 +224,15 @@ it('imports opening balances as one invoice per student, once', async () => {
   const again = await importOpeningBalances(ctx, good, false, 'Opening balance');
   expect(again.imported).toBe(0);
   expect(again.errors).toHaveLength(2);
+});
+
+it('adds up billing by fee head, concessions and what is still owed by class, for this school only', async () => {
+  const report = await getBillingReport(ctx);
+  expect(report?.year).toBe('2026–27');
+  expect(report?.byHead.map((row) => row.name)).toEqual(expect.arrayContaining(['Tuition', 'Transport']));
+  expect(report?.byHead.reduce((sum, row) => sum + row.billedMinor, 0)).toBe(report?.billedMinor);
+  expect(report?.lateFeesMinor).toBe(4 * 10_000);
+  expect(report?.concessions.map((row) => row.name)).toEqual(expect.arrayContaining(['Sibling discount', 'Staff ward discount']));
+  expect(report?.outstandingByClass).toMatchObject([{ name: 'Class 7', students: 4 }]);
+  expect(await getBillingReport({ ...ctx, schoolId: new Types.ObjectId() })).toBeNull();
 });

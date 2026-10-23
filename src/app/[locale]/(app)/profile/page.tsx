@@ -2,6 +2,7 @@ import { getTranslations } from 'next-intl/server';
 import { ProfileView } from '@/features/auth/ProfileView';
 import { parseDensity } from '@/lib/visualMode';
 import { readSession } from '@/server/auth/session';
+import { Guardian } from '@/server/models/guardian';
 import { Session } from '@/server/models/session';
 import { User } from '@/server/models/user';
 import { pageContext } from '../pageContext';
@@ -22,14 +23,17 @@ export async function generateMetadata() {
 
 export default async function ProfilePage() {
   const ctx = await pageContext();
-  const [t, user, sessions, current] = await Promise.all([
+  const [t, user, sessions, current, guardian] = await Promise.all([
     getTranslations('shell.roles'),
-    User.findById(ctx.userId).select('email density').lean(),
+    User.findById(ctx.userId).select('email phone density notificationPrefs').lean(),
     Session.find({ userId: ctx.userId, totpPending: { $ne: true }, expires: { $gt: new Date() } })
       .sort({ createdAt: -1 })
       .select('userAgent ip createdAt')
       .lean(),
     readSession(),
+    ctx.guardianId
+      ? Guardian.findOne({ schoolId: ctx.schoolId, _id: ctx.guardianId }).select('notificationPrefs').lean()
+      : null,
   ]);
   return (
     <ProfileView
@@ -37,6 +41,16 @@ export default async function ProfilePage() {
       roleLabel={t(ctx.role)}
       email={user?.email ?? null}
       density={parseDensity(user?.density ?? undefined)}
+      feeTexts={
+        guardian
+          ? !guardian.notificationPrefs.some((pref) => pref.channel === 'sms' && pref.category === 'fees' && !pref.enabled)
+          : null
+      }
+      announcementCopy={(['email', 'sms'] as const).map((channel) => ({
+        channel,
+        reachable: Boolean(channel === 'email' ? user?.email : user?.phone),
+        enabled: !user?.notificationPrefs.some((pref) => pref.channel === channel && pref.category === 'announcements' && !pref.enabled),
+      }))}
       sessions={sessions.map((session) => ({
         id: String(session._id),
         device: deviceName(session.userAgent),

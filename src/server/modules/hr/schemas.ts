@@ -1,9 +1,18 @@
 import 'server-only';
 import { z } from 'zod';
 import type { LeaveBalance } from './leave';
+import type { DocumentRow } from '@/server/modules/sis/documents';
 import { STAFF_STATUSES, STAFF_TYPES } from '@/server/models/staff';
 
 const E = 'hr.errors';
+
+const Qualification = z.object({
+  degree: z.string().trim().min(1, `${E}.degree`).max(80, `${E}.degree`),
+  institution: z.string().trim().max(120, `${E}.institution`).default(''),
+  year: z
+    .union([z.literal('').transform(() => undefined), z.coerce.number().int(`${E}.qualYear`).min(1950, `${E}.qualYear`).max(2100, `${E}.qualYear`)])
+    .optional(),
+});
 
 export const StaffInput = z.object({
   name: z.string().trim().min(1, `${E}.name`).max(120, `${E}.name`),
@@ -20,6 +29,7 @@ export const StaffInput = z.object({
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, `${E}.joinedOn`)
     .refine((date) => !Number.isNaN(Date.parse(date)), `${E}.joinedOn`),
+  qualifications: z.array(Qualification).max(8, `${E}.tooManyQualifications`).default([]),
 });
 export type StaffInput = z.infer<typeof StaffInput>;
 
@@ -40,6 +50,7 @@ export type StaffMember = {
   email: string;
   joinedOn: string;
   status: string;
+  qualifications: { degree: string; institution: string; year: string }[];
 };
 
 export type StaffProfile = {
@@ -54,6 +65,8 @@ export type StaffProfile = {
   joinedOn: string;
   status: (typeof STAFF_STATUSES)[number];
   hasAccount: boolean;
+  qualifications: { degree: string; institution: string; year: number | null }[];
+  documents: DocumentRow[];
   classTeacherOf: string[];
   teaches: { subject: string; sections: string; periods: number }[];
   leave: LeaveBalance[];

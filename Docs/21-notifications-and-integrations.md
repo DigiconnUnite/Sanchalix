@@ -32,6 +32,8 @@ flowchart LR
 4. The in-app `notifications` document is written first. Channel deliveries are queued, and each delivery's status is recorded in `deliveries[]`.
 5. Failures retry with exponential backoff (5 attempts), then fall back: failed push → SMS for `urgent` categories (absence, emergency, payment failure); failed SMS → email if an email exists.
 
+**Announcements by email and text (built 2026-10-21).** The author chooses Email and/or Text message when publishing; people get a copy unless they switched that channel off in Profile (`User.notificationPrefs`). Texts wait out quiet hours. Both channels use the `dev` provider until the SES and MSG91 keys are set. Web push is not built: it needs the installable PWA (v1) and VAPID keys.
+
 ## Channel matrix
 
 Defaults per category. ✓ = on by default, ○ = available but off by default, — = not offered. Users change these in Profile → Notifications. Schools can turn channels off per category (e.g. no SMS for homework, to save credits).

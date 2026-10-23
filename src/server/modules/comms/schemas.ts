@@ -24,6 +24,8 @@ export const AnnouncementInput = z.object({
   audience: Audience,
   /** A notice: each recipient is asked to confirm they have read it. */
   requiresAck: z.boolean().default(false),
+  /** Besides the app, which always gets it. People who have switched a channel off in Profile are skipped. */
+  channels: z.array(z.enum(['email', 'sms'])).max(2).default([]),
   /** Leave empty to publish now. A later date holds it until that morning. */
   publishOn: OptionalDate,
   /** The last day it is shown. Empty means it stays. */
@@ -41,6 +43,8 @@ export type AnnouncementRow = {
   publishedAt: string;
   audience: { type: 'school' } | { type: 'role'; roles: RoleKey[] } | { type: 'section'; sections: string[] };
   requiresAck: boolean;
+  /** Files the author attached, for everyone who can read the announcement. */
+  attachments: { id: string; fileName: string }[];
   /** Waiting for its publish date. Only the people who publish announcements see these. */
   scheduled: boolean;
   /** The last day it is shown, if it has one. */

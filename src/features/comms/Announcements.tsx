@@ -4,6 +4,8 @@ import Alert from '@cloudscape-design/components/alert';
 import Box from '@cloudscape-design/components/box';
 import Button from '@cloudscape-design/components/button';
 import Checkbox from '@cloudscape-design/components/checkbox';
+import FileUpload from '@cloudscape-design/components/file-upload';
+import Link from '@cloudscape-design/components/link';
 import ColumnLayout from '@cloudscape-design/components/column-layout';
 import DatePicker from '@cloudscape-design/components/date-picker';
 import Container from '@cloudscape-design/components/container';
@@ -29,6 +31,8 @@ import type { RoleKey } from '@/server/auth/permissions';
 import { acknowledgeAnnouncement, previewAudience, publishAnnouncement } from '@/server/modules/comms/actions';
 import type { AnnouncementDetail, AnnouncementRow } from '@/server/modules/comms/schemas';
 
+const MAX_FILE = 5 * 1024 * 1024;
+const MAX_FILES = 3;
 const LIST = '/communication/announcements';
 const NEW = `${LIST}/new`;
 const STAFF_ROLES: RoleKey[] = ['school_admin', 'principal', 'teacher', 'accountant', 'librarian', 'transport_manager'];
@@ -52,12 +56,14 @@ export function AnnouncementsTable({
   published,
   recipients,
   scheduled,
+  filesFailed,
 }: {
   announcements: AnnouncementRow[];
   canCreate: boolean;
   published: string | null;
   recipients: number;
   scheduled: boolean;
+  filesFailed: number;
 }) {
   const t = useTranslations('comms');
   const router = useRouter();
@@ -92,6 +98,11 @@ export function AnnouncementsTable({
           {published && (
             <Alert type="success" dismissible dismissAriaLabel={t('dismiss')} onDismiss={() => router.replace(pathname)}>
               {t(scheduled ? 'announcements.scheduledNotice' : 'announcements.published', { title: published, count: recipients })}
+            </Alert>
+          )}
+          {published && filesFailed > 0 && (
+            <Alert type="warning" dismissible dismissAriaLabel={t('dismiss')} onDismiss={() => router.replace(pathname)}>
+              {t('announcements.filesFailed', { count: filesFailed })}
             </Alert>
           )}
         </SpaceBetween>
@@ -204,6 +215,20 @@ export function AnnouncementView({ announcement }: { announcement: AnnouncementD
         }
       >
         <SpaceBetween size="s">
+          {announcement.attachments.length > 0 && (
+            <SpaceBetween direction="horizontal" size="s">
+              {announcement.attachments.map((file) => (
+                <Link
+                  key={file.id}
+                  href={`/api/v1/announcements/${announcement.id}/attachments/${file.id}`}
+                  external
+                  externalIconAriaLabel={t('download')}
+                >
+                  {file.fileName}
+                </Link>
+              ))}
+            </SpaceBetween>
+          )}
           {announcement.body.split(/\n{2,}/).map((paragraph, index) => (
             <Box key={index} variant="p">
               {paragraph}
@@ -225,6 +250,9 @@ export function AnnouncementForm({ sections }: { sections: { id: string; name: s
   const [roles, setRoles] = useState<RoleKey[]>([]);
   const [sectionIds, setSectionIds] = useState<string[]>([]);
   const [requiresAck, setRequiresAck] = useState(false);
+  const [copyBy, setCopyBy] = useState<('email' | 'sms')[]>([]);
+  const [files, setFiles] = useState<File[]>([]);
+  const tooBig = files.some((file) => file.size > MAX_FILE);
   const [publishOn, setPublishOn] = useState('');
   const [expiresOn, setExpiresOn] = useState('');
   const sectionOptions = sections.map(({ id, name }) => ({ value: id, label: name }));
@@ -275,14 +303,27 @@ export function AnnouncementForm({ sections }: { sections: { id: string; name: s
       body,
       audience,
       requiresAck,
+      channels: copyBy,
       publishOn,
       expiresOn,
     });
     if (result.ok) {
+      let failed = 0;
+      for (const file of files) {
+        const body = new FormData();
+        body.set('file', file);
+        try {
+          const response = await fetch(`/api/v1/announcements/${result.data.id}/attachments`, { method: 'POST', body });
+          if (!response.ok) failed += 1;
+        } catch {
+          failed += 1;
+        }
+      }
       const params = new URLSearchParams({
         published: result.data.title,
         recipients: String(result.data.recipients),
         ...(result.data.scheduled && { scheduled: '1' }),
+        ...(failed > 0 && { filesFailed: String(failed) }),
       });
       return router.push(`${LIST}?${params}`);
     }
@@ -307,7 +348,7 @@ export function AnnouncementForm({ sections }: { sections: { id: string; name: s
               <Button formAction="none" onClick={() => router.push(LIST)}>
                 {t('cancel')}
               </Button>
-              <Button variant="primary" iconSvg={svg('send')} loading={busy}>
+              <Button variant="primary" iconSvg={svg('send')} loading={busy} disabled={tooBig || files.length > MAX_FILES}>
                 {t('announcements.form.submit')}
               </Button>
             </SpaceBetween>
@@ -413,10 +454,44 @@ export function AnnouncementForm({ sections }: { sections: { id: string; name: s
                     />
                   </FormField>
                 </ColumnLayout>
-                <FormField label={t('announcements.form.channels')}>
-                  <Checkbox checked disabled description={t('announcements.form.inAppReason')}>
-                    {t('announcements.form.inApp')}
-                  </Checkbox>
+                <FormField
+                  label={t('announcements.form.files')}
+                  constraintText={t('announcements.form.filesHint')}
+                  errorText={tooBig ? t('announcements.form.fileTooBig') : files.length > MAX_FILES ? t('announcements.form.tooManyFiles') : null}
+                >
+                  <FileUpload
+                    multiple
+                    value={files}
+                    accept=".pdf,.jpg,.jpeg,.png,.webp"
+                    showFileSize
+                    i18nStrings={{
+                      uploadButtonText: (multiple) => (multiple ? t('announcements.form.chooseFiles') : t('announcements.form.chooseFile')),
+                      dropzoneText: () => t('announcements.form.dropFiles'),
+                      removeFileAriaLabel: () => t('announcements.form.removeFile'),
+                      limitShowFewer: t('announcements.form.showFewer'),
+                      limitShowMore: t('announcements.form.showMore'),
+                      errorIconAriaLabel: t('announcements.form.errorIcon'),
+                    }}
+                    onChange={({ detail }) => setFiles(detail.value)}
+                  />
+                </FormField>
+                <FormField label={t('announcements.form.channels')} constraintText={t('announcements.form.channelsHint')}>
+                  <SpaceBetween size="xs">
+                    <Checkbox checked disabled description={t('announcements.form.inAppReason')}>
+                      {t('announcements.form.inApp')}
+                    </Checkbox>
+                    {(['email', 'sms'] as const).map((channel) => (
+                      <Checkbox
+                        key={channel}
+                        checked={copyBy.includes(channel)}
+                        onChange={({ detail }) =>
+                          setCopyBy(detail.checked ? [...copyBy, channel] : copyBy.filter((entry) => entry !== channel))
+                        }
+                      >
+                        {t(`announcements.form.${channel}`)}
+                      </Checkbox>
+                    ))}
+                  </SpaceBetween>
                 </FormField>
                 <Alert type="info">
                   <span aria-live="polite">

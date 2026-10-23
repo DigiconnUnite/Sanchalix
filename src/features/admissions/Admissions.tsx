@@ -464,7 +464,7 @@ export function AdmissionView({
         )}
         {canReadDocuments && (inProgress || admission.documents.length > 0) && (
           <StudentDocuments
-            admission
+            owner="admission"
             studentId={admission.id}
             documents={admission.documents}
             canEdit={canEdit && inProgress}

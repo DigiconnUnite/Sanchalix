@@ -9,6 +9,8 @@ const schema = new Schema(
     name: { type: String, required: true, maxlength: 60 },
     code: { type: String, required: true, uppercase: true },
     type: { type: String, required: true, enum: SUBJECT_TYPES },
+    // Not every student of the class takes it: each is given it on their profile, and only they sit its papers.
+    isOptional: { type: Boolean, default: false },
     ...audit,
   },
   { timestamps: true },

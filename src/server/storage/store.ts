@@ -1,9 +1,10 @@
 import 'server-only';
+import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
-// ponytail: files live on the server's own disk, in .data/uploads, which is fine for one machine in development.
-// When the S3 keys arrive, put and get the same keys there instead; nothing else stores or reads a file.
+// With S3_BUCKET_DOCUMENTS set, files go to that bucket under the same keys. Without it they live on the server's own
+// disk, in .data/uploads, which is only right for one development machine, so production refuses to start storing.
 const ROOT = path.resolve(process.cwd(), '.data', 'uploads');
 
 export const MAX_FILE_BYTES = 5 * 1024 * 1024;
@@ -33,11 +34,40 @@ function locate(key: string) {
   return path.join(ROOT, key);
 }
 
+let client: S3Client | undefined;
+
+function bucket() {
+  const name = process.env.S3_BUCKET_DOCUMENTS;
+  if (!name && process.env.NODE_ENV === 'production') throw new Error('S3_BUCKET_DOCUMENTS is not set');
+  if (name) client ??= new S3Client({});
+  return name ? { name, s3: client as S3Client } : null;
+}
+
 export async function putFile(key: string, bytes: Uint8Array) {
   const file = locate(key);
+  const remote = bucket();
+  if (remote) {
+    await remote.s3.send(
+      new PutObjectCommand({ Bucket: remote.name, Key: key, Body: bytes, ContentType: KINDS.find((kind) => kind.ext === key.split('.').pop())?.mime, ServerSideEncryption: 'AES256' }),
+    );
+    return;
+  }
   await mkdir(path.dirname(file), { recursive: true });
   await writeFile(file, bytes);
 }
 
-export const getFile = async (key: string) => readFile(locate(key));
-export const removeFile = async (key: string) => rm(locate(key), { force: true });
+export async function getFile(key: string) {
+  const file = locate(key);
+  const remote = bucket();
+  if (!remote) return readFile(file);
+  const { Body } = await remote.s3.send(new GetObjectCommand({ Bucket: remote.name, Key: key }));
+  if (!Body) throw new Error('Empty storage object');
+  return Buffer.from(await Body.transformToByteArray());
+}
+
+export async function removeFile(key: string) {
+  const file = locate(key);
+  const remote = bucket();
+  if (remote) await remote.s3.send(new DeleteObjectCommand({ Bucket: remote.name, Key: key }));
+  else await rm(file, { force: true });
+}

@@ -15,7 +15,14 @@ export default async function EventsPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const ctx = await pageContext('calendar.event.read');
-  const { month } = await searchParams;
+  const { month, view } = await searchParams;
   const calendar = await getMonth(ctx, typeof month === 'string' ? month : undefined);
-  return <EventsCalendar key={calendar.month} {...calendar} canEdit={can(ctx.role, 'calendar.event.update')} />;
+  return (
+    <EventsCalendar
+      key={calendar.month}
+      {...calendar}
+      view={view === 'list' ? 'list' : 'month'}
+      canEdit={can(ctx.role, 'calendar.event.update')}
+    />
+  );
 }

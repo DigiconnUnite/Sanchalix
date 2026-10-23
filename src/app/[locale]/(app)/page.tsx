@@ -17,7 +17,9 @@ import { daysBefore } from '@/lib/dates';
 import { formatMoney } from '@/lib/money';
 import type { RequestContext } from '@/server/auth/context';
 import { can } from '@/server/auth/permissions';
+import { listUpcoming } from '@/server/modules/calendar/events';
 import { listAnnouncements } from '@/server/modules/comms/service';
+import { getLeaveBalances } from '@/server/modules/hr/leave';
 import { getSchoolCalendar } from '@/server/modules/attendance/queries';
 import {
   getAttendanceToday,
@@ -35,6 +37,8 @@ import { homeLabel, pageContext } from './pageContext';
 
 const ANNOUNCEMENTS = '/communication/announcements';
 const dateFormat = new Intl.DateTimeFormat('en-IN', { dateStyle: 'medium', timeZone: 'Asia/Kolkata' });
+const dayFormat = new Intl.DateTimeFormat('en-IN', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' });
+const shortDay = (value: string) => dayFormat.format(new Date(`${value}T00:00:00Z`));
 
 const COLLECTION_DAYS = 14;
 const attendanceToday = cache(getAttendanceToday);
@@ -138,6 +142,8 @@ export default async function DashboardPage({
           {sees.collection && widget(t('charts.methods.title'), <Methods ctx={ctx} />)}
           {sees.fees && widget(t('charts.ageing.title'), <Ageing ctx={ctx} />)}
           {widget(t('announcements.title'), <LatestAnnouncements ctx={ctx} />)}
+          {widget(t('upcoming.title'), <UpcomingEvents ctx={ctx} />)}
+          {ctx.staffId && can(ctx.role, 'hr.leave.create') && widget(t('myLeave.title'), <MyLeave ctx={ctx} />)}
         </ColumnLayout>
       </SpaceBetween>
     </ContentLayout>
@@ -317,6 +323,63 @@ async function TodayClasses({ ctx }: { ctx: RequestContext }) {
           ))}
         </ColumnLayout>
       )}
+    </Container>
+  );
+}
+
+async function UpcomingEvents({ ctx }: { ctx: RequestContext }) {
+  const [t, items] = await Promise.all([getTranslations('dashboard.upcoming'), listUpcoming(ctx, 5)]);
+  const upcoming = items.sort((a, b) => a.start.localeCompare(b.start)).slice(0, 5);
+  return (
+    <Container
+      fitHeight
+      header={
+        <Header variant="h2" actions={<AppLink href="/calendar/events">{t('all')}</AppLink>}>
+          {t('title')}
+        </Header>
+      }
+    >
+      {upcoming.length === 0 ? (
+        <EmptyState icon="event" heading={t('empty.heading')} body={t('empty.body')} />
+      ) : (
+        <SpaceBetween size="s">
+          {upcoming.map((item) => (
+            <SpaceBetween key={`${item.start}-${item.title}`} size="xxxs">
+              <Box fontWeight="bold">{item.title}</Box>
+              <Box color="text-body-secondary">
+                {item.start === item.end ? shortDay(item.start) : `${shortDay(item.start)} – ${shortDay(item.end)}`}
+              </Box>
+            </SpaceBetween>
+          ))}
+        </SpaceBetween>
+      )}
+    </Container>
+  );
+}
+
+async function MyLeave({ ctx }: { ctx: RequestContext }) {
+  const [t, tLeave, balances] = await Promise.all([
+    getTranslations('dashboard.myLeave'),
+    getTranslations('hr.leave'),
+    getLeaveBalances(ctx),
+  ]);
+  return (
+    <Container
+      fitHeight
+      header={
+        <Header variant="h2" actions={<AppLink href="/leave">{t('apply')}</AppLink>}>
+          {t('title')}
+        </Header>
+      }
+    >
+      <ColumnLayout columns={3} variant="text-grid">
+        {balances.map((balance) => (
+          <div key={balance.type}>
+            <Box variant="awsui-key-label">{tLeave(`type.${balance.type}`)}</Box>
+            <Box variant="awsui-value-large">{tLeave('balance', { left: balance.left, quota: balance.quota })}</Box>
+          </div>
+        ))}
+      </ColumnLayout>
     </Container>
   );
 }

@@ -26,6 +26,8 @@ Architecture and design decisions for Sanchalix, in a lightweight ADR format. A 
 | 018 | English only until the core modules are built | Accepted | 2026-10-03 |
 | 019 | Two-step verification switched off during development | Accepted | 2026-10-03 |
 | 020 | Shell overrides: hide the duplicate navigation toggle, compact breadcrumb row | Accepted | 2026-10-03 |
+| 025 | Files on S3 through the AWS SDK | Accepted | 2026-10-21 |
+| 026 | The platform console lives in the same app | Accepted | 2026-10-21 |
 
 ---
 
@@ -279,7 +281,7 @@ Architecture and design decisions for Sanchalix, in a lightweight ADR format. A 
 - ✅ One place draws the banner, so a new navigation page gets it by adding its description string.
 - The page's own heading on those pages is an `h2` (it keeps its counter, filters and buttons), or is removed where it only repeated the title. Forms, records and other pages that are not navigation links keep their plain `h1`.
 - Banner pages get their side padding from `ContentLayout`, because the shell turns off `AppLayout`'s content padding for them.
-- A banner can carry an illustration (`banner.image` on the navigation item). The dashboard and the 16 pages listed in `ILLUSTRATED` in the app layout have one, an SVG in `public/banners/` named after the module key; these are cropped copies of the owner's artwork in `public/dash_page_banner/`. It is a decorative CSS background standing on the band's bottom edge at the right; that banner is taller (140px of title area) and the picture fills the band from top edge to bottom edge.
+- A banner can carry an illustration (`banner.image` on the navigation item). The dashboard and the 22 pages listed in `ILLUSTRATED` in the app layout have one, an SVG in `public/banners/` named after the module key; these are cropped copies of the owner's artwork in `public/dash_page_banner/`. It is a decorative CSS background standing on the band's bottom edge at the right; that banner is taller (140px of title area) and the picture fills the band from top edge to bottom edge.
 - Behind the picture a soft light in the accent colour rises from the band's bottom edge, brightest at the bottom and fading out before the title.
 - Below 1000px wide the picture is left out and the band is plain.
 - The banner is hidden when a page is printed.
@@ -303,7 +305,7 @@ Architecture and design decisions for Sanchalix, in a lightweight ADR format. A 
 
 **Status.** Accepted for the MVP on 2026-10-13. Replaces the separate worker process in [13-architecture.md](13-architecture.md) until a job needs more than a request can give.
 
-**Context.** Some work has to happen on a timer, not when someone clicks: marking invoices overdue and adding the late fee each day, and publishing announcements on their date. The architecture plans a queue with a worker process. Nothing built so far needs one, and a worker is another thing to deploy, monitor and keep alive.
+**Context.** Some work has to happen on a timer, not when someone clicks: marking invoices overdue and adding the late fee each day, publishing announcements on their date, sending texts held through quiet hours, and checking Razorpay for payments whose webhook never arrived. The architecture plans a queue with a worker process. Nothing built so far needs one, and a worker is another thing to deploy, monitor and keep alive.
 
 **Decision.** One route, `GET /api/cron/tick`, runs every scheduled job for every school. A timer outside the app calls it with `Authorization: Bearer $CRON_SECRET`: the host's cron, a system scheduler or an uptime pinger. Each job is written so that running it twice does nothing the second time, and so that a missed run is made up by the next.
 
@@ -313,3 +315,31 @@ Architecture and design decisions for Sanchalix, in a lightweight ADR format. A 
 - The route is as slow as its slowest job and runs schools one after another. A school that fails is logged and skipped, and tried again on the next run.
 - ⚠️ Until a timer is pointed at the route, nothing scheduled happens: invoices are not marked overdue and no late fee is added. `CRON_SECRET` must be set, and the route answers `503` without it.
 - ⚠️ Move to a queue and worker when a run nears the host's request time limit, or when a job (bulk PDFs, large exports) is too heavy for a request.
+
+## ADR-025: Files on S3 through the AWS SDK
+
+**Status.** Accepted by the project owner on 2026-10-21.
+
+**Context.** Uploaded files (student and staff documents, homework and announcement attachments) lived on the server's disk, which loses them on a redeploy and can't be shared between instances. The owner will use AWS S3.
+
+**Decision.** `@aws-sdk/client-s3` is added. `putFile`, `getFile` and `removeFile` use the bucket in `S3_BUCKET_DOCUMENTS` with the same keys the disk used, with server-side encryption. With no bucket they use the disk in development and refuse in production. The SDK finds its region and credentials in the environment or the host's IAM role.
+
+**Consequences.**
+- ✅ One place stores files; no caller changed.
+- ✅ The bucket can have versioning, a lifecycle rule and replication, as [20-devops-and-deployment.md](20-devops-and-deployment.md) describes.
+- Files are served by the app after its own permission check, not by a public or pre-signed bucket address, so every read is audited where it needs to be. Large files stream through the server; move to pre-signed addresses if that becomes slow.
+- ⚠️ The bucket must exist, block public access, and the app's role needs object read, write and delete.
+
+## ADR-026: The platform console lives in the same app
+
+**Status.** Accepted for the MVP on 2026-10-21.
+
+**Context.** Schools could only be created by the seed script. Platform staff need to set a school up, switch it on, pause it and give its admin a new password, without a developer.
+
+**Decision.** Platform staff (`super_admin`) use the same Next.js app under `/platform`, with a session that has no school. They get their own context (`getPlatformContext`, `requirePlatform`) and their own audit collection (`platformAuditLogs`), so no school query ever runs without a `schoolId` and a school's audit log never shows platform activity. The few cross-school counts (students, staff) read the collections directly and say so.
+
+**Consequences.**
+- ✅ Nothing extra to deploy, and the same shell, components and tests apply.
+- ✅ The tenant plugin keeps its rule: ordinary code still can't query without a school.
+- Not built yet: platform users, platform notices, backups, settings, "view as" and break-glass access (v1).
+- ⚠️ The first platform admin is created from the command line (`npm run superadmin`).

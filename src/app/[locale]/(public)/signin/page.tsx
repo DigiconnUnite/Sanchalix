@@ -3,7 +3,7 @@ import { getLocale, getTranslations } from 'next-intl/server';
 import { SignInForm } from '@/features/auth/SignInForm';
 import { redirect } from '@/i18n/navigation';
 import { safeNext } from '@/lib/safeNext';
-import { getContext, getPendingSession } from '@/server/auth/context';
+import { getContext, getPendingSession, getPlatformContext } from '@/server/auth/context';
 import { googleConfig } from '@/server/auth/google';
 
 export async function generateMetadata() {
@@ -19,7 +19,7 @@ export default async function SignInPage({
 }) {
   const params = await searchParams;
   const next = safeNext(params.next);
-  if (await getContext()) redirect({ href: next, locale: await getLocale() });
+  if ((await getContext()) || (await getPlatformContext())) redirect({ href: next, locale: await getLocale() });
   if (await getPendingSession()) {
     redirect({ href: { pathname: '/signin/2fa', query: next === '/' ? {} : { next } }, locale: await getLocale() });
   }

@@ -5,7 +5,9 @@ import { cookies, headers } from 'next/headers';
 import { cache } from 'react';
 import { SESSION_COOKIE } from '@/lib/sessionCookie';
 import { type Density, MODE_COOKIE, type VisualMode } from '@/lib/visualMode';
+import { AppError } from '@/lib/appError';
 import { connectDb } from '@/server/db/connect';
+import { School } from '@/server/models/school';
 import { Session } from '@/server/models/session';
 import { type RoleKey, TOTP_REQUIRED_ROLES } from './permissions';
 
@@ -27,9 +29,13 @@ const hashToken = (token: string) => createHash('sha256').update(token).digest('
 export async function createSession(
   userId: Types.ObjectId,
   role: RoleKey,
-  schoolId: Types.ObjectId,
+  schoolId: Types.ObjectId | null,
   totpPending = false,
 ) {
+  // A suspended school can't be signed in to, whichever way the person proves who they are.
+  if (schoolId && (await School.exists({ _id: schoolId, status: 'suspended' }))) {
+    throw new AppError('FORBIDDEN', 'auth.signIn.suspended');
+  }
   const token = randomBytes(32).toString('base64url');
   const { idle, absolute } = lifetimes(role);
   const requestHeaders = await headers();
@@ -38,7 +44,7 @@ export async function createSession(
     sessionToken: hashToken(token),
     userId,
     activeRole: role,
-    activeSchoolId: schoolId,
+    ...(schoolId && { activeSchoolId: schoolId }),
     expires: new Date(Date.now() + (totpPending ? TOTP_PENDING_MS : idle)),
     totpPending,
     ip: requestHeaders.get('x-forwarded-for')?.split(',')[0]?.trim() ?? null,

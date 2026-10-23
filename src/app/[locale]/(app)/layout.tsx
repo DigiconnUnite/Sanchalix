@@ -3,7 +3,9 @@ import { getTranslations } from 'next-intl/server';
 import type { ReactNode } from 'react';
 import { AppShell, type NavItem } from '@/components/AppShell';
 import { MODE_COOKIE, parseVisualMode } from '@/lib/visualMode';
-import { setVisualMode, signOut, switchRole } from '@/server/auth/actions';
+import { setVisualMode, signOut, switchRole, switchSchool } from '@/server/auth/actions';
+import { getPlatformContext, type PlatformContext } from '@/server/auth/context';
+import { listOtherSchools } from '@/server/auth/service';
 import { User } from '@/server/models/user';
 import { can, type Permission } from '@/server/auth/permissions';
 import { countUnread, listNotifications } from '@/server/modules/comms/service';
@@ -120,12 +122,55 @@ const ILLUSTRATED = new Set<ModuleKey>([
   'feeCounter',
   'feeStructures',
   'invoices',
+  'payments',
+  'dues',
+  'announcements',
+  'calendarEvents',
+  'promotion',
+  'users',
 ]);
 
+async function PlatformLayout({ platform, children }: { platform: PlatformContext; children: ReactNode }) {
+  const [t, cookieStore] = await Promise.all([getTranslations('shell'), cookies()]);
+  const pages = [
+    { key: 'platformHome', href: '/platform', icon: 'dashboard' },
+    { key: 'platformSchools', href: '/platform/schools', icon: 'school' },
+    { key: 'platformAudit', href: '/platform/audit', icon: 'auditLog' },
+  ] as const;
+  const nav: NavItem[] = pages.map(({ key, href, icon }) => ({
+    text: t(`nav.${key}`),
+    banner: { title: t(`banner.${key}.title`), description: t(`banner.${key}.description`) },
+    href,
+    icon,
+  }));
+  return (
+    <AppShell
+      nav={nav}
+      schoolName={t('platformName')}
+      schoolLogo={null}
+      userName={platform.name}
+      roleLabel={t('roles.super_admin')}
+      signOut={signOut}
+      otherRoles={[]}
+      switchRole={switchRole}
+      otherSchools={[]}
+      switchSchool={switchSchool}
+      visualMode={parseVisualMode(cookieStore.get(MODE_COOKIE)?.value)}
+      setVisualMode={setVisualMode}
+      unread={0}
+      notifications={[]}
+    >
+      {children}
+    </AppShell>
+  );
+}
+
 export default async function AppGroupLayout({ children }: { children: ReactNode }) {
+  const platform = await getPlatformContext();
+  if (platform) return <PlatformLayout platform={platform}>{children}</PlatformLayout>;
   const ctx = await pageContext();
   // Everything the shell needs is asked for at once; one after another, each page waited on five round trips.
-  const [t, tDashboard, school, account, unread, notifications, cookieStore] = await Promise.all([
+  const [t, tDashboard, school, account, unread, notifications, cookieStore, otherSchools] = await Promise.all([
     getTranslations('shell'),
     getTranslations('dashboard'),
     getSchoolBrand(ctx.schoolId),
@@ -133,6 +178,7 @@ export default async function AppGroupLayout({ children }: { children: ReactNode
     countUnread(ctx),
     listNotifications(ctx, 5),
     cookies(),
+    listOtherSchools(ctx.userId, ctx.schoolId),
   ]);
   const otherRoles = (account?.roles ?? [])
     .filter((assignment) => assignment.schoolId?.equals(ctx.schoolId) && assignment.role !== ctx.role)
@@ -171,6 +217,8 @@ export default async function AppGroupLayout({ children }: { children: ReactNode
       signOut={signOut}
       otherRoles={otherRoles}
       switchRole={switchRole}
+      otherSchools={otherSchools.map(({ id, name }) => ({ id, name }))}
+      switchSchool={switchSchool}
       visualMode={parseVisualMode(cookieStore.get(MODE_COOKIE)?.value)}
       setVisualMode={setVisualMode}
       unread={unread}

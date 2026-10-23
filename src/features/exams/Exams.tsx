@@ -5,6 +5,7 @@ import Box from '@cloudscape-design/components/box';
 import Button from '@cloudscape-design/components/button';
 import Checkbox from '@cloudscape-design/components/checkbox';
 import DatePicker from '@cloudscape-design/components/date-picker';
+import FileUpload from '@cloudscape-design/components/file-upload';
 import FormField from '@cloudscape-design/components/form-field';
 import Header from '@cloudscape-design/components/header';
 import Input from '@cloudscape-design/components/input';
@@ -20,13 +21,16 @@ import { useState } from 'react';
 import { AppLink } from '@/components/AppLink';
 import { useCrumb } from '@/components/Crumb';
 import { EmptyState } from '@/components/EmptyState';
+import { svg } from '@/components/icons';
 import { usePathname, useRouter } from '@/i18n/navigation';
+import { MARKS_FILE_HEADER, type MarksFileProblem, type MarksFileRow, readMarksFile } from '@/lib/marksFile';
 import { lockMarks, publishExamResults, saveMarks, upsertExam, upsertExamSchedule } from '@/server/modules/exams/actions';
+import type { HistoryEntry } from '@/server/modules/audit/history';
 import type { ExamDetail, ExamRow, MarksSheet as Sheet } from '@/server/modules/exams/service';
 
 type Option = { id: string; name: string };
 type Failure = { message: string; fieldErrors?: Record<string, string> };
-type Feedback = { type: 'success' | 'error'; text: string };
+type Feedback = { type: 'success' | 'error' | 'info'; text: string };
 const TYPES = ['unit_test', 'term', 'annual', 'practical', 'other'];
 const date = new Intl.DateTimeFormat('en-IN', { dateStyle: 'medium', timeZone: 'UTC' });
 const day = (value: string) => date.format(new Date(`${value}T00:00:00Z`));
@@ -433,7 +437,9 @@ export function ExamView({
   );
 }
 
-export function MarksSheet({ sheet }: { sheet: Sheet }) {
+const when = new Intl.DateTimeFormat('en-IN', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Kolkata' });
+
+export function MarksSheet({ sheet, history }: { sheet: Sheet; history: HistoryEntry[] | null }) {
   const t = useTranslations('exams');
   useCrumb(sheet.exam.name);
   const router = useRouter();
@@ -444,7 +450,38 @@ export function MarksSheet({ sheet }: { sheet: Sheet }) {
   const [absent, setAbsent] = useState(() => new Set(sheet.students.filter((s) => s.isAbsent).map((s) => s.id)));
   const [busy, setBusy] = useState(false);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
+  const [filling, setFilling] = useState(false);
+  const [files, setFiles] = useState<File[]>([]);
+  const [read, setRead] = useState<{ rows: MarksFileRow[]; problems: MarksFileProblem[] } | null>(null);
   const { paper, section } = sheet;
+  const rollOf = new Map(sheet.students.map((student) => [student.rollNo, student.id]));
+  const template = `data:text/csv;charset=utf-8,${encodeURIComponent(
+    `${MARKS_FILE_HEADER.join(',')}\r\n${sheet.students.map((student) => `${student.rollNo},`).join('\r\n')}\r\n`,
+  )}`;
+
+  async function chooseFile(next: File[]) {
+    setFiles(next.slice(-1));
+    const file = next.at(-1);
+    setRead(file ? readMarksFile(await file.text(), new Set(rollOf.keys()), paper.maxMarks) : null);
+  }
+
+  function fill() {
+    if (!read) return;
+    const nextMarks = new Map(marks);
+    const nextAbsent = new Set(absent);
+    for (const row of read.rows) {
+      const id = rollOf.get(row.rollNo) as string;
+      nextMarks.set(id, row.marks === null ? '' : String(row.marks));
+      if (row.absent) nextAbsent.add(id);
+      else nextAbsent.delete(id);
+    }
+    setMarks(nextMarks);
+    setAbsent(nextAbsent);
+    setFeedback({ type: 'info', text: t('marks.fill.done', { count: read.rows.length }) });
+    setFilling(false);
+    setFiles([]);
+    setRead(null);
+  }
   const invalid = (id: string) => {
     const text = marks.get(id) ?? '';
     const value = Number(text);
@@ -483,6 +520,7 @@ export function MarksSheet({ sheet }: { sheet: Sheet }) {
           : null;
 
   return (
+    <>
     <Table
       variant="container"
       stickyHeader
@@ -511,6 +549,11 @@ export function MarksSheet({ sheet }: { sheet: Sheet }) {
                 >
                   {t('marks.back')}
                 </Button>
+                {sheet.canEdit && sheet.students.length > 0 && (
+                  <Button iconSvg={svg('upload')} onClick={() => setFilling(true)}>
+                    {t('marks.fill.button')}
+                  </Button>
+                )}
                 {sheet.canEdit && sheet.students.length > 0 && (
                   <Button variant="primary" loading={busy} disabled={anyInvalid} onClick={() => void save()}>
                     {t('marks.save')}
@@ -583,5 +626,82 @@ export function MarksSheet({ sheet }: { sheet: Sheet }) {
         { id: 'grade', header: t('marks.grade'), cell: (student) => student.grade ?? '—' },
       ]}
     />
+    <Modal
+      visible={filling}
+      header={t('marks.fill.title')}
+      closeAriaLabel={t('cancel')}
+      onDismiss={() => {
+        setFilling(false);
+        setFiles([]);
+        setRead(null);
+      }}
+      footer={
+        <Box float="right">
+          <SpaceBetween direction="horizontal" size="xs">
+            <Button variant="link" onClick={() => setFilling(false)}>
+              {t('cancel')}
+            </Button>
+            <Button variant="primary" disabled={!read || read.problems.length > 0} onClick={fill}>
+              {t('marks.fill.apply')}
+            </Button>
+          </SpaceBetween>
+        </Box>
+      }
+    >
+      <SpaceBetween size="m">
+        <Box>{t('marks.fill.body')}</Box>
+        <Button href={template} download={`marks-${paper.subject}.csv`} iconSvg={svg('download')}>
+          {t('marks.fill.template')}
+        </Button>
+        <FormField label={t('marks.fill.file')} constraintText={t('marks.fill.hint', { max: paper.maxMarks })}>
+          <FileUpload
+            value={files}
+            accept=".csv"
+            showFileSize
+            i18nStrings={{
+              uploadButtonText: () => t('marks.fill.choose'),
+              dropzoneText: () => t('marks.fill.drop'),
+              removeFileAriaLabel: () => t('marks.fill.remove'),
+              limitShowFewer: t('marks.fill.showFewer'),
+              limitShowMore: t('marks.fill.showMore'),
+              errorIconAriaLabel: t('marks.fill.errorIcon'),
+            }}
+            onChange={({ detail }) => void chooseFile(detail.value)}
+          />
+        </FormField>
+        {read && read.problems.length === 0 && <Alert type="success">{t('marks.fill.ready', { count: read.rows.length })}</Alert>}
+        {read && read.problems.length > 0 && (
+          <Alert type="error" header={t('marks.fill.problems', { count: read.problems.length })}>
+            <ul>
+              {read.problems.slice(0, 10).map((problem) => (
+                <li key={`${problem.line}-${problem.reason}`}>{t(`marks.fill.reason.${problem.reason}`, { line: problem.line })}</li>
+              ))}
+            </ul>
+          </Alert>
+        )}
+      </SpaceBetween>
+    </Modal>
+    {history && (
+      <Table
+        variant="container"
+        trackBy="id"
+        items={history}
+        header={<Header variant="h2" counter={`(${history.length})`}>{t('marks.history.title')}</Header>}
+        empty={<EmptyState icon="auditLog" heading={t('marks.history.emptyHeading')} body={t('marks.history.emptyBody')} />}
+        columnDefinitions={[
+          { id: 'when', header: t('marks.history.when'), isRowHeader: true, cell: (entry) => when.format(new Date(entry.at)) },
+          { id: 'who', header: t('marks.history.who'), cell: (entry) => entry.actor },
+          {
+            id: 'what',
+            header: t('marks.history.what'),
+            cell: (entry) => {
+              const key = `marks.history.actions.${entry.action.replaceAll('.', '_')}`;
+              return t.has(key) ? t(key) : entry.action;
+            },
+          },
+        ]}
+      />
+    )}
+    </>
   );
 }
