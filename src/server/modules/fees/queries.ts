@@ -30,8 +30,14 @@ import type {
 } from './schemas';
 
 export async function listFeeHeads(ctx: RequestContext): Promise<FeeHeadRow[]> {
-  const heads = await FeeHead.find({ schoolId: ctx.schoolId }).sort({ name: 1 }).select('name code gstRate').lean();
-  return heads.map((head) => ({ id: String(head._id), name: head.name, code: head.code, gstRate: head.gstRate }));
+  const heads = await FeeHead.find({ schoolId: ctx.schoolId }).sort({ name: 1 }).select('name code gstRate discountable').lean();
+  return heads.map((head) => ({
+    id: String(head._id),
+    name: head.name,
+    code: head.code,
+    gstRate: head.gstRate,
+    discountable: head.discountable,
+  }));
 }
 
 export async function listFeeStructures(ctx: RequestContext): Promise<FeeStructureRow[]> {
@@ -218,6 +224,7 @@ export async function getReceipt(ctx: RequestContext, paymentId: string): Promis
 
   return {
     id: String(payment._id),
+    studentId: String(payment.studentId),
     receiptNo: payment.receiptNo,
     collectedAt: payment.createdAt.toISOString(),
     collectedBy: collector?.name ?? '',

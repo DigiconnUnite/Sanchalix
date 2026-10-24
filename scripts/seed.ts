@@ -215,6 +215,15 @@ async function main() {
     staff: [{ role: 'school_admin', name: 'Anita Desai', scope: 'school' }],
   });
 
+  await User.create({
+    name: 'Platform Admin',
+    email: 'platform@sanchalix.example',
+    passwordHash,
+    roles: [{ role: 'super_admin', scope: 'platform' }],
+    status: 'active',
+    totp: { secret: seal(DEMO_TOTP_SECRET), enabledAt: new Date() },
+  });
+
   const demo = await seedGreenValleyDemo(greenValley.schoolId, 'greenvalley.example', passwordHash);
 
   console.log(`Seeded ${greenValley.students} students in Green Valley School and ${riverside.students} in Riverside Public School.`);
@@ -222,6 +231,7 @@ async function main() {
   console.log('exams with results, report cards, admissions, homework, leave, events and announcements.');
   console.log('Sign in @greenvalley.example as admin, principal, accountant, teacher (class teacher of 6-A), teacher2 to teacher12,');
   console.log('librarian, transport, parent (two children in 6-A), parent2 or student. Riverside: admin@riverside.example.');
+  console.log('Platform console: sign in as platform@sanchalix.example (no school), with the same password.');
   console.log(`Password: ${password}`);
   console.log('Admins, the principal and the accountant are also asked for a code: run `npm run totp`,');
   console.log(`or add the key ${DEMO_TOTP_SECRET} to an authenticator app.`);

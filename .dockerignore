@@ -1,0 +1,12 @@
+node_modules
+.next
+.git
+.data
+.env*
+!.env.example
+test-results
+tests/e2e
+.kilo
+*.md
+!README.md
+Docs

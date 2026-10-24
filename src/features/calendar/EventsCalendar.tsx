@@ -9,6 +9,7 @@ import FormField from '@cloudscape-design/components/form-field';
 import Header from '@cloudscape-design/components/header';
 import Input from '@cloudscape-design/components/input';
 import Modal from '@cloudscape-design/components/modal';
+import SegmentedControl from '@cloudscape-design/components/segmented-control';
 import Select from '@cloudscape-design/components/select';
 import SpaceBetween from '@cloudscape-design/components/space-between';
 import Table from '@cloudscape-design/components/table';
@@ -25,12 +26,34 @@ const monthName = new Intl.DateTimeFormat('en-IN', { month: 'long', year: 'numer
 const date = new Intl.DateTimeFormat('en-IN', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' });
 const day = (value: string) => date.format(new Date(`${value}T00:00:00Z`));
 
+const WEEKDAYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const;
+type Week = { first: string; days: (string | null)[] };
+
+/** The month as rows of seven days, Monday first. A day outside the month is null. */
+function monthWeeks(month: string): Week[] {
+  const [year, number] = month.split('-').map(Number);
+  const length = new Date(Date.UTC(year ?? 0, number ?? 1, 0)).getUTCDate();
+  const offset = (new Date(Date.UTC(year ?? 0, (number ?? 1) - 1, 1)).getUTCDay() + 6) % 7;
+  const days = [
+    ...Array<null>(offset).fill(null),
+    ...Array.from({ length }, (_, index) => `${month}-${String(index + 1).padStart(2, '0')}`),
+  ];
+  const weeks: Week[] = [];
+  for (let at = 0; at < days.length; at += 7) {
+    const row = days.slice(at, at + 7);
+    while (row.length < 7) row.push(null);
+    weeks.push({ first: row.find(Boolean) ?? `${month}-${at}`, days: row });
+  }
+  return weeks;
+}
+
 export function EventsCalendar({
   month,
   today,
   previous,
   next,
   items,
+  view,
   canEdit,
 }: {
   month: string;
@@ -38,6 +61,7 @@ export function EventsCalendar({
   previous: string;
   next: string;
   items: CalendarItem[];
+  view: 'month' | 'list';
   canEdit: boolean;
 }) {
   const t = useTranslations('calendar.events');
@@ -51,7 +75,13 @@ export function EventsCalendar({
   const [error, setError] = useState<{ message: string; fieldErrors?: Record<string, string> } | null>(null);
   const [result, setResult] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const typeOptions = TYPES.map((value) => ({ value, label: t(`type.${value}`) }));
-  const go = (to: string) => router.replace(`${pathname}?month=${to}`);
+  const go = (to: string, shown = view) => router.replace(`${pathname}?month=${to}&view=${shown}`);
+  const openEdit = (item: CalendarItem) => {
+    setError(null);
+    setEditingId(item.id);
+    setValues({ title: item.title, type: item.type, start: item.start, end: item.end });
+    setAdding(true);
+  };
   const addButton = (primary: boolean) => (
     <Button
       {...(primary && { variant: 'primary' as const })}
@@ -102,94 +132,149 @@ export function EventsCalendar({
     </FormField>
   );
 
-  return (
-    <>
-      <Table
-        variant="container"
-        stickyHeader
-        trackBy={(item) => item.id ?? `holiday-${item.start}`}
-        items={items}
-        header={
-          <SpaceBetween size="m">
-            <Header
-              variant="h2"
-              description={t('description')}
-              actions={
-                <SpaceBetween direction="horizontal" size="xs">
-                  <Button ariaLabel={t('previousLabel')} onClick={() => go(previous)}>
-                    {t('previous')}
-                  </Button>
-                  <Button ariaLabel={t('nextLabel')} onClick={() => go(next)}>
-                    {t('next')}
-                  </Button>
-                  {canEdit && addButton(true)}
-                </SpaceBetween>
-              }
+  const weeks = monthWeeks(month);
+  const cell = (date: string | null) => {
+    if (!date) return null;
+    const own = items.filter((item) => item.start <= date && item.end >= date);
+    return (
+      <SpaceBetween size="xxxs">
+        <Box fontWeight="bold" color={date === today ? 'text-status-info' : 'inherit'}>
+          {Number(date.slice(8))}
+          {date === today && ` · ${t('today')}`}
+        </Box>
+        {own.map((item) =>
+          canEdit && item.id ? (
+            <Button
+              key={item.id}
+              variant="inline-link"
+              ariaLabel={t('editLabel', { title: item.title })}
+              onClick={() => openEdit(item)}
             >
-              {monthName.format(new Date(`${month}-01T00:00:00Z`))}
-            </Header>
-            {result && (
-              <Alert type={result.type} dismissible dismissAriaLabel={t('dismiss')} onDismiss={() => setResult(null)}>
-                {result.text}
-              </Alert>
-            )}
+              {item.title}
+            </Button>
+          ) : (
+            <Box key={`${item.start}-${item.title}`} fontSize="body-s">
+              {item.title}
+            </Box>
+          ),
+        )}
+      </SpaceBetween>
+    );
+  };
+
+  const header = (
+    <SpaceBetween size="m">
+      <Header
+        variant="h2"
+        description={t('description')}
+        actions={
+          <SpaceBetween direction="horizontal" size="xs">
+            <SegmentedControl
+            selectedId={view}
+            label={t('view.label')}
+            options={[
+              { id: 'month', text: t('view.month') },
+              { id: 'list', text: t('view.list') },
+            ]}
+            onChange={({ detail }) => go(month, detail.selectedId === 'list' ? 'list' : 'month')}
+          />
+          <Button ariaLabel={t('previousLabel')} onClick={() => go(previous)}>
+              {t('previous')}
+            </Button>
+            <Button ariaLabel={t('nextLabel')} onClick={() => go(next)}>
+              {t('next')}
+            </Button>
+            {canEdit && addButton(true)}
           </SpaceBetween>
         }
-        empty={
-          <EmptyState
-            icon="event"
-            heading={t('empty.heading')}
-            body={t('empty.body')}
-            action={canEdit && addButton(false)}
-          />
-        }
-        columnDefinitions={[
-          {
-            id: 'when',
-            header: t('columns.when'),
-            cell: (item) => (
-              <SpaceBetween direction="horizontal" size="xs">
-                {item.start === item.end ? day(item.start) : `${day(item.start)} – ${day(item.end)}`}
-                {item.start <= today && item.end >= today && <Badge color="blue">{t('today')}</Badge>}
-              </SpaceBetween>
-            ),
-          },
-          { id: 'title', header: t('columns.title'), cell: (item) => item.title, isRowHeader: true },
-          { id: 'type', header: t('columns.type'), cell: (item) => t(`type.${item.type}`) },
-          ...(canEdit
-            ? [
-                {
-                  id: 'actions',
-                  header: t('columns.actions'),
-                  cell: (item: CalendarItem) =>
-                    item.id && (
-                      <SpaceBetween direction="horizontal" size="s">
-                        <Button
-                          variant="inline-link"
-                          ariaLabel={t('editLabel', { title: item.title })}
-                          onClick={() => {
-                            setError(null);
-                            setEditingId(item.id);
-                            setValues({ title: item.title, type: item.type, start: item.start, end: item.end });
-                            setAdding(true);
-                          }}
-                        >
-                          {t('edit')}
-                        </Button>
-                        <Button
-                          variant="inline-link"
-                          ariaLabel={t('deleteLabel', { title: item.title })}
-                          onClick={() => setRemoving(item)}
-                        >
-                          {t('delete')}
-                        </Button>
-                      </SpaceBetween>
-                    ),
-                },
-              ]
-            : []),
-        ]}
-      />
+      >
+        {monthName.format(new Date(`${month}-01T00:00:00Z`))}
+      </Header>
+      {result && (
+        <Alert type={result.type} dismissible dismissAriaLabel={t('dismiss')} onDismiss={() => setResult(null)}>
+          {result.text}
+        </Alert>
+      )}
+    </SpaceBetween>
+  );
+
+  return (
+    <>
+      {view === 'month' ? (
+        <Table
+          variant="container"
+          trackBy="first"
+          items={weeks}
+          header={header}
+          columnDefinitions={WEEKDAYS.map((weekday, index) => ({
+            id: weekday,
+            header: t(`weekdays.${weekday}`),
+            cell: (week: Week) => cell(week.days[index] ?? null),
+          }))}
+        />
+      ) : (
+        <Table
+          variant="container"
+          stickyHeader
+          trackBy={(item) => item.id ?? `${item.type}-${item.start}-${item.title}`}
+          items={items}
+          header={header}
+          empty={
+            <EmptyState
+              icon="event"
+              heading={t('empty.heading')}
+              body={t('empty.body')}
+              action={canEdit && addButton(false)}
+            />
+          }
+          columnDefinitions={[
+            {
+              id: 'when',
+              header: t('columns.when'),
+              cell: (item) => (
+                <SpaceBetween direction="horizontal" size="xs">
+                  {item.start === item.end ? day(item.start) : `${day(item.start)} – ${day(item.end)}`}
+                  {item.start <= today && item.end >= today && <Badge color="blue">{t('today')}</Badge>}
+                </SpaceBetween>
+              ),
+            },
+            { id: 'title', header: t('columns.title'), cell: (item) => item.title, isRowHeader: true },
+            { id: 'type', header: t('columns.type'), cell: (item) => t(`type.${item.type}`) },
+            ...(canEdit
+              ? [
+                  {
+                    id: 'actions',
+                    header: t('columns.actions'),
+                    cell: (item: CalendarItem) =>
+                      item.id && (
+                        <SpaceBetween direction="horizontal" size="s">
+                          <Button
+                            variant="inline-link"
+                            ariaLabel={t('editLabel', { title: item.title })}
+                            onClick={() => {
+                              setError(null);
+                              setEditingId(item.id);
+                              setValues({ title: item.title, type: item.type, start: item.start, end: item.end });
+                              setAdding(true);
+                            }}
+                          >
+                            {t('edit')}
+                          </Button>
+                          <Button
+                            variant="inline-link"
+                            ariaLabel={t('deleteLabel', { title: item.title })}
+                            onClick={() => setRemoving(item)}
+                          >
+                            {t('delete')}
+                          </Button>
+                        </SpaceBetween>
+                      ),
+                  },
+                ]
+              : []),
+          ]}
+        />
+      )}
       <Modal
         visible={adding}
         header={t(editingId ? 'editTitle' : 'add')}

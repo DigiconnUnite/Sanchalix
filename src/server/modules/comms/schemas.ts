@@ -14,12 +14,22 @@ export const Audience = z.discriminatedUnion('type', [
 ]);
 export type Audience = z.infer<typeof Audience>;
 
+const OptionalDate = z
+  .union([z.literal('').transform(() => undefined), z.string().regex(/^\d{4}-\d{2}-\d{2}$/, `${E}.date`)])
+  .optional();
+
 export const AnnouncementInput = z.object({
   title: z.string().trim().min(1, `${E}.title`).max(120, `${E}.title`),
   body: z.string().trim().min(1, `${E}.body`).max(5000, `${E}.body`),
   audience: Audience,
   /** A notice: each recipient is asked to confirm they have read it. */
   requiresAck: z.boolean().default(false),
+  /** Besides the app, which always gets it. People who have switched a channel off in Profile are skipped. */
+  channels: z.array(z.enum(['email', 'sms'])).max(2).default([]),
+  /** Leave empty to publish now. A later date holds it until that morning. */
+  publishOn: OptionalDate,
+  /** The last day it is shown. Empty means it stays. */
+  expiresOn: OptionalDate,
 });
 export type AnnouncementInput = z.infer<typeof AnnouncementInput>;
 
@@ -33,6 +43,12 @@ export type AnnouncementRow = {
   publishedAt: string;
   audience: { type: 'school' } | { type: 'role'; roles: RoleKey[] } | { type: 'section'; sections: string[] };
   requiresAck: boolean;
+  /** Files the author attached, for everyone who can read the announcement. */
+  attachments: { id: string; fileName: string }[];
+  /** Waiting for its publish date. Only the people who publish announcements see these. */
+  scheduled: boolean;
+  /** The last day it is shown, if it has one. */
+  expiresOn: string | null;
 };
 
 export type AnnouncementDetail = AnnouncementRow & {

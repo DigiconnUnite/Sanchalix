@@ -18,7 +18,9 @@ import {
   listHomework,
   readAttachment,
 } from '@/server/modules/homework/service';
-import { clearSlot, createSubject, getTimetable, setSlot } from './service';
+import { Notification } from '@/server/models/notification';
+import { User } from '@/server/models/user';
+import { clearSlot, createSubject, getTimetable, notifyTimetable, setSlot } from './service';
 
 const ADDRESS = { line1: '12 School Road', city: 'Bhopal', state: 'Madhya Pradesh', pincode: '462001', country: 'IN' };
 let admin: RequestContext;
@@ -179,4 +181,23 @@ it('keeps homework files to the teacher who set it, the office, and that section
   await expect(readAttachment(parent(new Types.ObjectId()), id, fileId)).rejects.toMatchObject({ code: 'NOT_FOUND' });
   await expect(readAttachment(otherTeacher, id, fileId)).rejects.toMatchObject({ code: 'NOT_FOUND' });
   await expect(readAttachment(otherSchool, id, fileId)).rejects.toMatchObject({ code: 'NOT_FOUND' });
+});
+
+it('tells a section’s teachers its timetable is ready, once a day, and only in its own school', async () => {
+  const sectionId = sections[2] ?? '';
+  const stamp = Date.now().toString(36);
+  await User.create({
+    name: 'Anita Desai',
+    email: `anita-${stamp}@example.test`,
+    roles: [{ role: 'teacher', schoolId: admin.schoolId, scope: 'assigned' }],
+    ...(teacher.staffId && { staffId: teacher.staffId }),
+    status: 'active',
+  });
+  await setSlot(admin, { sectionId, day: 2, period: 1, subjectId: maths, teacherId: String(teacher.staffId) });
+
+  await expect(notifyTimetable(otherSchool, sectionId, 'Updated')).rejects.toMatchObject({ code: 'NOT_FOUND' });
+  expect(await notifyTimetable(admin, sectionId, 'Updated')).toMatchObject({ sectionName: '7-C', recipients: 1, told: 1 });
+  expect(await Notification.countDocuments({ schoolId: admin.schoolId, dedupeKey: { $regex: `^timetable:${sectionId}:` } })).toBe(1);
+  expect(await notifyTimetable(admin, sectionId, 'Updated')).toMatchObject({ recipients: 1, told: 0 });
+  expect(await Notification.countDocuments({ schoolId: admin.schoolId, dedupeKey: { $regex: `^timetable:${sectionId}:` } })).toBe(1);
 });

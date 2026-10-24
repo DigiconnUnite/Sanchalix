@@ -18,6 +18,8 @@ import { usePathname, useRouter } from '@/i18n/navigation';
 import { submitStaffAttendance } from '@/server/modules/hr/actions';
 import type { StaffMark, StaffSheet } from '@/server/modules/hr/staffAttendance';
 
+const QR = '/staff/attendance/qr';
+const REGISTER = '/staff/attendance/register';
 const MARKS: StaffMark[] = ['present', 'absent', 'half_day', 'leave'];
 
 export function StaffAttendance({ sheet, canEdit }: { sheet: StaffSheet; canEdit: boolean }) {
@@ -60,11 +62,34 @@ export function StaffAttendance({ sheet, canEdit }: { sheet: StaffSheet; canEdit
             counter={closed ? '' : `(${sheet.staff.length})`}
             description={t('description')}
             actions={
-              editable &&
-              sheet.staff.length > 0 && (
-                <Button variant="primary" iconSvg={svg('attendance')} loading={busy} onClick={() => void save()}>
-                  {t(sheet.saved ? 'update' : 'save')}
-                </Button>
+              canEdit && (
+                <SpaceBetween direction="horizontal" size="xs">
+                  <Button
+                    href={REGISTER}
+                    iconSvg={svg('reports')}
+                    onFollow={(event) => {
+                      event.preventDefault();
+                      router.push(REGISTER);
+                    }}
+                  >
+                    {t('register')}
+                  </Button>
+                  <Button
+                    href={QR}
+                    iconSvg={svg('qrAttendance')}
+                    onFollow={(event) => {
+                      event.preventDefault();
+                      router.push(QR);
+                    }}
+                  >
+                    {t('qr')}
+                  </Button>
+                  {editable && sheet.staff.length > 0 && (
+                    <Button variant="primary" iconSvg={svg('attendance')} loading={busy} onClick={() => void save()}>
+                      {t(sheet.saved ? 'update' : 'save')}
+                    </Button>
+                  )}
+                </SpaceBetween>
               )
             }
           >

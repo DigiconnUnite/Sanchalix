@@ -15,7 +15,11 @@ import { User } from '@/server/models/user';
 import { addEvent, EventInput, getMonth, removeEvent } from '@/server/modules/calendar/events';
 import { StudentInput } from '@/server/modules/sis/schemas';
 import { createStudent } from '@/server/modules/sis/service';
-import { addUserRole, createUser, listUsers, resetUserPassword, setUserStatus, UserInput } from '@/server/modules/users/service';
+import { addUserRole, createUser, removeUserRole, listUsers, resetUserPassword, setUserStatus, UserInput } from '@/server/modules/users/service';
+import { Subject } from '@/server/models/subject';
+import { getSectionSubjectIds, listClasses } from '@/server/modules/academics/queries';
+import { setClassSubjects } from '@/server/modules/academics/service';
+import { getSettings, saveTerms, TermsInput } from '@/server/modules/settings/service';
 import { closeYear, createNextYear, getPromotionSheet, getPromotionState, promoteSection } from './service';
 
 const ADDRESS = { line1: '12 School Road', city: 'Bhopal', state: 'Madhya Pradesh', pincode: '462001' };
@@ -106,6 +110,10 @@ it('promotes, detains and releases students, and does nothing on a repeat', asyn
   expect(sheet.promoteTo.map(({ name }) => name)).toEqual(['10-A']);
   expect(sheet.detainIn.map(({ name }) => name)).toEqual(['9-A']);
   const [asha = '', bela = '', chitra = ''] = students;
+  const [kept, dropped] = [new Types.ObjectId(), new Types.ObjectId()];
+  await Enrollment.updateOne({ schoolId: ctx.schoolId, studentId: asha, status: 'active' }, { optionalSubjectIds: [kept, dropped] });
+  const destination = await Section.findOne({ schoolId: ctx.schoolId, _id: sheet.promoteTo[0]?.id }).select('classId').lean();
+  await Class.updateOne({ schoolId: ctx.schoolId, _id: destination?.classId }, { subjectIds: [kept] });
   const decisions = [
     { studentId: asha, action: 'promote' as const, toSectionId: sheet.promoteTo[0]?.id },
     { studentId: bela, action: 'detain' as const, toSectionId: sheet.detainIn[0]?.id },
@@ -125,6 +133,8 @@ it('promotes, detains and releases students, and does nothing on a repeat', asyn
   const enrollments = await Enrollment.find({ schoolId: ctx.schoolId, studentId: asha }).sort({ createdAt: 1 }).lean();
   expect(enrollments.map(({ status }) => status)).toEqual(['promoted', 'active']);
   expect(String(enrollments[1]?.sectionId)).toBe(sheet.promoteTo[0]?.id);
+  expect(enrollments[1]?.optionalSubjectIds.map(String)).toEqual([String(kept)]);
+  await Class.updateOne({ schoolId: ctx.schoolId, _id: destination?.classId }, { subjectIds: [] });
   expect((await Student.findOne({ schoolId: ctx.schoolId, _id: chitra }).lean())?.status).toBe('withdrawn');
   expect((await Student.findOne({ schoolId: ctx.schoolId, _id: bela }).lean())?.status).toBe('active');
 });
@@ -188,9 +198,40 @@ it('creates a sign-in with a one-time password, and resets or disables it only w
   await addUserRole(ctx, id, 'accountant');
   await expect(addUserRole(ctx, id, 'accountant')).rejects.toMatchObject({ code: 'CONFLICT' });
   expect((await listUsers(ctx, {})).rows.find((row) => row.id === id)?.roles).toHaveLength(2);
+  await expect(removeUserRole(otherSchool, id, 'accountant')).rejects.toMatchObject({ code: 'NOT_FOUND' });
+  await removeUserRole(ctx, id, 'accountant');
+  await expect(removeUserRole(ctx, id, 'teacher')).rejects.toMatchObject({ code: 'BUSINESS_RULE' });
+  expect((await listUsers(ctx, {})).rows.find((row) => row.id === id)?.roles).toEqual(['teacher']);
 
   await expect(setUserStatus(otherSchool, id, 'disabled')).rejects.toMatchObject({ code: 'NOT_FOUND' });
   await expect(setUserStatus(ctx, String(ctx.userId), 'disabled')).rejects.toMatchObject({ code: 'BUSINESS_RULE' });
   await setUserStatus(ctx, id, 'disabled');
   expect((await User.findById(created.id).lean())?.status).toBe('disabled');
+});
+
+it('keeps terms inside the year and in order, and limits a class to its subjects', async () => {
+  const year = (await getSettings(ctx))?.year;
+  const [start, end] = [year?.startDate ?? '', year?.endDate ?? ''];
+  const [september, october] = [`${start.slice(0, 4)}-09-30`, `${start.slice(0, 4)}-10-01`];
+  const term = (name: string, startDate: string, endDate: string) => ({ name, startDate, endDate });
+  expect(TermsInput.safeParse([term('Term 1', start, october), term('Term 2', october, end)]).success).toBe(false);
+  await expect(saveTerms(ctx, TermsInput.parse([term('Term 1', '2001-04-01', october)]))).rejects.toMatchObject({
+    code: 'BUSINESS_RULE',
+  });
+  const terms = TermsInput.parse([term('Term 1', start, september), term('Term 2', october, end)]);
+  expect(await saveTerms(ctx, terms)).toMatchObject({ count: 2 });
+  expect((await getSettings(ctx))?.year?.terms).toHaveLength(2);
+
+  const subject = await Subject.create({ schoolId: ctx.schoolId, name: 'Physics', code: 'PHY', type: 'scholastic' });
+  const [first, second] = await listClasses(ctx);
+  const sectionOf = async (classId = '') =>
+    String((await Section.findOne({ schoolId: ctx.schoolId, classId }).orFail().lean())._id);
+  const physics = [String(subject._id)];
+  await expect(setClassSubjects(otherSchool, first?.id ?? '', physics)).rejects.toMatchObject({ code: 'NOT_FOUND' });
+  await expect(setClassSubjects(ctx, first?.id ?? '', [String(new Types.ObjectId())])).rejects.toMatchObject({
+    code: 'NOT_FOUND',
+  });
+  await setClassSubjects(ctx, first?.id ?? '', physics);
+  expect(await getSectionSubjectIds(ctx, await sectionOf(first?.id))).toEqual(physics);
+  expect(await getSectionSubjectIds(ctx, await sectionOf(second?.id))).toBeNull();
 });

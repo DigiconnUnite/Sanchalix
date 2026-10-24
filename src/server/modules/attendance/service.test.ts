@@ -4,6 +4,7 @@ import { afterAll, beforeAll, expect, it } from 'vitest';
 import { todayIn, weekdayOf } from '@/lib/dates';
 import type { RequestContext } from '@/server/auth/context';
 import { connectDb } from '@/server/db/connect';
+import { AcademicYear } from '@/server/models/academicYear';
 import { AttendanceRecord } from '@/server/models/attendanceRecord';
 import { Enrollment } from '@/server/models/enrollment';
 import { Holiday } from '@/server/models/holiday';
@@ -11,6 +12,7 @@ import { School } from '@/server/models/school';
 import { Section } from '@/server/models/section';
 import { TimetableSlot } from '@/server/models/timetableSlot';
 import { getAttendanceSheet } from './queries';
+import { getAttendanceReport } from './reports';
 import type { MarkableStatus } from './schemas';
 import { submitAttendance } from './service';
 
@@ -241,4 +243,26 @@ it('lets a past day be corrected only as a correction, and only if it was taken'
   await expect(submitAttendance(principal, sheet([], { date: daysAgo(40) }), true)).rejects.toMatchObject({
     code: 'BUSINESS_RULE',
   });
+});
+
+it('reports attendance for the sections a person may see, and nothing of another school', async () => {
+  const section = await Section.findOne({ schoolId: admin.schoolId, _id: sectionId }).orFail().lean();
+  await AcademicYear.create({
+    _id: section.academicYearId,
+    schoolId: admin.schoolId,
+    label: '2026–27',
+    startDate: '2026-04-01',
+    endDate: '2027-03-31',
+    status: 'current',
+  });
+  const report = await getAttendanceReport(admin, undefined, undefined);
+  expect(report.to).toBe(todayIn('Asia/Kolkata'));
+  expect(report.percent).toBeGreaterThan(0);
+  expect(report.sections.map((section) => section.id)).toContain(sectionId);
+  expect(report.low.every((student) => student.percent < 75)).toBe(true);
+
+  const reversed = await getAttendanceReport(admin, '2030-01-01', '2020-01-01');
+  expect(reversed).toMatchObject({ from: '2020-01-01', to: '2020-01-01', percent: null, sections: [] });
+  const elsewhere = await getAttendanceReport({ ...admin, schoolId: new Types.ObjectId() }, undefined, undefined);
+  expect(elsewhere).toMatchObject({ percent: null, sections: [], low: [] });
 });

@@ -19,9 +19,17 @@ const settings = new Schema(
       amountMinor: { type: Number, min: 0, default: 0, validate: Number.isInteger },
       perDay: { type: Boolean, default: false },
     },
+    // Days a year of each paid leave type. Leave without pay has no limit.
+    leaveQuotas: {
+      CL: { type: Number, min: 0, max: 366, default: 12 },
+      SL: { type: Number, min: 0, max: 366, default: 10 },
+      EL: { type: Number, min: 0, max: 366, default: 15 },
+    },
     quietHours: { type: window, default: () => ({ start: '21:00', end: '07:00' }) },
     weekStart: { type: Number, min: 0, max: 6, default: 1 },
     workingDays: { type: [Number], default: [1, 2, 3, 4, 5, 6] },
+    // A due date that lands on a holiday or a non-working day moves to the next working day when invoices are issued.
+    shiftDueDates: { type: Boolean, default: false },
     receiptPrefix: { type: String, default: 'RCPT' },
     messagingStudentsEnabled: { type: Boolean, default: false },
     aiInsightsEnabled: { type: Boolean, default: false },

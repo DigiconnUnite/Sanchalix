@@ -1,6 +1,6 @@
 import 'server-only';
 import { Schema } from 'mongoose';
-import { address, audit, DATE_STR, defineTenantModel, E164 } from './shared';
+import { address, audit, DATE_STR, defineTenantModel, documentRef, E164 } from './shared';
 
 const ObjectId = Schema.Types.ObjectId;
 
@@ -22,6 +22,7 @@ const schema = new Schema(
     type: { type: String, required: true, enum: STAFF_TYPES },
     joinedOn: { type: String, required: true, match: DATE_STR },
     subjectIds: [{ type: ObjectId, ref: 'Subject' }],
+    documents: [documentRef],
     qualifications: [{ _id: false, degree: String, institution: String, year: Number }],
     bank: { type: { accountNo: String, ifsc: String, name: String }, select: false },
     pan: { type: String, select: false },

@@ -22,6 +22,7 @@ type Data = { rows: PaymentRow[]; page: number; nextCursor: string | null; prevC
 
 export function PaymentsTable({ pageSize, data }: { pageSize: number; data: Data | null }) {
   const t = useTranslations('fees.payments');
+  const tExport = useTranslations('export');
   const tMethod = useTranslations('fees.counter.methods');
   const router = useRouter();
   const pathname = usePathname();
@@ -62,7 +63,7 @@ export function PaymentsTable({ pageSize, data }: { pageSize: number; data: Data
     loadingText: t('loading'),
     stickyHeader: true,
     header: (
-      <Header variant="h2" actions={<ExportButton kind="payments" />}>
+      <Header variant="h2" actions={<ExportButton href="/api/v1/export/payments" label={tExport('label.payments')} />}>
         {t('title')}
       </Header>
     ),

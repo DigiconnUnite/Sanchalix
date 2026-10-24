@@ -2,6 +2,9 @@ import 'server-only';
 import { z } from 'zod';
 import { AppError } from '@/lib/appError';
 import type { RequestContext } from '@/server/auth/context';
+import { AcademicYear } from '@/server/models/academicYear';
+import { Exam } from '@/server/models/exam';
+import { DEFAULT_LEAVE_QUOTAS } from '@/server/modules/hr/leave';
 import { PeriodDefinition } from '@/server/models/periodDefinition';
 import { School } from '@/server/models/school';
 import { TimetableSlot } from '@/server/models/timetableSlot';
@@ -25,6 +28,7 @@ export const SchoolInput = z.object({
     .array(z.number().int().min(0).max(6))
     .min(1, `${E}.workingDays`)
     .transform((days) => [...new Set(days)].sort()),
+  shiftDueDates: z.boolean().default(false),
 });
 export type SchoolInput = z.infer<typeof SchoolInput>;
 
@@ -45,12 +49,61 @@ export const PeriodsInput = z
   });
 export type PeriodsInput = z.infer<typeof PeriodsInput>;
 
-export type SchoolSettings = SchoolInput & { code: string; board: string; periods: { start: string; end: string }[] };
+export const LeaveQuotasInput = z.object({
+  CL: z.coerce.number().int(`${E}.quota`).min(0, `${E}.quota`).max(366, `${E}.quota`),
+  SL: z.coerce.number().int(`${E}.quota`).min(0, `${E}.quota`).max(366, `${E}.quota`),
+  EL: z.coerce.number().int(`${E}.quota`).min(0, `${E}.quota`).max(366, `${E}.quota`),
+});
+export type LeaveQuotasInput = z.infer<typeof LeaveQuotasInput>;
+
+export const AlertTimeInput = z.object({ absenceAlertTime: Time });
+export type AlertTimeInput = z.infer<typeof AlertTimeInput>;
+
+export const QuietHoursInput = z
+  .object({ start: Time, end: Time })
+  .refine(({ start, end }) => start !== end, `${E}.quietSame`);
+export type QuietHoursInput = z.infer<typeof QuietHoursInput>;
+
+const Day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, `${E}.date`);
+export const TermsInput = z
+  .array(
+    z.object({
+      // The id of a term that already exists, so exams tied to it stay tied when its name or dates change.
+      id: z.string().regex(/^[0-9a-f]{24}$/).optional(),
+      name: text('termName', 40),
+      startDate: Day,
+      endDate: Day,
+    }),
+  )
+  .max(6, `${E}.tooManyTerms`)
+  .superRefine((terms, issue) => {
+    terms.forEach((term, index) => {
+      // YYYY-MM-DD compares correctly as text. A term ends after it starts, and starts after the one before it ended.
+      if (term.endDate <= term.startDate) issue.addIssue({ code: 'custom', path: [index, 'endDate'], message: `${E}.termEnd` });
+      const previous = terms[index - 1];
+      if (previous && term.startDate <= previous.endDate) {
+        issue.addIssue({ code: 'custom', path: [index, 'startDate'], message: `${E}.termOverlap` });
+      }
+    });
+  });
+export type TermsInput = z.infer<typeof TermsInput>;
+
+export type SchoolSettings = SchoolInput & {
+  code: string;
+  board: string;
+  periods: { start: string; end: string }[];
+  quietHours: QuietHoursInput;
+  absenceAlertTime: string;
+  leaveQuotas: LeaveQuotasInput;
+  /** The current academic year and its terms. Null until a year is set up. */
+  year: { label: string; startDate: string; endDate: string; terms: TermsInput } | null;
+};
 
 export async function getSettings(ctx: RequestContext): Promise<SchoolSettings | null> {
-  const [school, periods] = await Promise.all([
-    School.findById(ctx.schoolId).select('name code board affiliationNo logoUrl address settings.workingDays').lean(),
+  const [school, periods, year] = await Promise.all([
+    School.findById(ctx.schoolId).select('name code board affiliationNo logoUrl address settings.workingDays settings.shiftDueDates settings.quietHours settings.leaveQuotas settings.absenceAlertTime').lean(),
     getPeriods(ctx),
+    AcademicYear.findOne({ schoolId: ctx.schoolId, status: 'current' }).select('label startDate endDate terms').lean(),
   ]);
   if (!school) return null;
   return {
@@ -66,7 +119,22 @@ export async function getSettings(ctx: RequestContext): Promise<SchoolSettings |
       pincode: school.address.pincode,
     },
     workingDays: school.settings?.workingDays ?? [1, 2, 3, 4, 5, 6],
+    shiftDueDates: school.settings?.shiftDueDates ?? false,
     periods: periods.map(({ start, end }) => ({ start, end })),
+    quietHours: { start: school.settings?.quietHours?.start ?? '21:00', end: school.settings?.quietHours?.end ?? '07:00' },
+    absenceAlertTime: school.settings?.absenceAlertTime ?? '09:30',
+    leaveQuotas: { ...DEFAULT_LEAVE_QUOTAS, ...school.settings?.leaveQuotas },
+    year: year && {
+      label: year.label,
+      startDate: year.startDate,
+      endDate: year.endDate,
+      terms: year.terms.map((term) => ({
+        id: String(term._id),
+        name: term.name,
+        startDate: term.startDate ?? '',
+        endDate: term.endDate ?? '',
+      })),
+    },
   };
 }
 
@@ -83,13 +151,64 @@ export async function updateSchool(ctx: RequestContext, input: SchoolInput) {
       'address.state': input.address.state,
       'address.pincode': input.address.pincode,
       'settings.workingDays': input.workingDays,
+      'settings.shiftDueDates': input.shiftDueDates,
     },
     { runValidators: true },
   )
-    .select('name settings.workingDays')
+    .select('name settings.workingDays settings.shiftDueDates')
     .lean();
   if (!before) throw new AppError('NOT_FOUND', `${E}.notFound`);
-  return { name: input.name, before: { name: before.name, workingDays: before.settings?.workingDays ?? [] } };
+  return {
+    name: input.name,
+    before: { name: before.name, workingDays: before.settings?.workingDays ?? [], shiftDueDates: before.settings?.shiftDueDates ?? false },
+  };
+}
+
+/** Replaces the terms of the current academic year. Every term has to fall inside the year. */
+export async function saveTerms(ctx: RequestContext, terms: TermsInput) {
+  const { schoolId } = ctx;
+  const year = await AcademicYear.findOne({ schoolId, status: 'current' }).select('startDate endDate terms').lean();
+  if (!year) throw new AppError('BUSINESS_RULE', `${E}.noYear`);
+  if (terms.some((term) => term.startDate < year.startDate || term.endDate > year.endDate)) {
+    throw new AppError('BUSINESS_RULE', `${E}.termOutsideYear`);
+  }
+  const kept = new Set(terms.flatMap((term) => term.id ?? []));
+  const removed = year.terms.filter((term) => !kept.has(String(term._id))).map((term) => term._id);
+  if (removed.length > 0 && (await Exam.exists({ schoolId, termId: { $in: removed } }))) {
+    throw new AppError('BUSINESS_RULE', `${E}.termInUse`);
+  }
+  await AcademicYear.updateOne(
+    { schoolId, _id: year._id },
+    { terms: terms.map(({ id, ...term }) => ({ ...(id && { _id: id }), ...term })), updatedBy: ctx.userId },
+  );
+  return { id: year._id, count: terms.length, before: year.terms.length };
+}
+
+/** Texts that aren't urgent wait until these hours are over. Sign-in codes and absence alerts ignore them. */
+export async function saveQuietHours(ctx: RequestContext, quiet: QuietHoursInput) {
+  const before = await School.findOneAndUpdate({ _id: ctx.schoolId }, { 'settings.quietHours': quiet })
+    .select('settings.quietHours')
+    .lean();
+  if (!before) throw new AppError('NOT_FOUND', `${E}.notFound`);
+  return { before: before.settings?.quietHours ?? null };
+}
+
+/** The time parents are told about an absence. A register saved earlier waits for it. */
+export async function saveAlertTime(ctx: RequestContext, { absenceAlertTime }: AlertTimeInput) {
+  const before = await School.findOneAndUpdate({ _id: ctx.schoolId }, { 'settings.absenceAlertTime': absenceAlertTime })
+    .select('settings.absenceAlertTime')
+    .lean();
+  if (!before) throw new AppError('NOT_FOUND', `${E}.notFound`);
+  return { before: before.settings?.absenceAlertTime ?? '09:30' };
+}
+
+/** A new allowance applies from now. Days already taken are kept, so someone can end up with a negative balance. */
+export async function saveLeaveQuotas(ctx: RequestContext, quotas: LeaveQuotasInput) {
+  const before = await School.findOneAndUpdate({ _id: ctx.schoolId }, { 'settings.leaveQuotas': quotas })
+    .select('settings.leaveQuotas')
+    .lean();
+  if (!before) throw new AppError('NOT_FOUND', `${E}.notFound`);
+  return { before: { ...DEFAULT_LEAVE_QUOTAS, ...before.settings?.leaveQuotas } };
 }
 
 export async function savePeriods(ctx: RequestContext, periods: PeriodsInput) {

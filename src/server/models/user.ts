@@ -30,6 +30,15 @@ const schema = new Schema(
     studentId: { type: ObjectId, ref: 'Student' },
     guardianId: { type: ObjectId, ref: 'Guardian' },
     locale: String,
+    // What this person has switched off. Email and text announcements are on unless there is an entry saying otherwise.
+    notificationPrefs: [
+      {
+        _id: false,
+        channel: { type: String, required: true, enum: ['email', 'sms'] },
+        category: { type: String, required: true, enum: ['announcements'] },
+        enabled: { type: Boolean, required: true },
+      },
+    ],
     visualMode: { type: String, enum: ['light', 'dark', 'system'], default: 'system' },
     density: { type: String, enum: ['comfortable', 'compact'], default: 'comfortable' },
     totp: {

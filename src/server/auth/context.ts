@@ -42,6 +42,24 @@ export const getContext = cache(async (): Promise<RequestContext | null> => {
   };
 });
 
+export type PlatformContext = { userId: Types.ObjectId; name: string; role: 'super_admin' };
+
+/** The signed-in platform staff member. Platform staff work across schools, so they have no school in their session. */
+export const getPlatformContext = cache(async (): Promise<PlatformContext | null> => {
+  const session = await readSession();
+  if (session?.activeRole !== 'super_admin' || session.activeSchoolId || session.totpPending) return null;
+  const user = await User.findById(session.userId).select('name roles status').lean();
+  if (user?.status !== 'active' || !user.roles.some((r) => r.role === 'super_admin' && !r.schoolId)) return null;
+  return { userId: user._id, name: user.name, role: 'super_admin' };
+});
+
+export async function requirePlatform(permission: Permission) {
+  const ctx = await getPlatformContext();
+  if (!ctx) throw new AppError('UNAUTHENTICATED', 'errors.unauthenticated');
+  if (!can(ctx.role, permission)) throw new AppError('FORBIDDEN', 'errors.forbidden');
+  return ctx;
+}
+
 export async function requirePermission(permission: Permission) {
   const ctx = await getContext();
   if (!ctx) throw new AppError('UNAUTHENTICATED', 'errors.unauthenticated');

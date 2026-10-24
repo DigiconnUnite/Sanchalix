@@ -149,27 +149,41 @@ body {
   }
 }
 
+/* A banner page turns off AppLayout's content padding so the band can run edge to edge, which also drops the
+   space AppLayout leaves under a page. It is put back here. Without it the last row's grid gutter spills past the
+   shell: the page scrolls a few pixels further than the navigation is tall and a strip shows under it. */
 .vw-page-banner-body {
   padding-block-start: var(--space-scaled-l-33ruz6, 20px);
+  padding-block-end: var(--space-layout-content-bottom-adv8e9, 40px);
 }
 
-.vw-page-banner [class*='awsui_background_'],
-.vw-page-banner [class*='awsui_header-background_'] {
+/* Child selectors, so only the banner's own layout is matched: a page inside it may use a ContentLayout too, and
+   its background element reaches down behind the first row of the page. */
+.vw-page-banner > * > [class*='awsui_background_'],
+.vw-page-banner > * > [class*='awsui_background_'] > [class*='awsui_header-background_'] {
   border-end-start-radius: var(--border-radius-container-33hhdh, 16px);
   border-end-end-radius: var(--border-radius-container-33hhdh, 16px);
 }
 
-.vw-page-banner [class*='awsui_background_'] {
+.vw-page-banner > * > [class*='awsui_background_'] {
   border-block-end: var(--border-divider-section-width-dlkb8v, 1px) solid var(--color-border-divider-default-diwd4w);
 }
 
 /* The home page header opens with the maker's logo in the logo box, then the product's own logo and name.
    Cloudscape's identity offers one plain image, so the product logo is drawn on the title, as the school's is. */
-.vw-public-nav .vw-platform-logo {
+.vw-platform-logo.vw-maker-logo {
   inline-size: 56px;
   padding-inline: 0;
   background-image: url('/logo/dcu-white-logo.svg');
   background-size: 36px;
+}
+
+/* The app header also carries the product's logo box and the school's name, so a phone has no room for the
+   maker's logo there. The home page header keeps it at every width. */
+@media (max-width: 688px) {
+  .vw-top-nav:not(.vw-public-nav) > .vw-maker-logo {
+    display: none;
+  }
 }
 
 .vw-public-nav [class*='awsui_identity_'] [class*='awsui_title_']::before {
@@ -203,6 +217,14 @@ body {
 .vw-public-footer {
   background: var(--color-background-container-content-mjfil9);
   border-block-start: var(--border-divider-section-width-dlkb8v, 1px) solid var(--color-border-divider-default-diwd4w);
+}
+
+/* A blog card's picture. It is decoration (the title says what the post is), so it is a background, which screen
+   readers skip. The backdrop is the lightest step of the accent scale, fixed in both modes: the pictures are drawn
+   with dark outlines that would vanish on a dark card. */
+.vw-blog-cover {
+  block-size: 100%;
+  background: var(--vw-blog-cover-image) center bottom / auto 88% no-repeat #ffedd5;
 }
 
 .vw-public-footer-inner {
@@ -383,6 +405,11 @@ body {
   scrollbar-color: color-mix(in srgb, var(--color-text-body-secondary-66ygbb) 20%, transparent) transparent;
 }
 
+/* ADR-020: the navigation panel shows no scrollbar. It still scrolls with the wheel, touch and the keyboard. */
+[class*='awsui_navigation-container_'] > [class*='awsui_navigation_'] {
+  scrollbar-width: none;
+}
+
 /* ADR-020: the school's circular logo sits before its name. Cloudscape's identity offers one plain image and no
    shape option, so the logo is drawn on the title. It arrives as --vw-school-logo; without one it is the school
    icon, drawn smaller on a tinted disc so it reads as a logo, not a stray glyph. */
@@ -442,12 +469,51 @@ body {
   padding-block-start: var(--space-scaled-m-lfeh3i, 16px) !important;
 }
 
+/* ADR-020: on desktop only the content area scrolls, so the scrollbar starts under the breadcrumb row instead of
+   running up beside the header. Cloudscape scrolls the whole window and its toolbar layout has no option for this.
+   The offset Cloudscape hands the content is the height of the header plus the breadcrumb row, which is exactly
+   what the content area has to give up. Screen only: on paper a fixed height would cut the document off. */
+@media screen and (min-width: 689px) {
+  [data-awsui-app-layout-widget-loaded] > main > [class*='awsui_main_'] {
+    box-sizing: border-box;
+    block-size: calc(100vh - var(--awsui-sticky-vertical-top-offset, 0px));
+    overflow-y: auto;
+    /* The area spans the page's side gutters so its scrollbar sits at the window's edge. The gutters and the
+       1620px content limit, which Cloudscape keeps in the grid columns, become padding. */
+    grid-column: 3 / 6 !important;
+    margin-block: 0 !important;
+    padding-inline: max(var(--space-layout-content-horizontal-axaoos, 24px), (100% - 1620px) / 2);
+  }
+
+  [data-awsui-app-layout-widget-loaded] > main > [class*='awsui_main-disable-paddings_'] {
+    padding: 0;
+  }
+
+  /* The space above and below a page is drawn as spacers, not padding: a sticky table header keeps clear of its
+     scroll area's padding, so it would stop 12px short of the top with rows showing through the gap. */
+  [data-awsui-app-layout-widget-loaded] > main > [class*='awsui_main_']:not([class*='awsui_main-disable-paddings_'])::before,
+  [data-awsui-app-layout-widget-loaded] > main > [class*='awsui_main_']:not([class*='awsui_main-disable-paddings_'])::after {
+    content: '';
+    display: block;
+    block-size: var(--space-scaled-s-2crg2b, 12px);
+  }
+
+  [data-awsui-app-layout-widget-loaded] > main > [class*='awsui_main_']:not([class*='awsui_main-disable-paddings_'])::after {
+    block-size: var(--space-layout-content-bottom-adv8e9, 40px);
+  }
+
+  /* Sticky table and card headers now stick to the top of the content area, not 91px below it. */
+  [data-awsui-app-layout-widget-loaded] > main > [class*='awsui_main_'] > * {
+    --awsui-sticky-vertical-top-offset: 0px;
+  }
+}
+
 /* ADR-020: paper gets the document only. Cloudscape ships no print styles for its shell, so the header, the
    navigation and the breadcrumb row are removed here, along with anything marked vw-no-print. */
 @media print {
   .vw-top-nav,
-  .vw-page-banner [class*='awsui_background_'],
-  .vw-page-banner [class*='awsui_header-wrapper_'],
+  .vw-page-banner > * > [class*='awsui_background_'],
+  .vw-page-banner > * > [class*='awsui_header-wrapper_'],
   .vw-no-print,
   [class*='awsui_navigation_'],
   [class*='awsui_toolbar-container_'] {

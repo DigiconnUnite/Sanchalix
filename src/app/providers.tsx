@@ -98,7 +98,7 @@ const lightHeaderTokens = {
 // Both must stay at or above 4.5:1, so change them only with a contrast check.
 const themeCss = generateThemeStylesheet({
   theme: {
-    tokens: {},
+    tokens: { colorBackgroundLayoutMain: { light: '{colorNeutral200}', dark: '{colorNeutral850}' } },
     contexts: { 'top-navigation': { tokens: lightHeaderTokens } },
     referenceTokens: {
       color: {

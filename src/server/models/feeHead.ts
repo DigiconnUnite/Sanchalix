@@ -11,6 +11,7 @@ const schema = new Schema(
     taxable: { type: Boolean, default: false },
     gstRate: { type: Number, enum: GST_RATES, default: 0 },
     refundable: { type: Boolean, default: false },
+    discountable: { type: Boolean, default: false },
     ...audit,
   },
   { timestamps: true },

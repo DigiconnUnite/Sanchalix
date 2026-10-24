@@ -31,7 +31,13 @@
       "exams": "Exams",
       "reportCards": "Report cards",
       "outbox": "Sent messages",
-      "feeReports": "Fee reports"
+      "feeReports": "Fee reports",
+      "feeDiscounts": "Discounts and late fees",
+      "attendanceReport": "Attendance report",
+      "reports": "Reports",
+      "platformHome": "Platform overview",
+      "platformSchools": "Schools",
+      "platformAudit": "Platform audit log"
     },
     "breadcrumbs": "Breadcrumbs",
     "signOut": "Sign out",
@@ -100,10 +106,15 @@
       "reset-password": "Reset password",
       "pay": "Pay fees",
       "reports": "Reports",
-      "transfer-certificate": "Transfer certificate"
+      "transfer-certificate": "Transfer certificate",
+      "discounts": "Discounts and late fees",
+      "report": "Report",
+      "checkin": "Check in",
+      "qr": "Check-in code"
     },
     "logoAlt": "{school} logo",
     "platformLogoAlt": "Sanchalix",
+    "makerLogoAlt": "Digiconn Unite, developer of Sanchalix",
     "notificationsMenu": {
       "title": "Notifications",
       "new": "New",
@@ -212,8 +223,34 @@
       "settings": {
         "title": "School settings",
         "description": "Your school’s profile, working days and bell schedule."
+      },
+      "feeDiscounts": {
+        "title": "Discounts and late fees",
+        "description": "Who pays less, by how much, and what a late payment costs."
+      },
+      "attendanceReport": {
+        "title": "Attendance report",
+        "description": "How each section is attending, and which students are falling behind."
+      },
+      "reports": {
+        "title": "School reports",
+        "description": "Admissions and staff at a glance, with the way to the other reports."
+      },
+      "platformHome": {
+        "title": "Platform overview",
+        "description": "Every school on Sanchalix at a glance."
+      },
+      "platformSchools": {
+        "title": "Schools",
+        "description": "Set up a school, switch it on, or pause it."
+      },
+      "platformAudit": {
+        "title": "Platform audit log",
+        "description": "What platform staff have done across schools."
       }
-    }
+    },
+    "switchSchool": "Switch to {school}",
+    "platformName": "Sanchalix platform"
   },
   "auth": {
     "signIn": {
@@ -233,7 +270,8 @@
         "noAccount": "That Google account isn't linked to a staff account at any school. Sign in with the email your school gave you."
       },
       "description": "Welcome back. Use the account your school gave you.",
-      "emailPlaceholder": "name@school.example"
+      "emailPlaceholder": "name@school.example",
+      "suspended": "This school has been paused. Ask the school office or Sanchalix support."
     },
     "totp": {
       "cancel": "Cancel sign-in",
@@ -285,7 +323,8 @@
       "tooShort": "Use at least 10 characters",
       "tooLong": "Use 256 characters or fewer",
       "mismatch": "The two new passwords don't match",
-      "same": "Choose a password that is different from your current one"
+      "same": "Choose a password that is different from your current one",
+      "breached": "This password has appeared in a data leak. Choose a different one."
     },
     "profile": {
       "title": "Profile",
@@ -321,7 +360,29 @@
         "unknown": "Unknown device",
         "signOutOthers": "Sign out other devices",
         "signedOut": "{count, plural, one {# other device was} other {# other devices were}} signed out.",
-        "dismiss": "Dismiss message"
+        "dismiss": "Dismiss message",
+        "actions": "Actions",
+        "signOut": "Sign out",
+        "signOutLabel": "Sign out {device}",
+        "signedOutOne": "That device was signed out."
+      },
+      "texts": {
+        "title": "Text messages",
+        "description": "What the school may text you. Everything is also shown in the app.",
+        "fee": "Fee reminders",
+        "feeHint": "A text when a payment is overdue.",
+        "always": "Absence alerts and sign-in codes",
+        "alwaysHint": "These are about your child's safety and your account, so they can't be switched off."
+      },
+      "copy": {
+        "title": "Announcements by email and text",
+        "description": "Every announcement is in the app. You can also get a copy by email or text.",
+        "email": "Email",
+        "emailHint": "A copy of each announcement to your email address.",
+        "emailMissing": "No email address is saved on your account.",
+        "sms": "Text message",
+        "smsHint": "A short text with a link to each announcement.",
+        "smsMissing": "No phone number is saved on your account."
       }
     },
     "reset": {
@@ -473,6 +534,18 @@
         "heading": "No classes today",
         "body": "Periods the office gives you on the timetable appear here."
       }
+    },
+    "upcoming": {
+      "title": "Coming up",
+      "all": "Open the calendar",
+      "empty": {
+        "heading": "Nothing coming up",
+        "body": "Events and holidays appear here as the school adds them."
+      }
+    },
+    "myLeave": {
+      "title": "My leave",
+      "apply": "Apply for leave"
     }
   },
   "sis": {
@@ -621,6 +694,13 @@
           "dues": "{amount} in fees is unpaid. Collect it first, or ask the principal to transfer the student out.",
           "collect": "Open the fee counter",
           "certificate": "Transfer certificate"
+        },
+        "optional": {
+          "title": "Optional subjects",
+          "description": "The optional subjects this student takes. Only they get marks entered for them.",
+          "none": "None chosen",
+          "save": "Save",
+          "saved": "Optional subjects saved."
         }
       },
       "form": {
@@ -675,7 +755,8 @@
         "notActive": "Only an active student can be withdrawn.",
         "sameSection": "The student is already in that section.",
         "phoneTaken": "Another parent in this school already has that mobile number.",
-        "duesUnpaid": "This student has unpaid fees. Collect them at the fee counter, or ask the principal to transfer the student out."
+        "duesUnpaid": "This student has unpaid fees. Collect them at the fee counter, or ask the principal to transfer the student out.",
+        "optionalSubjects": "Choose only optional subjects that this student's class offers."
       },
       "import": "Import students",
       "guardianEdit": {
@@ -705,7 +786,23 @@
         "reason": "Reason for leaving",
         "preparedBy": "Prepared by",
         "classTeacher": "Class teacher",
-        "principal": "Principal, with school seal"
+        "principal": "Principal, with school seal",
+        "download": "Download PDF",
+        "downloadLabel": "Download the transfer certificate of {name} as a PDF",
+        "pdfVerify": "Scan to check this certificate is genuine.",
+        "verify": {
+          "title": "Check a transfer certificate",
+          "valid": "This certificate is genuine",
+          "school": "School",
+          "tcNo": "Certificate no.",
+          "name": "Student",
+          "leftOn": "Date of leaving",
+          "compare": "Compare these with the paper certificate. If anything differs, the paper has been changed.",
+          "invalid": "We can’t confirm this certificate",
+          "invalidBody": "The link is incomplete or was not issued by this system. Scan the code on the certificate again, or ask the school office.",
+          "tooMany": "Too many checks",
+          "tooManyBody": "Wait a minute, then scan the code again."
+        }
       }
     },
     "import": {
@@ -727,7 +824,6 @@
       "import": "{count, plural, one {Import # student} other {Import # students}}",
       "ready": "{count, plural, one {# student is ready to import.} other {All # students are ready to import.}} Nothing has been saved yet.",
       "imported": "{count, plural, one {# student imported.} other {# students imported.}}",
-      "viewStudents": "View students",
       "errorsTitle": "Rows to fix",
       "errorsDescription": "Nothing was imported. Fix these in the file and check it again. Showing {shown} of {count}.",
       "row": "Row",
@@ -736,8 +832,31 @@
       "errors": {
         "noFile": "Choose a CSV file first.",
         "header": "The first row doesn't match the template. Download the template and copy your data into it.",
-        "empty": "The file has no students below the header row.",
-        "tooMany": "A file can hold up to {max} students. Split it into smaller files."
+        "empty": "The file has no rows below the header row.",
+        "tooMany": "A file can hold up to {max} rows. Split it into smaller files."
+      },
+      "view": "View students",
+      "kinds": {
+        "staff": {
+          "title": "Import staff",
+          "description": "Add many staff members at once from a CSV file. The file is checked first; nothing is saved until every row is correct.",
+          "columns": "The first row must be exactly these columns, in this order: {columns}. Type is teaching or non_teaching, the phone number is 10 digits, joinedOn is YYYY-MM-DD, and department and email may be left empty.",
+          "constraint": "One .csv file, up to 500 staff members.",
+          "import": "{count, plural, one {Import # staff member} other {Import # staff members}}",
+          "ready": "{count, plural, one {# staff member is ready to import.} other {All # staff members are ready to import.}} Nothing has been saved yet.",
+          "imported": "{count, plural, one {# staff member imported.} other {# staff members imported.}} Each got the next employee number.",
+          "view": "View staff"
+        },
+        "openingBalances": {
+          "title": "Import opening balances",
+          "description": "Bring in what each student still owed before the school started using Sanchalix. Each row becomes one invoice the fee counter can collect against.",
+          "columns": "The first row must be exactly these columns, in this order: {columns}. The admission number is as on the student's profile, the amount is in rupees such as 12500 or 12500.50, and dueDate is YYYY-MM-DD.",
+          "constraint": "One .csv file, up to 500 students. A student can have one opening balance.",
+          "import": "{count, plural, one {Import # opening balance} other {Import # opening balances}}",
+          "ready": "{count, plural, one {# opening balance is ready to import.} other {All # opening balances are ready to import.}} Nothing has been saved yet.",
+          "imported": "{count, plural, one {# invoice created.} other {# invoices created.}}",
+          "view": "View invoices"
+        }
       }
     },
     "documents": {
@@ -773,7 +892,11 @@
         "photo": "Photograph",
         "report_card_prev": "Previous report card",
         "medical": "Medical record",
-        "other": "Other"
+        "other": "Other",
+        "qualification": "Qualification certificate",
+        "id_proof": "ID proof",
+        "appointment_letter": "Appointment letter",
+        "experience_letter": "Experience letter"
       },
       "upload": {
         "title": "Add a document",
@@ -826,7 +949,8 @@
     "unauthenticated": "You were signed out. Sign in again to continue.",
     "forbidden": "You don't have access to this. If you think you should, ask your school admin.",
     "internal": "Something went wrong on our side. Try again in a moment. Reference: {requestId}.",
-    "conflict": "Someone else changed this at the same time. Try again."
+    "conflict": "Someone else changed this at the same time. Try again.",
+    "rateLimited": "Too many attempts. Wait a few minutes and try again."
   },
   "academics": {
     "classes": {
@@ -906,6 +1030,13 @@
       "empty": {
         "heading": "No subjects yet",
         "body": "Add the subjects your school teaches. They are used on the timetable and for homework."
+      },
+      "optional": {
+        "column": "Taken by",
+        "yes": "Chosen students",
+        "no": "Whole class",
+        "label": "Optional subject",
+        "hint": "Not every student takes it. Each is given it on their profile, and only they sit its papers."
       }
     },
     "timetable": {
@@ -954,7 +1085,38 @@
         "teacher": "Choose an active teacher",
         "slot": "That period is already free.",
         "teacherBusy": "{name} already teaches another section in this period. Choose a different teacher or period."
+      },
+      "notice": {
+        "action": "Tell everyone",
+        "title": "The timetable has been updated",
+        "sent": "{section}'s students, parents and teachers ({count, plural, one {# person} other {# people}}) were told the timetable is ready. Anyone already told today isn't told again.",
+        "dismiss": "Dismiss message"
       }
+    },
+    "classSubjects": {
+      "title": "Subjects by class",
+      "description": "Which subjects each class studies. The timetable offers only these for the class. A class with none set is offered every subject.",
+      "class": "Class",
+      "subjects": "Subjects",
+      "actions": "Actions",
+      "all": "All subjects",
+      "edit": "Edit",
+      "editLabel": "Edit the subjects of {name}",
+      "editTitle": "Subjects of {name}",
+      "hint": "Leave empty to offer every subject.",
+      "placeholder": "Choose subjects",
+      "save": "Save",
+      "cancel": "Cancel",
+      "dismiss": "Dismiss message",
+      "saved": "{name} now has {count, plural, =0 {every subject on offer} one {# subject} other {# subjects}}.",
+      "empty": {
+        "heading": "No classes yet",
+        "body": "Add classes first, then choose their subjects."
+      }
+    },
+    "errors": {
+      "subjects": "Choose subjects from the list",
+      "class": "We couldn't find that class."
     }
   },
   "attendance": {
@@ -1046,8 +1208,41 @@
       "period": "Period",
       "wholeDay": "Whole day",
       "periodNo": "Period {number}",
-      "export": "Export CSV",
-      "exportLabel": "Export this register as a CSV file"
+      "exportLabel": "Export this register"
+    },
+    "report": {
+      "title": "Attendance report",
+      "from": "From",
+      "to": "To",
+      "percent": "{value}%",
+      "average": "Average attendance",
+      "range": "{from} to {to}",
+      "sectionsCounted": "Sections with attendance",
+      "below": "Students below the line",
+      "belowNote": "Under {line}% in this period",
+      "lowTitle": "Students below {line}%",
+      "lowDescription": "Lowest first. {line}% is the attendance most boards ask for to sit the exams.",
+      "lowMore": "Showing the lowest {shown} of {total}. Shorten the dates to see fewer.",
+      "lowEmpty": {
+        "heading": "Nobody is below the line",
+        "body": "Every student is at {line}% or above in this period."
+      },
+      "bySection": "By section",
+      "empty": {
+        "heading": "No attendance in this period",
+        "body": "Choose other dates, or take attendance first."
+      },
+      "columns": {
+        "student": "Student",
+        "admissionNo": "Admission no.",
+        "section": "Class",
+        "days": "Days marked",
+        "absent": "Days absent",
+        "percent": "Attendance",
+        "daysTaken": "Days taken",
+        "students": "Students",
+        "below": "Below {line}%"
+      }
     }
   },
   "calendar": {
@@ -1139,7 +1334,21 @@
       "editLabel": "Edit event {title}",
       "editTitle": "Edit event",
       "saveChanges": "Save changes",
-      "updated": "{title} updated."
+      "updated": "{title} updated.",
+      "view": {
+        "label": "View",
+        "month": "Month",
+        "list": "List"
+      },
+      "weekdays": {
+        "mon": "Mon",
+        "tue": "Tue",
+        "wed": "Wed",
+        "thu": "Thu",
+        "fri": "Fri",
+        "sat": "Sat",
+        "sun": "Sun"
+      }
     }
   },
   "fees": {
@@ -1153,7 +1362,8 @@
       "columns": {
         "name": "Fee head",
         "code": "Code",
-        "gst": "GST"
+        "gst": "GST",
+        "discountable": "Discounts apply"
       },
       "gstNone": "No GST",
       "empty": {
@@ -1166,8 +1376,13 @@
         "nameHint": "For example, Tuition or Transport.",
         "code": "Code",
         "codeHint": "2 to 10 letters or digits, like TUI.",
-        "gstRate": "GST rate"
-      }
+        "gstRate": "GST rate",
+        "discountable": "Discounts apply to this fee",
+        "discountableHint": "Turn on for tuition. Leave off for fees charged at cost, such as transport or exam fees."
+      },
+      "discountableYes": "Yes",
+      "discountableNo": "No",
+      "discountableLabel": "Discounts apply to {name}"
     },
     "structures": {
       "title": "Fee structures",
@@ -1386,6 +1601,13 @@
         "heading": "Receipt not found",
         "body": "We couldn't find that receipt. You may have followed an old link.",
         "action": "Go to the fee counter"
+      },
+      "pdfButton": "Open PDF",
+      "pdfLabel": "Open receipt {receiptNo} as a PDF",
+      "pdf": {
+        "title": "Fee receipt",
+        "verify": "Scan to check this receipt on the school's system.",
+        "computer": "This is a computer-generated receipt and needs no signature."
       }
     },
     "payments": {
@@ -1479,12 +1701,22 @@
       "errors": {
         "invoices": "Those fees can't be paid: they may already be paid. Reload your home page and try again.",
         "notFound": "We couldn't find that payment.",
-        "closed": "This payment is already finished or has expired."
+        "closed": "This payment is already finished or has expired.",
+        "gateway": "The payment service is not answering. Try again in a moment."
+      },
+      "checkoutName": "School fees",
+      "razorpay": {
+        "title": "Pay securely",
+        "body": "You will pay on Razorpay with UPI, a card or net banking. The school never sees your card details.",
+        "pay": "Pay {amount}",
+        "confirming": "Waiting for the bank to confirm your payment. This page updates by itself.",
+        "failed": "The payment did not go through. Nothing was charged. You can try again.",
+        "blocked": "We could not open the payment window. Check your connection, or whether something is blocking it, and try again."
       }
     },
     "reports": {
       "title": "Fee collection",
-      "description": "What was collected between two dates, by payment method and by day.",
+      "description": "What was collected between two dates, and what this year's invoices add up to.",
       "from": "From",
       "to": "To",
       "collected": "Collected",
@@ -1500,6 +1732,151 @@
       "empty": {
         "heading": "Nothing collected",
         "body": "No payments were received between these dates."
+      },
+      "billing": {
+        "title": "Billing this year",
+        "description": "Everything invoiced for {year}, whatever the dates above.",
+        "billed": "Billed",
+        "billedNote": "Fees with GST, before concessions",
+        "concessions": "Concessions given",
+        "lateFees": "Late fees added",
+        "byHead": "Billed by fee head",
+        "feeHead": "Fee head",
+        "byConcession": "Concessions",
+        "discount": "Discount",
+        "students": "Students",
+        "byClass": "Still owed, by class",
+        "class": "Class",
+        "empty": {
+          "heading": "Nothing billed yet",
+          "body": "Approve a fee structure to issue invoices."
+        },
+        "noConcessions": {
+          "heading": "No concessions",
+          "body": "Discounts given on invoices appear here."
+        },
+        "noDues": {
+          "heading": "Nothing owed",
+          "body": "Every invoice of this year is paid."
+        },
+        "carried": "Carried forward",
+        "carriedNote": "Unpaid from earlier years, still payable"
+      }
+    },
+    "discounts": {
+      "title": "Discounts and late fees",
+      "save": "Save",
+      "cancel": "Cancel",
+      "dismiss": "Dismiss message",
+      "readOnly": "Only the accountant can change these.",
+      "kinds": {
+        "sibling": "Sibling discount",
+        "staff_ward": "Staff ward discount"
+      },
+      "automatic": {
+        "title": "Automatic discounts",
+        "description": "Taken off the fee heads marked \"Discounts apply\" when invoices are issued. A child who qualifies for both gets the larger one. Invoices already issued don't change.",
+        "sibling": "Sibling discount (%)",
+        "siblingHint": "For the second and later children of the same parents. The eldest pays in full. Enter 0 for none.",
+        "staffWard": "Staff ward discount (%)",
+        "staffWardHint": "For a child whose parent's mobile number is a staff member's. Enter 0 for none.",
+        "saved": "Automatic discounts saved. They apply to invoices issued from now on."
+      },
+      "lateFee": {
+        "title": "Late fee",
+        "description": "Added once to an installment that is still unpaid after the grace days.",
+        "amount": "Late fee (₹)",
+        "amountHint": "Enter 0 for no late fee.",
+        "graceDays": "Grace days",
+        "graceDaysHint": "Days after the due date before the late fee is added.",
+        "saved": "Late fee saved."
+      },
+      "students": {
+        "title": "Student discounts",
+        "description": "A discount for one student this year. It takes effect when the principal approves it.",
+        "add": "Add student discount",
+        "approve": "Approve",
+        "reject": "Reject",
+        "approveLabel": "Approve {name} for {student}",
+        "rejectLabel": "Reject {name} for {student}",
+        "requested": "Discount for {student} sent to the principal for approval.",
+        "approved": "{name} approved. {count, plural, =0 {No unpaid invoices to change; it applies to invoices issued from now on.} one {# unpaid invoice reduced.} other {# unpaid invoices reduced.}}",
+        "rejected": "{name} rejected.",
+        "percentOff": "{value}% off",
+        "amountOff": "{amount} off for the year",
+        "empty": {
+          "heading": "No student discounts",
+          "body": "Discounts given to one student by name appear here."
+        },
+        "columns": {
+          "student": "Student",
+          "name": "Discount",
+          "value": "Value",
+          "reason": "Reason",
+          "status": "Status",
+          "actions": "Actions"
+        },
+        "status": {
+          "pending": "Waiting for approval",
+          "approved": "Approved",
+          "rejected": "Rejected",
+          "withdrawn": "Withdrawn"
+        },
+        "form": {
+          "admissionNo": "Admission number",
+          "admissionNoHint": "Exactly as it appears on the student's profile.",
+          "name": "Discount name",
+          "nameHint": "For example, Merit concession.",
+          "type": "Type",
+          "percent": "Percentage of the fee",
+          "fixed": "Fixed amount for the year",
+          "valuePercent": "Percentage",
+          "valueFixed": "Amount (₹)",
+          "reason": "Reason",
+          "reasonHint": "The principal sees this when deciding.",
+          "submit": "Send for approval"
+        },
+        "withdraw": "Withdraw",
+        "withdrawLabel": "Withdraw {name} from {student}",
+        "withdrawTitle": "Withdraw {name} from {student}?",
+        "withdrawBody": "The discount stops applying. It comes off invoices that nobody has paid towards; an invoice with a receipt keeps it. This can't be undone, but a new discount can be added.",
+        "withdrawn": "{name} withdrawn. {count, plural, =0 {No unpaid invoices changed.} one {# unpaid invoice put back to its full amount.} other {# unpaid invoices put back to their full amount.}}"
+      },
+      "errors": {
+        "notFound": "We couldn't find that discount.",
+        "percent": "Enter a whole number from 0 to 100",
+        "amount": "Enter an amount greater than 0",
+        "lateFee": "Enter an amount, such as 100",
+        "graceDays": "Enter a number of days from 0 to 90",
+        "student": "No active student has that admission number",
+        "name": "Enter a name of up to 60 characters",
+        "type": "Choose a type",
+        "reason": "Enter a reason of up to 200 characters",
+        "decided": "This discount has already been decided. Reload the page."
+      }
+    },
+    "verify": {
+      "title": "Check a fee receipt",
+      "valid": "This receipt is genuine",
+      "school": "School",
+      "receiptNo": "Receipt no.",
+      "date": "Date",
+      "amount": "Amount received",
+      "compare": "Compare these with the paper receipt. If the number, date or amount differ, the paper has been changed.",
+      "invalid": "We can't confirm this receipt",
+      "invalidBody": "The link is incomplete or was not issued by this system. Scan the code on the receipt again, or ask the school office.",
+      "tooMany": "Too many checks",
+      "tooManyBody": "Wait a minute, then scan the code again."
+    },
+    "openingBalances": {
+      "action": "Import opening balances",
+      "label": "Opening balance",
+      "errors": {
+        "student": "No active student has this admission number",
+        "already": "This student already has an opening balance",
+        "repeated": "This admission number appears on an earlier row",
+        "amount": "Enter an amount greater than 0, such as 12500",
+        "dueDate": "Use YYYY-MM-DD"
       }
     }
   },
@@ -1547,7 +1924,7 @@
         "rolesPlaceholder": "Choose roles",
         "channels": "Sent by",
         "inApp": "In the app",
-        "inAppReason": "Every announcement appears in the app. Email and SMS are not set up yet.",
+        "inAppReason": "Every announcement appears in the app.",
         "reach": "This will reach {count, plural, =0 {nobody yet} one {# person} other {# people}} in the app.",
         "reachLoading": "Working out who this reaches…",
         "submit": "Publish announcement",
@@ -1556,11 +1933,35 @@
         "sections": "Sections",
         "sectionsPlaceholder": "Choose sections",
         "ack": "Ask everyone to confirm they have read it",
-        "ackHint": "Each person sees an \"I have read this\" button, and you see how many have pressed it."
+        "ackHint": "Each person sees an \"I have read this\" button, and you see how many have pressed it.",
+        "publishOn": "Publish on - optional",
+        "publishOnHint": "Leave empty to publish now. Use YYYY/MM/DD.",
+        "expiresOn": "Show until - optional",
+        "expiresOnHint": "The last day people see it. Leave empty to keep it.",
+        "channelsHint": "People who have switched email or texts off in their profile are skipped. Texts wait until quiet hours end.",
+        "email": "Email",
+        "sms": "Text message",
+        "files": "Attachments",
+        "filesHint": "Up to 3 files, PDF or image, 5 MB each. Everyone who can read the announcement can open them.",
+        "fileTooBig": "A file is over 5 MB",
+        "tooManyFiles": "Attach no more than 3 files",
+        "chooseFile": "Choose file",
+        "chooseFiles": "Choose files",
+        "dropFiles": "Drop files here",
+        "removeFile": "Remove file",
+        "showFewer": "Show fewer files",
+        "showMore": "Show more files",
+        "errorIcon": "Error"
       },
       "confirmRead": "I have read this",
       "youConfirmed": "You confirmed that you read this",
-      "confirmedBy": "{count, plural, =0 {Nobody has confirmed reading it yet} one {# person has confirmed reading it} other {# people have confirmed reading it}}"
+      "confirmedBy": "{count, plural, =0 {Nobody has confirmed reading it yet} one {# person has confirmed reading it} other {# people have confirmed reading it}}",
+      "scheduledNotice": "Announcement '{title}' is scheduled. It will reach {count, plural, =0 {nobody else yet} one {# person} other {# people}} on its date.",
+      "scheduledFor": "Scheduled for {date}",
+      "until": "Shown until {date}",
+      "expired": "Ended {date}",
+      "download": "Download",
+      "filesFailed": "{count, plural, one {# file} other {# files}} could not be attached. The announcement went out without {count, plural, one {it} other {them}}."
     },
     "notifications": {
       "title": "Notifications",
@@ -1584,7 +1985,11 @@
       "roles": "Choose at least one role",
       "notificationNotFound": "We couldn't find that notification.",
       "sections": "Choose at least one section",
-      "notFound": "We couldn't find that announcement."
+      "notFound": "We couldn't find that announcement.",
+      "date": "Use YYYY/MM/DD",
+      "expiresBeforePublish": "The last day must be on or after the day it is published.",
+      "file": "Attach a PDF, JPEG, PNG or WebP file of up to 5 MB",
+      "tooManyFiles": "An announcement can have up to {max} files"
     }
   },
   "hr": {
@@ -1633,7 +2038,17 @@
       "dateHint": "Use YYYY/MM/DD.",
       "editTitle": "Edit {name}",
       "editMeta": "Edit staff member",
-      "save": "Save changes"
+      "save": "Save changes",
+      "qualifications": "Qualifications",
+      "qualificationsHint": "Degrees and certificates. Optional.",
+      "addQualification": "Add qualification",
+      "removeQualification": "Remove",
+      "noQualifications": "None added yet.",
+      "qualification": {
+        "degree": "Degree or certificate",
+        "institution": "Institution",
+        "year": "Year"
+      }
     },
     "errors": {
       "name": "Enter a name of up to 120 characters",
@@ -1645,7 +2060,11 @@
       "joinedOn": "Choose the joining date",
       "noBranch": "Set up a branch before adding staff.",
       "status": "Choose a status",
-      "notFound": "We couldn't find that staff member."
+      "notFound": "We couldn't find that staff member.",
+      "degree": "Enter a degree or certificate of up to 80 characters",
+      "institution": "The institution can be up to 120 characters",
+      "qualYear": "Enter a year such as 2015",
+      "tooManyQualifications": "You can add up to 8 qualifications"
     },
     "updated": "Changes to {name} saved.",
     "editLabel": "Edit {name}",
@@ -1781,7 +2200,9 @@
       "errors": {
         "date": "Choose a date",
         "roster": "The list doesn't match the staff of this school. Reload the page and try again."
-      }
+      },
+      "qr": "Check-in code",
+      "register": "Monthly register"
     },
     "profile": {
       "edit": "Edit",
@@ -1799,7 +2220,70 @@
         "heading": "No periods in the timetable",
         "body": "Subjects appear here once this person is given periods in a timetable."
       },
-      "leave": "Leave left this year"
+      "leave": "Leave left this year",
+      "history": {
+        "title": "History",
+        "when": "When",
+        "who": "Who",
+        "what": "What",
+        "emptyHeading": "No history yet",
+        "emptyBody": "Changes to this staff record appear here.",
+        "actions": {
+          "hr_staff_create": "Added the staff member",
+          "hr_staff_update": "Edited the staff details",
+          "sis_document_create": "Uploaded a document",
+          "hr_document_verify": "Verified a document",
+          "hr_document_delete": "Deleted a document"
+        }
+      },
+      "qualifications": "Qualifications"
+    },
+    "import": {
+      "action": "Import staff",
+      "errors": {
+        "phoneTaken": "Someone on the staff record already has this mobile number",
+        "phoneRepeated": "This mobile number appears on an earlier row"
+      }
+    },
+    "checkIn": {
+      "title": "Check in",
+      "body": "Mark yourself present for today. This takes your arrival time from now.",
+      "button": "Check in",
+      "noCode": "This page needs the code at the entrance. Scan it again with your phone camera.",
+      "doneTitle": "You are checked in",
+      "alreadyTitle": "You had already checked in today",
+      "doneBody": "Your arrival today is recorded as {time}.",
+      "home": "Go to the dashboard",
+      "errors": {
+        "token": "This code is not for today or not for this school. Scan the code at the entrance again."
+      },
+      "code": {
+        "title": "Check-in code",
+        "description": "Staff scan this with their phone to mark themselves present. It works only today.",
+        "print": "Print",
+        "alt": "The QR code staff scan to check in today",
+        "scan": "Scan to check in",
+        "daily": "A new code is made every day, so a photo of this one is no use tomorrow."
+      }
+    },
+    "register": {
+      "title": "Staff attendance register",
+      "month": "Month",
+      "monthConstraint": "Use YYYY/MM.",
+      "legend": "P Present · A Absent · ½ Half day · Lv On leave · H Holiday · — Not a working day",
+      "holiday": "Holiday",
+      "exportLabel": "Export this register",
+      "columns": {
+        "employeeNo": "Employee no.",
+        "name": "Name",
+        "present": "Present",
+        "absent": "Absent",
+        "leave": "On leave"
+      },
+      "empty": {
+        "heading": "No staff yet",
+        "body": "Add staff members to see their attendance here."
+      }
     }
   },
   "homework": {
@@ -2011,19 +2495,22 @@
       "reset": "Reset password",
       "disable": "Disable",
       "enable": "Enable",
-      "addRole": "Add role"
+      "addRole": "Add role",
+      "removeRole": "Remove role"
     },
     "actionLabel": {
       "reset": "Reset password for {name}",
       "disable": "Disable sign-in for {name}",
       "enable": "Enable sign-in for {name}",
-      "addRole": "Add a role for {name}"
+      "addRole": "Add a role for {name}",
+      "removeRole": "Remove a role from {name}"
     },
     "confirm": {
       "reset": "Reset the password for {name}?",
       "disable": "Disable sign-in for {name}?",
       "enable": "Enable sign-in for {name}?",
-      "addRole": "Add a role for {name}"
+      "addRole": "Add a role for {name}",
+      "removeRole": "Remove a role from {name}"
     },
     "confirmBody": {
       "reset": "They are signed out everywhere and get a new temporary password, which you will see once.",
@@ -2033,7 +2520,8 @@
     "done": {
       "disable": "Sign-in disabled for {name}.",
       "enable": "Sign-in enabled for {name}.",
-      "addRole": "{name} can now switch to {role}."
+      "addRole": "{name} can now switch to {role}.",
+      "removeRole": "{name} is no longer {role}."
     },
     "empty": {
       "heading": "No users yet",
@@ -2069,13 +2557,19 @@
       "self": "You can't disable your own account.",
       "selfReset": "Change your own password from Profile.",
       "roleHeld": "They already have that role.",
-      "selfRole": "You can't change your own roles."
+      "selfRole": "You can't change your own roles.",
+      "lastRole": "This is their only role here. Disable the account instead.",
+      "roleNotHeld": "They don't have that role."
     },
     "addRole": {
       "role": "Role to add",
       "placeholder": "Choose a role",
       "hint": "They keep their current role and can switch between roles from the user menu.",
       "submit": "Add role"
+    },
+    "removeRole": {
+      "role": "Role to remove",
+      "hint": "They are signed out of anything open under this role. Their other roles stay."
     }
   },
   "promotion": {
@@ -2226,14 +2720,21 @@
     "reportCard": {
       "ready": "The report card for {name} is ready.",
       "open": "Open report card"
+    },
+    "receipts": {
+      "title": "Receipts",
+      "receiptNo": "Receipt no.",
+      "date": "Date",
+      "amount": "Amount",
+      "opens": "Opens the receipt as a PDF in a new tab"
     }
   },
   "export": {
-    "button": "Export CSV",
+    "button": "Export",
     "label": {
-      "students": "Export active students as a CSV file",
-      "dues": "Export overdue dues as a CSV file",
-      "payments": "Export payments as a CSV file"
+      "students": "Export active students",
+      "dues": "Export overdue dues",
+      "payments": "Export payments"
     },
     "columns": {
       "admissionNo": "Admission no.",
@@ -2252,6 +2753,10 @@
       "collectedAt": "Collected at",
       "method": "Method",
       "amount": "Amount (INR)"
+    },
+    "format": {
+      "csv": "CSV file",
+      "xlsx": "Excel workbook"
     }
   },
   "settings": {
@@ -2259,7 +2764,12 @@
     "save": "Save changes",
     "tabs": {
       "school": "School",
-      "periods": "Bell schedule"
+      "periods": "Bell schedule",
+      "terms": "Terms",
+      "notifications": "Notifications",
+      "leave": "Leave",
+      "attendance": "Attendance",
+      "data": "Your data"
     },
     "days": {
       "0": "Sunday",
@@ -2288,7 +2798,9 @@
       "title": "Working days",
       "label": "Days the school is open",
       "description": "Attendance can't be taken on the other days.",
-      "placeholder": "Choose days"
+      "placeholder": "Choose days",
+      "shift": "Move due dates off holidays",
+      "shiftHint": "When fees are issued, a due date that falls on a holiday or a day the school is closed moves to the next working day."
     },
     "periods": {
       "title": "Teaching periods",
@@ -2320,7 +2832,61 @@
       "overlap": "This period starts before the one above it ends",
       "periodInUse": "The timetable already uses period {number}. Clear it there before removing the period.",
       "notFound": "We couldn't find the school.",
-      "logoUrl": "Enter an https address of up to 300 characters, or leave it empty"
+      "logoUrl": "Enter an https address of up to 300 characters, or leave it empty",
+      "date": "Use YYYY/MM/DD",
+      "termName": "Enter a name of up to 40 characters",
+      "tooManyTerms": "A year can have up to 6 terms",
+      "termEnd": "A term has to end after it starts",
+      "termOverlap": "This term has to start after the one before it ends",
+      "termOutsideYear": "Every term has to fall inside the academic year.",
+      "noYear": "There is no current academic year.",
+      "termInUse": "An exam belongs to a term you removed. Keep the term, or it can only be renamed.",
+      "quietSame": "Choose different start and end times",
+      "quota": "Enter a whole number of days from 0 to 366"
+    },
+    "terms": {
+      "title": "Terms",
+      "description": "The terms of {year}, in order. Each has to fall inside the academic year and can't overlap the one before.",
+      "add": "Add term",
+      "remove": "Remove",
+      "removeLabel": "Remove {name}",
+      "unnamed": "this term",
+      "empty": "No terms yet. Add the first one, such as Term 1.",
+      "name": "Term name",
+      "namePlaceholder": "Term 1",
+      "startDate": "Starts on",
+      "endDate": "Ends on",
+      "saved": "Terms saved.",
+      "noYear": "Set up the academic year first. Terms belong to the current year."
+    },
+    "quiet": {
+      "title": "Quiet hours",
+      "description": "Texts that aren't urgent, such as fee reminders, wait until these hours are over. Sign-in codes and absence alerts are always sent at once.",
+      "start": "Quiet hours start",
+      "end": "Quiet hours end",
+      "saved": "Quiet hours saved."
+    },
+    "leave": {
+      "title": "Leave allowance",
+      "description": "Days a year each staff member may take. A new number applies from now; leave already taken is kept. Leave without pay has no limit.",
+      "CL": "Casual leave",
+      "SL": "Sick leave",
+      "EL": "Earned leave",
+      "days": "Days a year",
+      "saved": "Leave allowance saved."
+    },
+    "alertTime": {
+      "title": "Absence alerts",
+      "description": "Parents are texted when their child is marked absent. The text goes out at this time, so a register saved earlier waits for it, and a child marked present again before then is not texted.",
+      "label": "Send absence alerts at",
+      "hint": "A register saved after this time sends its alerts at once.",
+      "saved": "Absence alert time saved."
+    },
+    "data": {
+      "title": "Download all your school data",
+      "description": "One ZIP file with a spreadsheet for each of students, guardians, enrolments, staff, attendance, fees, exams and announcements. Use it to keep a copy or to move to another system.",
+      "download": "Download everything (ZIP)",
+      "footer": "Medical details, Aadhaar numbers, bank details and salaries are not included. Each download is recorded in the audit log."
     }
   },
   "exams": {
@@ -2355,7 +2921,8 @@
       "classes": "Classes",
       "papers": "Papers",
       "status": "Status",
-      "actions": "Actions"
+      "actions": "Actions",
+      "term": "Term"
     },
     "type": {
       "unit_test": "Unit test",
@@ -2414,6 +2981,45 @@
       "empty": {
         "heading": "No students",
         "body": "This section has no active students."
+      },
+      "fill": {
+        "button": "Fill from a file",
+        "title": "Fill marks from a file",
+        "body": "Download the list, add each student’s marks in the second column (AB if absent), and upload it. The marks are filled in below for you to check, and nothing is saved until you press Save marks.",
+        "template": "Download the class list",
+        "file": "Marks file",
+        "hint": "A CSV file with the columns rollNo and marks. Marks are whole or half numbers up to {max}.",
+        "choose": "Choose file",
+        "drop": "Drop the file here",
+        "remove": "Remove file",
+        "showFewer": "Show fewer files",
+        "showMore": "Show more files",
+        "errorIcon": "Error",
+        "ready": "{count, plural, one {# row is} other {# rows are}} ready to fill in.",
+        "problems": "{count, plural, one {# line needs} other {# lines need}} fixing",
+        "apply": "Fill in marks",
+        "done": "{count, plural, one {# row} other {# rows}} filled in. Check them, then press Save marks.",
+        "reason": {
+          "header": "The first line must be rollNo,marks. Use the class list you can download here.",
+          "empty": "The file has no marks in it.",
+          "rollNo": "Line {line}: the roll number must be a whole number.",
+          "unknownRoll": "Line {line}: no student in this section has that roll number.",
+          "repeatedRoll": "Line {line}: this roll number is in the file more than once.",
+          "marks": "Line {line}: the marks must be a whole or half number within the maximum, or AB."
+        }
+      },
+      "history": {
+        "title": "History",
+        "when": "When",
+        "who": "Who",
+        "what": "What",
+        "emptyHeading": "No history yet",
+        "emptyBody": "Changes to the marks of this paper appear here.",
+        "actions": {
+          "exams_mark_update": "Saved marks",
+          "exams_mark_lock": "Locked the paper",
+          "exams_mark_unlock": "Unlocked the paper"
+        }
       }
     },
     "results": {
@@ -2450,7 +3056,8 @@
       "lockState": "This paper is already in that state. Reload the page.",
       "published": "Results are already published, so this can't be changed.",
       "noPapers": "Add at least one paper before publishing results.",
-      "notLocked": "{count, plural, one {# paper is} other {# papers are}} not locked yet. Lock every paper first."
+      "notLocked": "{count, plural, one {# paper is} other {# papers are}} not locked yet. Lock every paper first.",
+      "term": "Choose a term of the current academic year"
     },
     "reportCards": {
       "title": "Report cards",
@@ -2517,18 +3124,19 @@
         "noResults": "No student in this section has published exam results yet. Publish an exam's results first.",
         "nothingToPublish": "There are no draft cards to publish. Generate them first."
       }
-    }
+    },
+    "noTerm": "No term"
   },
   "marketing": {
-    "metaTitle": "School management, made simple",
     "brand": "Sanchalix",
     "signIn": "Sign in",
     "openApp": "Open dashboard",
-    "builtBy": "Built by DCU",
+    "builtBy": "Digiconn Unite, developer of Sanchalix",
     "nav": {
       "features": "Features",
       "roles": "Who it's for",
-      "steps": "Getting started"
+      "steps": "Getting started",
+      "blog": "Blog"
     },
     "hero": {
       "title": "Run your whole school from one place",
@@ -2616,6 +3224,263 @@
       "forgotPassword": "Forgot password",
       "copyright": "© {year} Sanchalix. All rights reserved.",
       "credit": "Designed and developed by Digiconn Unite"
+    },
+    "tagline": "Sanchalix – Principal ka best friend",
+    "blog": {
+      "title": "The Sanchalix blog",
+      "description": "Practical notes on running a school office: fees, attendance, admissions, exams and getting off paper.",
+      "meta": "{date} · {minutes} min read",
+      "back": "All posts",
+      "more": "More from the blog",
+      "topics": {
+        "fees": "Fees",
+        "attendance": "Attendance",
+        "admissions": "Admissions",
+        "exams": "Exams",
+        "gettingStarted": "Getting started",
+        "timetable": "Timetable"
+      },
+      "posts": {
+        "a-timetable-without-clashes": {
+          "title": "A timetable without clashes",
+          "summary": "Clashes come from filling a whole sheet at once. Fill one period at a time, with a check on the teacher, and they stop.",
+          "sections": [
+            {
+              "heading": "Why timetables break",
+              "paragraphs": [
+                "A timetable drawn on paper looks finished the day it is pinned up. The trouble shows on Monday: one teacher is expected in two rooms in the third period, and a section has a free slot nobody noticed.",
+                "These are not careless mistakes. A school with twenty sections and eight periods a day has well over a hundred and fifty slots to fill each day, and no one can hold every teacher’s week in their head while filling them."
+              ]
+            },
+            {
+              "heading": "Fix the bell schedule first",
+              "paragraphs": [
+                "Before placing a single subject, agree when each period starts and ends, and where the breaks fall. Every section then shares the same grid, and \"fourth period\" means the same forty minutes to everyone.",
+                "Change the bell schedule in one place when winter timings begin, and every timetable follows."
+              ]
+            },
+            {
+              "heading": "Fill a slot, not a sheet",
+              "paragraphs": [
+                "Build the timetable one cell at a time: pick the section, the day and the period, then choose the subject and the teacher. It is slower than copying last year’s sheet and far faster than untangling it in the second week.",
+                "In Sanchalix the grid refuses a teacher who is already teaching another section in that period. The clash is caught while you are still looking at the cell, not after the sheet has gone out."
+              ]
+            },
+            {
+              "heading": "Start with the teachers you have least of",
+              "paragraphs": [
+                "Place the scarce ones first: the one physics teacher shared by four senior sections, the part-time music teacher who comes on two days. Subjects with several teachers will fit around them. Doing it the other way round leaves the scarce teacher with slots that do not exist."
+              ]
+            },
+            {
+              "heading": "Give every teacher their own day",
+              "paragraphs": [
+                "A section’s timetable answers \"what does 8-B have now?\". A teacher needs the other view: where am I this period, and where next. Showing each teacher their own day on their home screen ends the walk to the staff room notice board."
+              ]
+            },
+            {
+              "heading": "Expect it to change",
+              "paragraphs": [
+                "Teachers go on leave, a section is split, a lab is closed for a week. A timetable that can be changed one cell at a time, with the clash check still on, absorbs these without a new sheet being typed and photocopied."
+              ]
+            }
+          ]
+        },
+        "fee-collection-without-the-queue": {
+          "title": "Fee collection without the queue at the counter",
+          "summary": "Most of the waiting at a fee counter is the office looking things up. Here is how to take that time out.",
+          "sections": [
+            {
+              "heading": "Where the time goes",
+              "paragraphs": [
+                "Watch a fee counter on the tenth of the month and time one parent from \"good morning\" to the receipt in their hand. The payment itself takes seconds. The minutes go to finding the child in a register, working out which installment is due, checking whether last term was cleared and then writing a receipt by hand.",
+                "None of that is the cashier being slow. It is the cashier doing a lookup that the school already did once, when it set the fees for the year."
+              ]
+            },
+            {
+              "heading": "Decide the year once",
+              "paragraphs": [
+                "Set each class’s fees and installments before the year starts, and have the principal approve them. From then on every student has their installments billed with a due date, and nobody at the counter is deciding what a family owes.",
+                "In Sanchalix this is a fee structure: what a class pays, split into installments by percentage. Approval issues the invoices for every student in those classes in one step."
+              ]
+            },
+            {
+              "heading": "Make the counter a search box",
+              "paragraphs": [
+                "The cashier should type a name or an admission number and see that child’s open dues, oldest first. They tick what is being paid, choose cash, UPI, card or cheque, and the receipt prints with its number.",
+                "Part payments are normal, not an exception. A family that pays half today should leave with a receipt for half and a clear balance, not a note in the margin."
+              ]
+            },
+            {
+              "heading": "Let reminders do the chasing",
+              "paragraphs": [
+                "A dues list sorted by how late each payment is tells the office who to call first. A reminder sent to every parent with an overdue installment, in one action, replaces a week of phone calls with an afternoon of the difficult ones."
+              ]
+            },
+            {
+              "heading": "What to keep on paper",
+              "paragraphs": [
+                "The printed receipt, signed if your school signs them. Parents value it and auditors ask for it. What you can stop keeping is the second handwritten copy and the ledger that exists only so someone can add it up."
+              ]
+            }
+          ]
+        },
+        "attendance-parents-can-trust": {
+          "title": "Attendance that parents can trust",
+          "summary": "A register is only useful if it is taken the same way every day and the family hears about an absence the same morning.",
+          "sections": [
+            {
+              "heading": "Start from present",
+              "paragraphs": [
+                "On an ordinary day almost everyone is in class. A register that starts every child as present and asks the teacher to change only the exceptions takes a minute, and a minute is short enough that it gets done before the first period, every day."
+              ]
+            },
+            {
+              "heading": "One person owns each section",
+              "paragraphs": [
+                "When any teacher can mark any class, nobody is sure who did. Give each section a class teacher who takes its daily attendance, and let subject teachers take period attendance only where the school needs it, usually the senior classes."
+              ]
+            },
+            {
+              "heading": "Tell the family the same morning",
+              "paragraphs": [
+                "An absence message that arrives in the evening is a record. One that arrives by mid-morning is useful: the parent who sent their child to school knows straight away that something is wrong.",
+                "Send it only after the register is submitted, and only for absences. Parents stop reading a school that messages them about everything."
+              ]
+            },
+            {
+              "heading": "Corrections are fine, silent ones are not",
+              "paragraphs": [
+                "Teachers make mistakes and children arrive late. Allow the day’s register to be changed on the day, and after that let a senior person correct it with a reason that is kept. A register that can never change is wrong for ever; one that changes without a trace is not a register."
+              ]
+            },
+            {
+              "heading": "Holidays should not count",
+              "paragraphs": [
+                "Mark holidays and non-working days once, in the school calendar, and attendance percentages take care of themselves. The 75 percent question at the end of the year should be an answer you read off, not a calculation."
+              ]
+            }
+          ]
+        },
+        "admissions-from-enquiry-to-first-day": {
+          "title": "Admissions: from the first enquiry to the first day",
+          "summary": "Admissions go wrong in the gaps between stages. Naming the stages, and what moves a family from one to the next, closes most of them.",
+          "sections": [
+            {
+              "heading": "Write down every enquiry",
+              "paragraphs": [
+                "The family that phoned in January and never heard back is the seat you could not fill in April. Record every enquiry the day it comes in, with the class sought and a phone number, even if nothing else is known yet."
+              ]
+            },
+            {
+              "heading": "Name the stages",
+              "paragraphs": [
+                "Enquiry, applied, documents pending, assessment, offered, admitted. The names matter less than everyone using the same ones, so that \"where is this child’s application?\" has one answer.",
+                "Each move should leave a line of history: who moved it, when, and a note if there was a reason. That history is what you read when a parent says they were told something different."
+              ]
+            },
+            {
+              "heading": "Ask for documents early, check them once",
+              "paragraphs": [
+                "Decide which documents the school must see before a child is admitted, usually a birth certificate and a photograph, and collect them while the application is still open. Checking each one once, and recording that it was checked, is better than asking the family again in June."
+              ]
+            },
+            {
+              "heading": "Make admitting a single step",
+              "paragraphs": [
+                "The moment a seat is confirmed, the child needs a student record, an admission number, a class and section, and their parents on file. Doing these as four jobs on four days is how a child ends up in class without a roll number.",
+                "In Sanchalix, admitting an applicant creates all of it together, or none of it, and carries the checked documents across to the student."
+              ]
+            },
+            {
+              "heading": "Count what you turned away",
+              "paragraphs": [
+                "At the end of the season, look at how many enquiries reached each stage. If most families drop out between enquiry and application, the form is the problem. If they drop out after the offer, it is usually fees or timing."
+              ]
+            }
+          ]
+        },
+        "report-cards-without-the-last-week-rush": {
+          "title": "Report cards without the last-week rush",
+          "summary": "The rush before results day is marks arriving late and being typed twice. Both can be designed out.",
+          "sections": [
+            {
+              "heading": "Agree the papers before the exam",
+              "paragraphs": [
+                "For each exam, list every class’s papers with the date and the maximum marks before the first one is written. A teacher who knows that Class 8 Science is out of 80 will not hand in marks out of 100."
+              ]
+            },
+            {
+              "heading": "Marks are entered once, by the teacher",
+              "paragraphs": [
+                "The person who marked the paper should be the person who enters the marks, in one place. Every copy from a mark sheet into a register and then into a report card is a chance to turn 67 into 76.",
+                "Entry should refuse a mark above the maximum and make \"absent\" a choice, not a zero."
+              ]
+            },
+            {
+              "heading": "Lock, then publish",
+              "paragraphs": [
+                "Give the principal a clear step between \"marks are in\" and \"families can see them\". Locking a paper says the marks are final; unlocking one should need a reason that is kept. Publish only when every paper is locked."
+              ]
+            },
+            {
+              "heading": "Generate, then add what only a teacher knows",
+              "paragraphs": [
+                "Totals, percentages and grades are arithmetic and should be generated. The class teacher’s time is better spent on the one thing that cannot be: a remark that sounds like it was written about this child."
+              ]
+            },
+            {
+              "heading": "Publish to families on one day",
+              "paragraphs": [
+                "When report cards go out for a whole section at once, every family sees them at the same time and the office is not asked forty times whether results are ready."
+              ]
+            }
+          ]
+        },
+        "moving-a-school-off-paper-registers": {
+          "title": "Moving a school off paper registers, one term at a time",
+          "summary": "Schools that change everything in a week go back to paper in a month. An order that works, and what to leave for later.",
+          "sections": [
+            {
+              "heading": "Start with the list of students",
+              "paragraphs": [
+                "Everything else hangs off it. Get every current student in with their class, section, roll number and one parent’s phone number. Import them from the spreadsheet you already have, check it with a trial run first, and fix the rows that fail.",
+                "Do not wait for perfect data. A correct name, class and phone number is enough to start; the rest can be filled in as families come to the office."
+              ]
+            },
+            {
+              "heading": "Then attendance",
+              "paragraphs": [
+                "It is daily, it is quick, and teachers see the benefit within a week. Run it alongside the paper register for a fortnight if that makes people comfortable, then stop the paper one."
+              ]
+            },
+            {
+              "heading": "Then fees",
+              "paragraphs": [
+                "Fees are where mistakes cost money, so move them at a boundary: the start of a term or a year. Set the structures, have them approved, and collect the new term through the system from day one. Finish the old term in the old ledger; do not try to type in history."
+              ]
+            },
+            {
+              "heading": "Exams and report cards last",
+              "paragraphs": [
+                "They happen a few times a year, so there is no hurry, and by then the students, classes and teachers are already in place. Try one unit test before you trust it with the half-yearly."
+              ]
+            },
+            {
+              "heading": "Give everyone their own sign-in",
+              "paragraphs": [
+                "A shared office password means nobody knows who changed what. Each person signs in as themselves, with the role that matches their job, and the record of who did what keeps itself."
+              ]
+            },
+            {
+              "heading": "What changes for the principal",
+              "paragraphs": [
+                "The questions you used to ask the office, you can now look up: who is absent today, what was collected this week, which sections have not submitted attendance, which fee structures are waiting for you. That is the point of the whole exercise."
+              ]
+            }
+          ]
+        }
+      }
     }
   },
   "outbound": {
@@ -2660,6 +3525,235 @@
     "empty": {
       "heading": "No messages yet",
       "body": "Absence alerts, fee reminders, sign-in codes and password reset links appear here."
+    }
+  },
+  "reports": {
+    "title": "Reports",
+    "count": "Number",
+    "more": "Other reports",
+    "links": {
+      "attendance": "Attendance report",
+      "fees": "Fee collection report",
+      "dues": "Overdue fees"
+    },
+    "empty": {
+      "heading": "Nothing to count yet",
+      "body": "Figures appear here once there are records."
+    },
+    "noYear": {
+      "heading": "No academic year yet",
+      "body": "Admissions are counted for the current academic year. Set one up first."
+    },
+    "admissions": {
+      "title": "Admissions",
+      "description": "Applications for {year}.",
+      "total": "Applications",
+      "admitted": "Admitted",
+      "open": "Still open",
+      "openNote": "Not yet admitted, rejected or withdrawn",
+      "byStage": "By stage",
+      "stage": "Stage",
+      "bySource": "How they found the school",
+      "source": "Source",
+      "byClass": "By class sought",
+      "class": "Class",
+      "applications": "Applications"
+    },
+    "staff": {
+      "title": "Staff",
+      "description": "People on the staff record. Totals count those working now, including anyone on leave.",
+      "total": "Working staff",
+      "totalNote": "Active or on leave",
+      "teaching": "Teaching staff",
+      "withAccount": "With a sign-in",
+      "withAccountNote": "Of {total} working staff",
+      "byStatus": "By status",
+      "status": "Status",
+      "byDepartment": "By department",
+      "department": "Department",
+      "noDepartment": "No department set"
+    },
+    "exams": {
+      "title": "Exam results",
+      "description": "How each paper went: who sat it, who was absent, the share who passed and the average mark.",
+      "exam": "Exam",
+      "published": "Results published",
+      "notPublished": "Results not published yet",
+      "class": "Class",
+      "subject": "Subject",
+      "appeared": "Sat the paper",
+      "absent": "Absent",
+      "pass": "Passed",
+      "average": "Average mark",
+      "empty": {
+        "heading": "No exam results yet",
+        "body": "Once an exam is scheduled and marks are entered, its results appear here."
+      }
+    }
+  },
+  "platform": {
+    "home": {
+      "title": "Platform overview",
+      "active": "Active schools",
+      "activeNote": "Live and signed in to.",
+      "onboarding": "Schools being set up",
+      "onboardingNote": "Created, not switched on yet.",
+      "suspended": "Paused schools",
+      "suspendedNote": "Nobody can sign in.",
+      "students": "Active students",
+      "studentsNote": "Across all schools.",
+      "staff": "Staff",
+      "staffNote": "Active and on leave.",
+      "users": "People with a sign-in",
+      "usersNote": "Staff, parents and students."
+    },
+    "schools": {
+      "title": "Schools",
+      "description": "Every school on the platform.",
+      "add": "Add school",
+      "loading": "Loading schools",
+      "columns": {
+        "name": "School",
+        "code": "Code",
+        "board": "Board",
+        "city": "City",
+        "status": "Status",
+        "students": "Students",
+        "created": "Added"
+      },
+      "status": {
+        "onboarding": "Being set up",
+        "active": "Active",
+        "suspended": "Paused"
+      },
+      "plan": {
+        "starter": "Starter",
+        "growth": "Growth",
+        "enterprise": "Enterprise"
+      },
+      "empty": {
+        "heading": "No schools yet",
+        "body": "Add the first school to get started."
+      }
+    },
+    "form": {
+      "title": "Add a school",
+      "description": "Sets up the school, its main campus, this academic year and its first admin. Switch it on once its data is in.",
+      "school": "School",
+      "name": "School name",
+      "code": "School code",
+      "codeHint": "3 to 8 capital letters or digits. It starts the admission numbers.",
+      "board": "Board",
+      "plan": "Plan",
+      "choose": "Choose",
+      "line1": "Address",
+      "city": "City",
+      "state": "State",
+      "pincode": "PIN code",
+      "admin": "First school admin",
+      "adminHint": "Gets a temporary password to show once, and an email with a link to choose their own.",
+      "adminName": "Name",
+      "adminEmail": "Email",
+      "submit": "Add school",
+      "cancel": "Cancel",
+      "created": "{name} is set up",
+      "createdBody": "An email with a link to choose a password is on its way to {email}. The temporary password below works until they do.",
+      "open": "Open the school"
+    },
+    "view": {
+      "overview": "Overview",
+      "plan": "Plan",
+      "organization": "Organization",
+      "staff": "Staff",
+      "users": "People with a sign-in",
+      "goLive": "Switch on",
+      "suspend": "Pause school",
+      "reactivate": "Switch back on",
+      "onboardingNote": "This school is still being set up. Switch it on when its data is in.",
+      "suspendedNote": "This school is paused. Its people are signed out and cannot sign in until it is switched back on.",
+      "admins": "School admins",
+      "adminsHint": "If an admin is locked out, give them a new temporary password.",
+      "adminName": "Name",
+      "adminEmail": "Email",
+      "adminStatus": {
+        "invited": "Invited",
+        "active": "Active",
+        "locked": "Locked",
+        "disabled": "Disabled"
+      },
+      "lastSignIn": "Last sign-in",
+      "never": "Never",
+      "actions": "Actions",
+      "password": "New temporary password",
+      "passwordLabel": "Give {name} a new temporary password",
+      "noAdmins": {
+        "heading": "No school admin",
+        "body": "This school has nobody who can sign in as its admin."
+      },
+      "confirm": {
+        "active": "Switch on {name}?",
+        "suspended": "Pause {name}?",
+        "password": "New temporary password for {name}?"
+      },
+      "confirmBody": {
+        "active": "The school opens for everyone with a sign-in.",
+        "suspended": "Everyone at this school is signed out now and cannot sign in until you switch it back on. Nothing is deleted.",
+        "password": "They are signed out everywhere, and the old password stops working. The new one is shown once."
+      },
+      "reason": "Why is it being paused?",
+      "reasonHint": "Kept in the platform audit log.",
+      "action": {
+        "active": "Switch on",
+        "suspended": "Pause school"
+      },
+      "done": {
+        "active": "{name} is switched on.",
+        "suspended": "{name} is paused."
+      },
+      "cancel": "Cancel",
+      "dismiss": "Dismiss message"
+    },
+    "audit": {
+      "title": "Platform audit log",
+      "description": "What platform staff have done across schools, newest first.",
+      "loading": "Loading the audit log",
+      "older": "Older entries",
+      "columns": {
+        "when": "When",
+        "who": "Who",
+        "what": "What",
+        "school": "School",
+        "reason": "Reason"
+      },
+      "actions": {
+        "auth.signIn": "Signed in",
+        "auth.totp.enable": "Turned on two-step verification",
+        "platform.school.create": "Added a school",
+        "platform.school.activate": "Switched a school on",
+        "platform.school.suspend": "Paused a school",
+        "platform.admin.resetPassword": "Gave a school admin a new password"
+      },
+      "empty": {
+        "heading": "Nothing yet",
+        "body": "Platform activity shows up here."
+      }
+    },
+    "errors": {
+      "name": "Enter the school name, 2 to 120 characters",
+      "code": "Use 3 to 8 capital letters or digits",
+      "board": "Choose a board",
+      "plan": "Choose a plan",
+      "line1": "Enter the address",
+      "city": "Enter the city",
+      "state": "Enter the state",
+      "pincode": "Enter a 6-digit PIN code",
+      "adminName": "Enter the admin’s name",
+      "adminEmail": "Enter an email address like name@school.example",
+      "codeTaken": "Another school already uses that code",
+      "adminEmailTaken": "That email address already has a sign-in",
+      "reason": "Say why, in a few words",
+      "alreadyThere": "The school is already in that state",
+      "notFound": "That school or admin could not be found"
     }
   }
 }

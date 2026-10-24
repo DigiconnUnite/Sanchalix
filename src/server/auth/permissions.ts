@@ -43,6 +43,9 @@ export type Permission =
   | 'fees.structure.update'
   | 'fees.structure.approve'
   | 'fees.invoice.read'
+  | 'fees.discount.read'
+  | 'fees.discount.update'
+  | 'fees.discount.approve'
   | 'fees.payment.read'
   | 'fees.payment.create'
   | 'comms.announcement.read'
@@ -61,6 +64,7 @@ export type Permission =
   | 'exams.reportCard.publish'
   | 'hr.attendance.read'
   | 'hr.attendance.update'
+  | 'hr.checkin.create'
   | 'hr.leave.read'
   | 'hr.leave.create'
   | 'hr.leave.approve'
@@ -72,14 +76,21 @@ export type Permission =
   | 'sis.enrollment.update'
   | 'portal.self.read'
   | 'settings.school.update'
+  | 'settings.export'
+  | 'platform.school.read'
+  | 'platform.school.create'
+  | 'platform.school.update'
+  | 'platform.audit.read'
   | 'messaging.outbox.read'
   | 'audit.log.read';
 
 const EVERYONE: readonly Permission[] = ['comms.announcement.read', 'calendar.event.read'];
 const OWN_LEAVE: readonly Permission[] = ['hr.leave.read', 'hr.leave.create'];
+// Staff mark themselves present by scanning the code at the entrance.
+const OWN_CHECKIN: readonly Permission[] = ['hr.checkin.create'];
 
 const ROLE_PERMISSIONS: Record<RoleKey, readonly Permission[]> = {
-  super_admin: [],
+  super_admin: ['platform.school.read', 'platform.school.create', 'platform.school.update', 'platform.audit.read'],
   school_admin: [
     ...EVERYONE,
     'exams.reportCard.read',
@@ -91,9 +102,11 @@ const ROLE_PERMISSIONS: Record<RoleKey, readonly Permission[]> = {
     'hr.staff.update',
     'hr.attendance.read',
     'hr.attendance.update',
+    ...OWN_CHECKIN,
     'hr.leave.read',
     'hr.leave.approve',
     'settings.school.update',
+    'settings.export',
     'messaging.outbox.read',
     'users.user.read',
     'users.user.create',
@@ -119,6 +132,7 @@ const ROLE_PERMISSIONS: Record<RoleKey, readonly Permission[]> = {
     'calendar.holiday.read',
     'calendar.holiday.update',
     'fees.structure.read',
+    'fees.discount.read',
     'fees.invoice.read',
     'fees.payment.read',
     'audit.log.read',
@@ -137,6 +151,7 @@ const ROLE_PERMISSIONS: Record<RoleKey, readonly Permission[]> = {
     'calendar.event.update',
     'hr.staff.read',
     'hr.attendance.read',
+    ...OWN_CHECKIN,
     'hr.leave.read',
     'hr.leave.approve',
     'comms.announcement.create',
@@ -154,6 +169,8 @@ const ROLE_PERMISSIONS: Record<RoleKey, readonly Permission[]> = {
     'calendar.holiday.update',
     'fees.structure.read',
     'fees.structure.approve',
+    'fees.discount.read',
+    'fees.discount.approve',
     'fees.invoice.read',
     'fees.payment.read',
     'audit.log.read',
@@ -165,6 +182,7 @@ const ROLE_PERMISSIONS: Record<RoleKey, readonly Permission[]> = {
     'exams.exam.read',
     'exams.mark.update',
     ...OWN_LEAVE,
+    ...OWN_CHECKIN,
     'sis.student.read',
     'attendance.record.read',
     'attendance.record.create',
@@ -177,14 +195,17 @@ const ROLE_PERMISSIONS: Record<RoleKey, readonly Permission[]> = {
   accountant: [
     ...EVERYONE,
     ...OWN_LEAVE,
+    ...OWN_CHECKIN,
     'fees.structure.read',
     'fees.structure.update',
+    'fees.discount.read',
+    'fees.discount.update',
     'fees.invoice.read',
     'fees.payment.read',
     'fees.payment.create',
   ],
-  librarian: [...EVERYONE, ...OWN_LEAVE],
-  transport_manager: [...EVERYONE, ...OWN_LEAVE],
+  librarian: [...EVERYONE, ...OWN_LEAVE, ...OWN_CHECKIN],
+  transport_manager: [...EVERYONE, ...OWN_LEAVE, ...OWN_CHECKIN],
 };
 
 export const can = (role: RoleKey, permission: Permission) => ROLE_PERMISSIONS[role].includes(permission);

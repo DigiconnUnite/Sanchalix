@@ -26,6 +26,8 @@ Architecture and design decisions for Sanchalix, in a lightweight ADR format. A 
 | 018 | English only until the core modules are built | Accepted | 2026-10-03 |
 | 019 | Two-step verification switched off during development | Accepted | 2026-10-03 |
 | 020 | Shell overrides: hide the duplicate navigation toggle, compact breadcrumb row | Accepted | 2026-10-03 |
+| 025 | Files on S3 through the AWS SDK | Accepted | 2026-10-21 |
+| 026 | The platform console lives in the same app | Accepted | 2026-10-21 |
 
 ---
 
@@ -242,8 +244,10 @@ Architecture and design decisions for Sanchalix, in a lightweight ADR format. A 
 - The same exception covers **icon and label alignment in the navigation**: a 20px icon sits in a 24px box that Cloudscape top-aligns with the 20px text line, which leaves the icon 2px low. A negative block margin on the icon box puts it on the label's centre line.
 - The same exception covers **navigation group titles**, also requested by the owner: People, Academics, Fees and Communication are 12px secondary labels instead of Cloudscape's 18px headings, so they don't outweigh the links under them. A 1px divider in Cloudscape's divider colour runs from each title to the panel's edge on the same line; it is decorative (a pseudo-element), and the collapsed rail, which hides the titles, has none.
 - The same exception covers **scrollbars**, also requested by the owner: everything that scrolls (the page, the navigation panel, tables, dropdowns, modals, drawers) uses one thin scrollbar (`scrollbar-width: thin`) on a transparent track, instead of the operating system's wide default. The thumb is Cloudscape's secondary text colour at 20% opacity, so it stays faint beside the content in light and dark mode.
-- The same exception covers the **header identity**, requested by the owner: the platform logo, a divider, then the school's logo as a 28px circle and the school name. Cloudscape's identity offers one logo and a title, so the divider and the school logo are drawn on the title element. When the school has no logo the `school` icon from the icon map is shown on a tinted disc instead.
+- The same exception covers the **header identity**, requested by the owner: the maker's logo (DCU) in its own 56px box as on the home page (hidden on phones, where the header has no room for it), the platform logo, a divider, then the school's logo as a 28px circle and the school name. Cloudscape's identity offers one logo and a title, so the divider and the school logo are drawn on the title element. When the school has no logo the `school` icon from the icon map is shown on a tinted disc instead.
 - The same exception covers **card and table title rows**, requested by the owner: a 1px line in Cloudscape's divider colour separates the header of every `Container` and `Table` from its content. Cloudscape draws this border itself but fixes it at 0px and transparent, with no property or theme token to turn it on. The header's bottom padding is 12px (matching its top) and the content's top padding is 16px, so the title and the content don't touch the line. A header with no content under it gets no line. In a table whose header also holds a filter or pagination row, or a picker and alerts stacked under the title in a `SpaceBetween`, the line sits directly under the title, not under the whole header. This relies on the `Header` being the first item of that stack.
+- The same exception covers the **navigation panel's scrollbar**, requested by the owner: the panel shows no scrollbar (`scrollbar-width: none`). It still scrolls with the wheel, touch and the keyboard, and focus moving through the links scrolls it too.
+- The same exception covers **where the page scrolls**, requested by the owner: on desktop (689px and wider) only the content area scrolls, so the scrollbar starts under the breadcrumb row and the header, breadcrumb row and navigation never move. Cloudscape scrolls the whole window and `AppLayoutToolbar` has no option for this (`disableBodyScroll` exists only in the classic layout). The content area takes a fixed height from the offset Cloudscape already measures, and sticky table headers stick to its top. The shell resets the area to the top when the path changes, because Next.js only resets the window. Phones keep window scrolling. After every Cloudscape upgrade, check that the window itself does not scroll on desktop.
 - The same exception covers **printing**: Cloudscape ships no print styles for its shell, so an `@media print` rule hides the header, the navigation and the breadcrumb row (and anything marked `vw-no-print`). The receipt page switches to light mode while the print dialog is open.
 - ⚠️ This depends on a Cloudscape internal class name. After every Cloudscape upgrade, check that the in-panel toggle is still hidden and that the toolbar toggle still opens and collapses the navigation.
 - ⚠️ Cloudscape moves keyboard focus to the in-panel button when the navigation opens; with it hidden, focus stays on the toolbar toggle. Keyboard users can still reach everything.
@@ -277,9 +281,65 @@ Architecture and design decisions for Sanchalix, in a lightweight ADR format. A 
 - ✅ One place draws the banner, so a new navigation page gets it by adding its description string.
 - The page's own heading on those pages is an `h2` (it keeps its counter, filters and buttons), or is removed where it only repeated the title. Forms, records and other pages that are not navigation links keep their plain `h1`.
 - Banner pages get their side padding from `ContentLayout`, because the shell turns off `AppLayout`'s content padding for them.
-- A banner can carry an illustration (`banner.image` on the navigation item). The dashboard and the 16 pages listed in `ILLUSTRATED` in the app layout have one, an SVG in `public/banners/` named after the module key; these are cropped copies of the owner's artwork in `public/dash_page_banner/`. It is a decorative CSS background standing on the band's bottom edge at the right; that banner is taller (140px of title area) and the picture fills the band from top edge to bottom edge.
+- A banner can carry an illustration (`banner.image` on the navigation item). The dashboard and the 22 pages listed in `ILLUSTRATED` in the app layout have one, an SVG in `public/banners/` named after the module key; these are cropped copies of the owner's artwork in `public/dash_page_banner/`. It is a decorative CSS background standing on the band's bottom edge at the right; that banner is taller (140px of title area) and the picture fills the band from top edge to bottom edge.
 - Behind the picture a soft light in the accent colour rises from the band's bottom edge, brightest at the bottom and fading out before the title.
 - Below 1000px wide the picture is left out and the band is plain.
 - The banner is hidden when a page is printed.
 - ⚠️ The corner rule depends on Cloudscape's internal `awsui_background_` class name. Check the corners after every Cloudscape upgrade.
 - White text sits on the header's dark colour, the same pairing Cloudscape uses in the top navigation.
+
+## ADR-024: Three libraries for PDF, QR codes and Excel files
+
+**Status.** Accepted by the project owner on 2026-10-13.
+
+**Context.** The MVP needs a receipt as a PDF with a QR code to verify it, and exports as Excel workbooks. None of the three formats can be written sensibly by hand, and the rule is to add a dependency only when the platform or a few lines will not do.
+
+**Decision.** `pdfkit` draws the receipt, `qrcode` makes the QR image, and `write-excel-file` writes workbooks. All three run on the server only. `pdfkit` is listed in `serverExternalPackages` because it reads its font files from its own folder at run time.
+
+**Consequences.**
+- ✅ `write-excel-file` was chosen over `exceljs`, which is far larger and pulls in a `uuid` version with an open advisory. `npm audit` reports nothing for the three.
+- `pdfkit`'s built-in fonts cover Latin text only, with no rupee sign and no Devanagari, so the receipt embeds Mukta (Regular and Bold, SIL Open Font License, in `assets/fonts` with its licence). It is read from disk when a PDF is drawn; `outputFileTracingIncludes` in `next.config.ts` makes the files travel with the receipt route when deployed.
+- PDFs and workbooks are built inside the request, like the CSV exports. Bulk PDFs (report cards for a section) still wait for a queue ([ADR-023](#adr-023-scheduled-jobs-through-one-route-not-a-worker)).
+
+## ADR-023: Scheduled jobs through one route, not a worker
+
+**Status.** Accepted for the MVP on 2026-10-13. Replaces the separate worker process in [13-architecture.md](13-architecture.md) until a job needs more than a request can give.
+
+**Context.** Some work has to happen on a timer, not when someone clicks: marking invoices overdue and adding the late fee each day, publishing announcements on their date, sending texts held through quiet hours, and checking Razorpay for payments whose webhook never arrived. The architecture plans a queue with a worker process. Nothing built so far needs one, and a worker is another thing to deploy, monitor and keep alive.
+
+**Decision.** One route, `GET /api/cron/tick`, runs every scheduled job for every school. A timer outside the app calls it with `Authorization: Bearer $CRON_SECRET`: the host's cron, a system scheduler or an uptime pinger. Each job is written so that running it twice does nothing the second time, and so that a missed run is made up by the next.
+
+**Consequences.**
+- ✅ Nothing extra to deploy. The jobs are ordinary functions with ordinary tests.
+- ✅ A job never depends on the timer being exact, because each one decides for itself what is due.
+- The route is as slow as its slowest job and runs schools one after another. A school that fails is logged and skipped, and tried again on the next run.
+- ⚠️ Until a timer is pointed at the route, nothing scheduled happens: invoices are not marked overdue and no late fee is added. `CRON_SECRET` must be set, and the route answers `503` without it.
+- ⚠️ Move to a queue and worker when a run nears the host's request time limit, or when a job (bulk PDFs, large exports) is too heavy for a request.
+
+## ADR-025: Files on S3 through the AWS SDK
+
+**Status.** Accepted by the project owner on 2026-10-21.
+
+**Context.** Uploaded files (student and staff documents, homework and announcement attachments) lived on the server's disk, which loses them on a redeploy and can't be shared between instances. The owner will use AWS S3.
+
+**Decision.** `@aws-sdk/client-s3` is added. `putFile`, `getFile` and `removeFile` use the bucket in `S3_BUCKET_DOCUMENTS` with the same keys the disk used, with server-side encryption. With no bucket they use the disk in development and refuse in production. The SDK finds its region and credentials in the environment or the host's IAM role.
+
+**Consequences.**
+- ✅ One place stores files; no caller changed.
+- ✅ The bucket can have versioning, a lifecycle rule and replication, as [20-devops-and-deployment.md](20-devops-and-deployment.md) describes.
+- Files are served by the app after its own permission check, not by a public or pre-signed bucket address, so every read is audited where it needs to be. Large files stream through the server; move to pre-signed addresses if that becomes slow.
+- ⚠️ The bucket must exist, block public access, and the app's role needs object read, write and delete.
+
+## ADR-026: The platform console lives in the same app
+
+**Status.** Accepted for the MVP on 2026-10-21.
+
+**Context.** Schools could only be created by the seed script. Platform staff need to set a school up, switch it on, pause it and give its admin a new password, without a developer.
+
+**Decision.** Platform staff (`super_admin`) use the same Next.js app under `/platform`, with a session that has no school. They get their own context (`getPlatformContext`, `requirePlatform`) and their own audit collection (`platformAuditLogs`), so no school query ever runs without a `schoolId` and a school's audit log never shows platform activity. The few cross-school counts (students, staff) read the collections directly and say so.
+
+**Consequences.**
+- ✅ Nothing extra to deploy, and the same shell, components and tests apply.
+- ✅ The tenant plugin keeps its rule: ordinary code still can't query without a school.
+- Not built yet: platform users, platform notices, backups, settings, "view as" and break-glass access (v1).
+- ⚠️ The first platform admin is created from the command line (`npm run superadmin`).

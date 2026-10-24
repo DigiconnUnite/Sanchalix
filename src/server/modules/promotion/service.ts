@@ -215,6 +215,7 @@ export async function promoteSection(ctx: RequestContext, { sectionId, decisions
 
   await withTransaction(async (session) => {
     const nextRoll = new Map<string, number>();
+    const offered = new Map<string, Set<string>>();
     for (const decision of decisions) {
       const target =
         decision.action === 'promote' || decision.action === 'detain'
@@ -228,7 +229,7 @@ export async function promoteSection(ctx: RequestContext, { sectionId, decisions
         { status: outcome[decision.action], updatedBy: ctx.userId },
         { session },
       )
-        .select('_id')
+        .select('_id optionalSubjectIds')
         .lean();
       if (!enrollment) continue;
 
@@ -244,6 +245,12 @@ export async function promoteSection(ctx: RequestContext, { sectionId, decisions
         }
         const rollNo = nextRoll.get(key) ?? 1;
         nextRoll.set(key, rollNo + 1);
+        if (!offered.has(String(target.classId))) {
+          const next = await Class.findOne({ schoolId, _id: target.classId }).select('subjectIds').session(session).lean();
+          offered.set(String(target.classId), new Set((next?.subjectIds ?? []).map(String)));
+        }
+        // The choice carries over where the next class still offers the subject; a student picks again for the rest.
+        const carried = (enrollment.optionalSubjectIds ?? []).filter((subjectId) => offered.get(String(target.classId))?.has(String(subjectId)));
         const enrollmentId = new Types.ObjectId();
         await Enrollment.create(
           [
@@ -256,6 +263,7 @@ export async function promoteSection(ctx: RequestContext, { sectionId, decisions
               classId: target.classId,
               sectionId: target._id,
               rollNo,
+              optionalSubjectIds: carried,
               ...audit,
             },
           ],

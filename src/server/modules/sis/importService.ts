@@ -60,6 +60,21 @@ export function parseCsv(text: string) {
   return rows.filter((cells) => cells.some((value) => value.trim()));
 }
 
+/**
+ * Reads an import file into one record per row, keyed by column name. The first row has to be exactly the expected
+ * columns, so a file made from another template is refused instead of being read into the wrong fields.
+ * ponytail: imported in the request, so the file is capped. Move to a background job for bigger files.
+ */
+export function readImportFile<Column extends string>(csv: string, columns: readonly Column[]) {
+  const [header, ...lines] = parseCsv(csv);
+  if (!header || columns.some((column, index) => header[index]?.trim() !== column)) {
+    throw new AppError('VALIDATION', 'sis.import.errors.header');
+  }
+  if (lines.length === 0) throw new AppError('VALIDATION', 'sis.import.errors.empty');
+  if (lines.length > MAX_ROWS) throw new AppError('VALIDATION', 'sis.import.errors.tooMany', { max: MAX_ROWS });
+  return lines.map((cells) => Object.fromEntries(columns.map((column, at) => [column, (cells[at] ?? '').trim()])) as Record<Column, string>);
+}
+
 export type ImportReport = {
   total: number;
   imported: number;
@@ -71,20 +86,13 @@ export type ImportReport = {
  * not at all. A dry run stops after the check.
  */
 export async function importStudents(ctx: RequestContext, csv: string, dryRun: boolean): Promise<ImportReport> {
-  const [header, ...lines] = parseCsv(csv);
-  if (!header || IMPORT_COLUMNS.some((column, index) => header[index]?.trim() !== column)) {
-    throw new AppError('VALIDATION', 'sis.import.errors.header');
-  }
-  if (lines.length === 0) throw new AppError('VALIDATION', 'sis.import.errors.empty');
-  // ponytail: imported in the request, so the file is capped. Move to importJobs and the worker for bigger files.
-  if (lines.length > MAX_ROWS) throw new AppError('VALIDATION', 'sis.import.errors.tooMany', { max: MAX_ROWS });
+  const lines = readImportFile(csv, IMPORT_COLUMNS);
 
   const sections = await listCurrentSections(ctx);
   const sectionId = new Map(sections.map((section) => [section.name.toLowerCase(), section.id]));
   const errors: ImportReport['errors'] = [];
   const students: StudentInput[] = [];
-  lines.forEach((cells, index) => {
-    const value = Object.fromEntries(IMPORT_COLUMNS.map((column, at) => [column, (cells[at] ?? '').trim()]));
+  lines.forEach((value, index) => {
     const parsed = StudentInput.safeParse({
       firstName: value.firstName,
       lastName: value.lastName,

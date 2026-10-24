@@ -1,6 +1,7 @@
 'use client';
 
 import Alert from '@cloudscape-design/components/alert';
+import AttributeEditor from '@cloudscape-design/components/attribute-editor';
 import Button from '@cloudscape-design/components/button';
 import Cards from '@cloudscape-design/components/cards';
 import CollectionPreferences from '@cloudscape-design/components/collection-preferences';
@@ -27,11 +28,14 @@ import { svg } from '@/components/icons';
 import { usePathname, useRouter } from '@/i18n/navigation';
 import { formatPhone } from '@/lib/phone';
 import { useIsMobile } from '@/lib/useIsMobile';
+import { StudentDocuments } from '@/features/sis/StudentDocuments';
 import { createStaff, updateStaff } from '@/server/modules/hr/actions';
+import type { HistoryEntry } from '@/server/modules/audit/history';
 import type { StaffMember, StaffProfile, StaffRow } from '@/server/modules/hr/schemas';
 
 const LIST = '/staff';
 const NEW = '/staff/new';
+const IMPORT = '/staff/import';
 const PAGE_SIZES = [10, 25, 50, 100];
 const TYPES = ['teaching', 'non_teaching'];
 const STATUSES = ['active', 'on_leave', 'resigned', 'terminated'];
@@ -113,7 +117,26 @@ export function StaffTable({
     stickyHeader: true,
     header: (
       <SpaceBetween size="m">
-        <Header variant="h2" actions={canCreate && addButton(true)}>
+        <Header
+          variant="h2"
+          actions={
+            canCreate && (
+              <SpaceBetween direction="horizontal" size="xs">
+                <Button
+                  href={IMPORT}
+                  iconSvg={svg('import')}
+                  onFollow={(event) => {
+                    event.preventDefault();
+                    router.push(IMPORT);
+                  }}
+                >
+                  {t('import.action')}
+                </Button>
+                {addButton(true)}
+              </SpaceBetween>
+            )
+          }
+        >
           {t('title')}
         </Header>
         {(created ?? updated) && (
@@ -199,6 +222,7 @@ export function StaffForm({ member }: { member?: StaffMember }) {
   useCrumb(member?.name);
   const router = useRouter();
   const [values, setValues] = useState(member ?? EMPTY);
+  const [qualifications, setQualifications] = useState(member?.qualifications ?? []);
   const [error, setError] = useState<{ message: string; fieldErrors?: Record<string, string> } | null>(null);
   const [busy, setBusy] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
@@ -213,7 +237,8 @@ export function StaffForm({ member }: { member?: StaffMember }) {
   async function submit() {
     setBusy(true);
     setError(null);
-    const result = member ? await updateStaff(values) : await createStaff(values);
+    const payload = { ...values, qualifications };
+    const result = member ? await updateStaff(payload) : await createStaff(payload);
     if (result.ok) {
       return router.push(`${LIST}?${member ? 'updated' : 'created'}=${encodeURIComponent(result.data.name)}`);
     }
@@ -289,6 +314,33 @@ export function StaffForm({ member }: { member?: StaffMember }) {
               )}
             </ColumnLayout>
           </Container>
+          <Container header={<Header variant="h2" description={t('form.qualificationsHint')}>{t('form.qualifications')}</Header>}>
+            <AttributeEditor
+              items={qualifications}
+              addButtonText={t('form.addQualification')}
+              removeButtonText={t('form.removeQualification')}
+              empty={t('form.noQualifications')}
+              disableAddButton={qualifications.length >= 8}
+              onAddButtonClick={() => setQualifications([...qualifications, { degree: '', institution: '', year: '' }])}
+              onRemoveButtonClick={({ detail }) =>
+                setQualifications(qualifications.filter((_, index) => index !== detail.itemIndex))
+              }
+              definition={(['degree', 'institution', 'year'] as const).map((key) => ({
+                label: t(`form.qualification.${key}`),
+                errorText: (_: unknown, index: number) => errors[`qualifications.${index}.${key}`],
+                control: (item: (typeof qualifications)[number], index: number) => (
+                  <Input
+                    value={item[key]}
+                    inputMode={key === 'year' ? 'numeric' : 'text'}
+                    autoComplete={false}
+                    onChange={({ detail }) =>
+                      setQualifications(qualifications.map((entry, at) => (at === index ? { ...entry, [key]: detail.value } : entry)))
+                    }
+                  />
+                ),
+              }))}
+            />
+          </Container>
         </Form>
       </form>
     </ContentLayout>
@@ -297,8 +349,17 @@ export function StaffForm({ member }: { member?: StaffMember }) {
 
 const NONE = '—';
 const day = new Intl.DateTimeFormat('en-IN', { dateStyle: 'medium', timeZone: 'UTC' });
+const dateTime = new Intl.DateTimeFormat('en-IN', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Kolkata' });
 
-export function StaffProfileView({ member, canEdit }: { member: StaffProfile; canEdit: boolean }) {
+export function StaffProfileView({
+  member,
+  history,
+  canEdit,
+}: {
+  member: StaffProfile;
+  history: HistoryEntry[] | null;
+  canEdit: boolean;
+}) {
   const t = useTranslations('hr');
   const tLeave = useTranslations('hr.leave');
   const router = useRouter();
@@ -374,6 +435,41 @@ export function StaffProfileView({ member, canEdit }: { member: StaffProfile; ca
             { id: 'periods', header: t('profile.periods'), cell: (row) => row.periods },
           ]}
         />
+        <StudentDocuments owner="staff" studentId={member.id} documents={member.documents} canEdit={canEdit} />
+        {member.qualifications.length > 0 && (
+          <Table
+            variant="container"
+            trackBy="degree"
+            items={member.qualifications}
+            header={<Header variant="h2">{t('profile.qualifications')}</Header>}
+            columnDefinitions={[
+              { id: 'degree', header: t('form.qualification.degree'), isRowHeader: true, cell: (item) => item.degree },
+              { id: 'institution', header: t('form.qualification.institution'), cell: (item) => item.institution || NONE },
+              { id: 'year', header: t('form.qualification.year'), cell: (item) => item.year ?? NONE },
+            ]}
+          />
+        )}
+        {history && (
+          <Table
+            variant="container"
+            trackBy="id"
+            items={history}
+            header={<Header variant="h2" counter={`(${history.length})`}>{t('profile.history.title')}</Header>}
+            empty={<EmptyState icon="auditLog" heading={t('profile.history.emptyHeading')} body={t('profile.history.emptyBody')} />}
+            columnDefinitions={[
+              { id: 'when', header: t('profile.history.when'), isRowHeader: true, cell: (entry) => dateTime.format(new Date(entry.at)) },
+              { id: 'who', header: t('profile.history.who'), cell: (entry) => entry.actor },
+              {
+                id: 'what',
+                header: t('profile.history.what'),
+                cell: (entry) => {
+                  const key = `profile.history.actions.${entry.action.replaceAll('.', '_')}`;
+                  return t.has(key) ? t(key) : entry.action;
+                },
+              },
+            ]}
+          />
+        )}
         <Container header={<Header variant="h2">{t('profile.leave')}</Header>}>
           <KeyValuePairs
             columns={3}

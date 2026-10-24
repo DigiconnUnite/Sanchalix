@@ -10,9 +10,28 @@ import { sendDuesReminders as remind } from '@/server/messaging/alerts';
 import { getSchoolBrand } from '@/server/platform/queries';
 import { z } from 'zod';
 import { CheckoutInput, createCheckout as checkout, OrderId, payWithDevGateway } from './online';
+import { ImportStudents as ImportFile } from '@/server/modules/sis/schemas';
+import { importOpeningBalances as importBalances } from './openingBalances';
 import { collectPayment as collect } from './paymentService';
-import { CollectPayment, FeeHeadInput, FeeStructureId, FeeStructureInput } from './schemas';
-import { approveFeeStructure as approve, createFeeHead, createFeeStructure, deleteDraftFeeStructure } from './service';
+import {
+  AutomaticDiscounts,
+  decideStudentDiscount as decide,
+  DiscountDecision,
+  LateFeeRule,
+  requestStudentDiscount as request,
+  setAutomaticDiscounts as setAutomatic,
+  setLateFeeRule as setLateFee,
+  StudentDiscount,
+  withdrawStudentDiscount as withdrawDiscount,
+} from './discounts';
+import { CollectPayment, FeeHeadDiscountable, FeeHeadInput, FeeStructureId, FeeStructureInput } from './schemas';
+import {
+  approveFeeStructure as approve,
+  createFeeHead,
+  createFeeStructure,
+  deleteDraftFeeStructure,
+  setFeeHeadDiscountable as setDiscountable,
+} from './service';
 
 const TestPayment = z.object({ orderId: OrderId, outcome: z.enum(['captured', 'failed']) });
 
@@ -71,6 +90,101 @@ export async function upsertFeeHead(input: unknown) {
     const head = await createFeeHead(ctx, data);
     await audit(ctx, 'fees.feeHead.create', { type: 'feeHead', id: head.id }, { after: data });
     return { name: head.name };
+  });
+}
+
+export async function setFeeHeadDiscountable(input: unknown) {
+  return withAction('fees.feeHead.update', async () => {
+    const ctx = await requirePermission('fees.structure.update');
+    const { id, discountable } = FeeHeadDiscountable.parse(input);
+    const head = await setDiscountable(ctx, id, discountable);
+    await audit(ctx, 'fees.feeHead.update', { type: 'feeHead', id: head.id }, {
+      before: { discountable: head.before },
+      after: { discountable },
+    });
+    return { name: head.name, discountable };
+  });
+}
+
+export async function saveAutomaticDiscounts(input: unknown) {
+  return withAction('fees.discount.update', async () => {
+    const ctx = await requirePermission('fees.discount.update');
+    const data = AutomaticDiscounts.parse(input);
+    const t = await getTranslations('fees.discounts.kinds');
+    const { before } = await setAutomatic(ctx, data, { sibling: t('sibling'), staff_ward: t('staff_ward') });
+    await audit(ctx, 'fees.discount.update', { type: 'school', id: ctx.schoolId }, { before, after: data });
+    return data;
+  });
+}
+
+export async function saveLateFeeRule(input: unknown) {
+  return withAction('fees.lateFee.update', async () => {
+    const ctx = await requirePermission('fees.discount.update');
+    const data = LateFeeRule.parse(input);
+    const { before } = await setLateFee(ctx, data);
+    await audit(ctx, 'fees.lateFee.update', { type: 'school', id: ctx.schoolId }, {
+      before: before ? { amountMinor: before.amountMinor, graceDays: before.graceDays } : {},
+      after: data,
+    });
+    return data;
+  });
+}
+
+export async function requestStudentDiscount(input: unknown) {
+  return withAction('fees.discount.create', async () => {
+    const ctx = await requirePermission('fees.discount.update');
+    const data = StudentDiscount.parse(input);
+    const discount = await request(ctx, data);
+    await audit(ctx, 'fees.discount.create', { type: 'discount', id: discount.id }, {
+      after: { type: data.type, value: data.value },
+      reason: data.reason,
+    });
+    return { student: discount.student };
+  });
+}
+
+export async function decideStudentDiscount(input: unknown) {
+  return withAction('fees.discount.approve', async () => {
+    const ctx = await requirePermission('fees.discount.approve');
+    const data = DiscountDecision.parse(input);
+    const discount = await decide(ctx, data);
+    await audit(ctx, 'fees.discount.approve', { type: 'discount', id: discount.id }, {
+      before: { status: 'pending' },
+      after: { status: data.decision, invoices: discount.invoices },
+    });
+    return { name: discount.name, decision: data.decision, invoices: discount.invoices };
+  });
+}
+
+export async function withdrawStudentDiscount(input: unknown) {
+  return withAction('fees.discount.withdraw', async () => {
+    const ctx = await requirePermission('fees.discount.approve');
+    const discount = await withdrawDiscount(ctx, FeeStructureId.parse(input));
+    await audit(ctx, 'fees.discount.withdraw', { type: 'discount', id: discount.id }, {
+      before: { status: 'approved' },
+      after: { status: 'withdrawn', invoices: discount.invoices },
+    });
+    return { name: discount.name, invoices: discount.invoices };
+  });
+}
+
+export async function importOpeningBalances(input: unknown) {
+  return withAction('fees.openingBalance.import', async () => {
+    const ctx = await requirePermission('fees.structure.update');
+    const { csv, dryRun } = ImportFile.parse(input);
+    const t = await getTranslations();
+    const report = await importBalances(ctx, csv, dryRun, t('fees.openingBalances.label'));
+    if (report.imported > 0) {
+      await audit(ctx, 'fees.openingBalance.import', { type: 'school', id: ctx.schoolId }, {
+        after: { invoices: report.imported },
+      });
+    }
+    return {
+      total: report.total,
+      imported: report.imported,
+      errorCount: report.errors.length,
+      errors: report.errors.slice(0, 100).map(({ row, field, messageKey }) => ({ row, field, message: t(messageKey) })),
+    };
   });
 }
 

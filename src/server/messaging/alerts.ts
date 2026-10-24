@@ -9,6 +9,7 @@ import { Notification } from '@/server/models/notification';
 import { School } from '@/server/models/school';
 import { Student } from '@/server/models/student';
 import { User } from '@/server/models/user';
+import { atTime } from './quietHours';
 import { type Outbound, sendMessages } from './send';
 
 type Text<T> = (values: T) => string;
@@ -20,7 +21,7 @@ async function contacts(ctx: RequestContext, studentIds: unknown[]) {
     .select('firstName lastName primaryGuardianId')
     .lean();
   const guardians = await Guardian.find({ schoolId, _id: { $in: students.map((student) => student.primaryGuardianId) } })
-    .select('phone')
+    .select('phone notificationPrefs')
     .lean();
   const guardianOf = new Map(guardians.map((guardian) => [String(guardian._id), guardian]));
   return students.flatMap((student) => {
@@ -32,6 +33,9 @@ async function contacts(ctx: RequestContext, studentIds: unknown[]) {
             name: `${student.firstName} ${student.lastName ?? ''}`.trim(),
             guardianId: guardian._id,
             phone: guardian.phone,
+            feeTextsOff: guardian.notificationPrefs.some(
+              (pref) => pref.channel === 'sms' && pref.category === 'fees' && !pref.enabled,
+            ),
           },
         ]
       : [];
@@ -57,6 +61,9 @@ export async function sendAbsenceAlerts(
   if (absent.length === 0) return 0;
 
   const people = await contacts(ctx, absent);
+  // Parents are texted at the school's alert time, when the registers are in, and not while teachers are still marking.
+  const school = await School.findById(schoolId).select('timezone settings.absenceAlertTime').lean();
+  const notBefore = atTime(school?.timezone ?? 'Asia/Kolkata', date, school?.settings?.absenceAlertTime ?? '09:30');
   const accounts = await User.find({
     roles: { $elemMatch: { schoolId } },
     guardianId: { $in: people.map((person) => person.guardianId) },
@@ -87,6 +94,9 @@ export async function sendAbsenceAlerts(
         channel: 'sms',
         to: person.phone,
         template: 'absence',
+        urgent: true,
+        notBefore,
+        recheck: { studentId: person.studentId as never, date },
         body: text({ student: person.name }),
         dedupeKey: `absence:${person.studentId}:${date}`,
       }),
@@ -105,10 +115,13 @@ export async function sendDuesReminders(ctx: RequestContext, text: Text<{ studen
     { $match: { dueMinor: { $gt: 0 } } },
   ]);
   const dueOf = new Map(overdue.map((row) => [String(row._id), row.dueMinor]));
-  const people = await contacts(
-    ctx,
-    overdue.map((row) => row._id),
-  );
+  // A parent who has switched fee texts off in their profile isn't sent one; they still see what is due in the app.
+  const people = (
+    await contacts(
+      ctx,
+      overdue.map((row) => row._id),
+    )
+  ).filter((person) => !person.feeTextsOff);
   const sent = await sendMessages(
     people.map(
       (person): Outbound => ({

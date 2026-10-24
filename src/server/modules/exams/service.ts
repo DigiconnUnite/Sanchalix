@@ -2,6 +2,7 @@ import 'server-only';
 import { Types } from 'mongoose';
 import { z } from 'zod';
 import { AppError } from '@/lib/appError';
+import { AcademicYear } from '@/server/models/academicYear';
 import type { RequestContext } from '@/server/auth/context';
 import { can } from '@/server/auth/permissions';
 import { Class } from '@/server/models/class';
@@ -38,6 +39,7 @@ export const ExamInput = z.object({
   name: z.string().trim().min(1, `${E}.name`).max(80, `${E}.name`),
   type: z.enum(EXAM_TYPES, `${E}.type`),
   classIds: z.array(Id('classes')).min(1, `${E}.classes`).max(30, `${E}.classes`),
+  termId: z.union([z.literal('').transform(() => undefined), Id('term')]).optional(),
 });
 export type ExamInput = z.infer<typeof ExamInput>;
 
@@ -78,6 +80,8 @@ export type ExamRow = {
   name: string;
   type: (typeof EXAM_TYPES)[number];
   classes: string;
+  /** The term the exam counts towards, if the school uses terms. */
+  term: string | null;
   papers: number;
   published: boolean;
 };
@@ -112,12 +116,22 @@ const namesOf = async (ctx: RequestContext, classIds: unknown[]) => {
   return classes.map((schoolClass) => ({ id: String(schoolClass._id), name: schoolClass.name }));
 };
 
+/** The names of the current year's terms by id, for labelling exams. */
+export async function termNames(ctx: RequestContext) {
+  const year = await AcademicYear.findOne({ schoolId: ctx.schoolId, status: 'current' }).select('terms').lean();
+  return new Map((year?.terms ?? []).map((term) => [String(term._id), term.name]));
+}
+
+export const listTerms = async (ctx: RequestContext) =>
+  [...(await termNames(ctx))].map(([id, name]) => ({ id, name }));
+
 export async function listExams(ctx: RequestContext): Promise<ExamRow[]> {
   const { schoolId } = ctx;
   const academicYearId = await getCurrentYearId(ctx);
   if (!academicYearId) return [];
   const exams = await Exam.find({ schoolId, academicYearId }).sort({ createdAt: -1 }).limit(100).lean();
-  const [classes, papers] = await Promise.all([
+  const [terms, classes, papers] = await Promise.all([
+    termNames(ctx),
     namesOf(
       ctx,
       exams.flatMap((exam) => exam.classIds),
@@ -137,6 +151,7 @@ export async function listExams(ctx: RequestContext): Promise<ExamRow[]> {
       .filter(({ id }) => exam.classIds.some((classId) => String(classId) === id))
       .map(({ id }) => nameOf.get(id))
       .join(', '),
+    term: terms.get(String(exam.termId)) ?? null,
     papers: papersOf.get(String(exam._id)) ?? 0,
     published: exam.status === 'results_published',
   }));
@@ -149,7 +164,16 @@ export async function createExam(ctx: RequestContext, input: ExamInput) {
     ? await Class.countDocuments({ schoolId, academicYearId, _id: { $in: input.classIds } })
     : 0;
   if (!academicYearId || valid !== new Set(input.classIds).size) throw new AppError('NOT_FOUND', `${E}.classes`);
-  const exam = await Exam.create({ schoolId, academicYearId, ...input, createdBy: ctx.userId, updatedBy: ctx.userId });
+  if (input.termId && !(await termNames(ctx)).has(input.termId)) throw new AppError('NOT_FOUND', `${E}.term`);
+  const { termId, ...details } = input;
+  const exam = await Exam.create({
+    schoolId,
+    academicYearId,
+    ...details,
+    ...(termId && { termId }),
+    createdBy: ctx.userId,
+    updatedBy: ctx.userId,
+  });
   return { id: exam._id, name: exam.name };
 }
 
@@ -174,6 +198,7 @@ export async function getExam(ctx: RequestContext, id: string): Promise<ExamDeta
     name: exam.name,
     type: exam.type,
     classes: classOptions.map(({ name }) => name).join(', '),
+    term: (await termNames(ctx)).get(String(exam.termId)) ?? null,
     papers: schedules.length,
     published: exam.status === 'results_published',
     classOptions,
@@ -250,12 +275,14 @@ export async function getMarksSheet(ctx: RequestContext, scheduleId: string, sec
   const section = sections.find((candidate) => String(candidate._id) === sectionId) ?? sections[0] ?? null;
   const [paperClass, subject, enrollments] = await Promise.all([
     Class.findOne({ schoolId, _id: schedule.classId }).select('name').lean(),
-    Subject.findOne({ schoolId, _id: schedule.subjectId }).setOptions({ withDeleted: true }).select('name').lean(),
-    section
-      ? Enrollment.find({ schoolId, sectionId: section._id, status: 'active' }).sort({ rollNo: 1 }).select('studentId rollNo').lean()
-      : [],
+    Subject.findOne({ schoolId, _id: schedule.subjectId }).setOptions({ withDeleted: true }).select('name isOptional').lean(),
+    section ? Enrollment.find({ schoolId, sectionId: section._id, status: 'active' }).sort({ rollNo: 1 }).select('studentId rollNo optionalSubjectIds').lean() : [],
   ]);
-  const ids = enrollments.map((enrollment) => enrollment.studentId);
+  // An optional subject is sat only by the students who were given it.
+  const takers = subject?.isOptional
+    ? enrollments.filter((enrollment) => enrollment.optionalSubjectIds.some((id) => id.equals(schedule.subjectId)))
+    : enrollments;
+  const ids = takers.map((enrollment) => enrollment.studentId);
   const [students, marks] = await Promise.all([
     Student.find({ schoolId, _id: { $in: ids } }).select('firstName lastName').lean(),
     Mark.find({ schoolId, examScheduleId: schedule._id, studentId: { $in: ids } }).select('studentId total isAbsent grade').lean(),
@@ -279,7 +306,7 @@ export async function getMarksSheet(ctx: RequestContext, scheduleId: string, sec
     sections: sections.map(option),
     section: section && option(section),
     canEdit: can(ctx.role, 'exams.mark.update') && Boolean(section) && !locked && !published,
-    students: enrollments.map((enrollment) => {
+    students: takers.map((enrollment) => {
       const id = String(enrollment.studentId);
       const mark = markOf.get(id);
       return {
@@ -302,7 +329,13 @@ export async function saveMarks(ctx: RequestContext, { examScheduleId, sectionId
   if (schedule.status === 'locked' || exam.status === 'results_published') {
     throw new AppError('BUSINESS_RULE', `${E}.locked`);
   }
-  const enrolled = await Enrollment.distinct('studentId', { schoolId, sectionId: section._id, status: 'active' });
+  const optional = (await Subject.findOne({ schoolId, _id: schedule.subjectId }).select('isOptional').lean())?.isOptional;
+  const enrolled = await Enrollment.distinct('studentId', {
+    schoolId,
+    sectionId: section._id,
+    status: 'active',
+    ...(optional && { optionalSubjectIds: schedule.subjectId }),
+  });
   const roster = new Set(enrolled.map(String));
   const seen = new Set(entries.map((entry) => entry.studentId));
   if (seen.size !== entries.length || entries.some((entry) => !roster.has(entry.studentId))) {
@@ -384,6 +417,7 @@ export async function publishResults(ctx: RequestContext, examId: string) {
 export type StudentResult = {
   examId: string;
   exam: string;
+  term?: string | null;
   papers: { subject: string; marks: number | null; maxMarks: number; isAbsent: boolean; grade: string | null; passed: boolean }[];
   total: number;
   maxTotal: number;
@@ -410,7 +444,7 @@ export async function getStudentResults(
       ...(academicYearId && { academicYearId }),
     })
       .sort({ createdAt: -1 })
-      .select('name')
+      .select('name termId')
       .lean(),
     Subject.find({ schoolId, _id: { $in: schedules.map((schedule) => schedule.subjectId) } })
       .setOptions({ withDeleted: true })
@@ -418,6 +452,7 @@ export async function getStudentResults(
       .lean(),
   ]);
   const subjectName = new Map(subjects.map((subject) => [String(subject._id), subject.name]));
+  const terms = await termNames(ctx);
   const markOf = new Map(marks.map((mark) => [String(mark.examScheduleId), mark]));
   return exams.map((exam): StudentResult => {
     const papers = schedules
@@ -439,6 +474,7 @@ export async function getStudentResults(
     return {
       examId: String(exam._id),
       exam: exam.name,
+      term: terms.get(String(exam.termId)) ?? null,
       papers,
       total,
       maxTotal,

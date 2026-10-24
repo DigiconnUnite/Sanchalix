@@ -13,6 +13,7 @@ export const SubjectInput = z.object({
     .toUpperCase()
     .regex(/^[A-Z0-9]{2,8}$/, `${E}.subjectCode`),
   type: z.enum(SUBJECT_TYPES, `${E}.subjectType`),
+  isOptional: z.boolean().default(false),
 });
 export type SubjectInput = z.infer<typeof SubjectInput>;
 
@@ -21,13 +22,20 @@ const Cell = z.object({
   day: z.number().int().min(1).max(6),
   period: z.number().int().min(1).max(12),
 });
+export const NotifySection = z.object({ sectionId: Id('section') });
 export const ClearSlot = Cell;
 export const SlotInput = Cell.extend({ subjectId: Id('subject'), teacherId: Id('teacher') });
 export type SlotInput = z.infer<typeof SlotInput>;
 export type ClearSlot = z.infer<typeof ClearSlot>;
 
 export type Period = { number: number; start: string; end: string };
-export type SubjectRow = { id: string; name: string; code: string; type: (typeof SUBJECT_TYPES)[number] };
+export type SubjectRow = {
+  id: string;
+  name: string;
+  code: string;
+  type: (typeof SUBJECT_TYPES)[number];
+  isOptional: boolean;
+};
 export type TimetableCell = { subjectId: string; subject: string; teacherId: string; teacher: string };
 export type Timetable = { periods: Period[]; cells: Record<string, TimetableCell> };
 export type TeacherPeriod = Period & { section: string; subject: string };

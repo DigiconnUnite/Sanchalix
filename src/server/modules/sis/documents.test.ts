@@ -2,6 +2,7 @@ import mongoose, { Types } from 'mongoose';
 import { afterAll, beforeAll, expect, it } from 'vitest';
 import type { RequestContext } from '@/server/auth/context';
 import { connectDb } from '@/server/db/connect';
+import { Staff } from '@/server/models/staff';
 import { Student } from '@/server/models/student';
 import { getFile } from '@/server/storage/store';
 import { addDocument, listDocuments, MAX_BYTES, readDocument, removeDocument, verifyDocument } from './documents';
@@ -66,4 +67,20 @@ it('reads, verifies and deletes a document only inside its school', async () => 
   expect(await listDocuments(ctx, id)).toEqual([]);
   await expect(getFile(key)).rejects.toThrow();
   await expect(getFile('../outside.pdf')).rejects.toThrow('Invalid storage key');
+});
+
+it("keeps a staff member's documents with their own types, and not under a student's types", async () => {
+  const staffId = new Types.ObjectId();
+  await Staff.collection.insertOne({ _id: staffId, schoolId: ctx.schoolId, name: 'Meena', documents: [], deletedAt: null });
+  const id = String(staffId);
+  await expect(addDocument(ctx, id, { type: 'birth_certificate', fileName: 'a.pdf', bytes: pdf }, 'staff')).rejects.toMatchObject({
+    code: 'VALIDATION',
+  });
+  const added = await addDocument(ctx, id, { type: 'id_proof', fileName: 'pan.pdf', bytes: pdf }, 'staff');
+  expect(await listDocuments(ctx, id, 'staff')).toMatchObject([{ type: 'id_proof', fileName: 'pan.pdf', verified: false }]);
+  expect(await listDocuments(other, id, 'staff')).toEqual([]);
+  await verifyDocument(ctx, id, String(added.id), 'staff');
+  expect((await listDocuments(ctx, id, 'staff'))[0]?.verified).toBe(true);
+  await removeDocument(ctx, id, String(added.id), 'staff');
+  expect(await listDocuments(ctx, id, 'staff')).toEqual([]);
 });

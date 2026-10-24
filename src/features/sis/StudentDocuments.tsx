@@ -19,22 +19,28 @@ import { EmptyState } from '@/components/EmptyState';
 import { svg } from '@/components/icons';
 import { useRouter } from '@/i18n/navigation';
 import { deleteAdmissionDocument, verifyAdmissionDocument } from '@/server/modules/admissions/actions';
+import { deleteStaffDocument, verifyStaffDocument } from '@/server/modules/hr/actions';
 import { deleteStudentDocument, verifyStudentDocument } from '@/server/modules/sis/actions';
-import type { DocumentRow } from '@/server/modules/sis/documents';
+import type { DocumentOwner, DocumentRow } from '@/server/modules/sis/documents';
 
-const TYPES = ['birth_certificate', 'transfer_certificate_prev', 'aadhaar', 'photo', 'report_card_prev', 'medical', 'other'];
+const TYPES: Record<DocumentOwner, string[]> = {
+  student: ['birth_certificate', 'transfer_certificate_prev', 'aadhaar', 'photo', 'report_card_prev', 'medical', 'other'],
+  admission: ['birth_certificate', 'transfer_certificate_prev', 'aadhaar', 'photo', 'report_card_prev', 'medical', 'other'],
+  staff: ['qualification', 'id_proof', 'appointment_letter', 'experience_letter', 'other'],
+};
+const PATH: Record<DocumentOwner, string> = { student: 'students', admission: 'admissions', staff: 'staff' };
 const MAX_BYTES = 5 * 1024 * 1024;
 type Feedback = { type: 'success' | 'error'; text: string };
 
 export function StudentDocuments({
   studentId,
-  admission = false,
+  owner = 'student',
   documents,
   canEdit,
 }: {
-  /** The student's id, or with `admission` the application's. */
+  /** The id of the student, the application or the staff member, as `owner` says. */
   studentId: string;
-  admission?: boolean;
+  owner?: DocumentOwner;
   documents: DocumentRow[];
   canEdit: boolean;
 }) {
@@ -45,18 +51,22 @@ export function StudentDocuments({
   const [busy, setBusy] = useState(false);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [removing, setRemoving] = useState<DocumentRow | null>(null);
-  const typeOptions = TYPES.map((value) => ({ value, label: t(`type.${value}`) }));
+  const typeOptions = TYPES[owner].map((value) => ({ value, label: t(`type.${value}`) }));
   const file = files[0];
   const tooBig = Boolean(file && file.size > MAX_BYTES);
-  const base = `/api/v1/${admission ? 'admissions' : 'students'}/${studentId}/documents`;
+  const base = `/api/v1/${PATH[owner]}/${studentId}/documents`;
   const verify = (documentId: string) =>
-    admission
+    owner === 'admission'
       ? verifyAdmissionDocument({ admissionId: studentId, documentId })
-      : verifyStudentDocument({ studentId, documentId });
+      : owner === 'staff'
+        ? verifyStaffDocument({ staffId: studentId, documentId })
+        : verifyStudentDocument({ studentId, documentId });
   const remove = (documentId: string) =>
-    admission
+    owner === 'admission'
       ? deleteAdmissionDocument({ admissionId: studentId, documentId })
-      : deleteStudentDocument({ studentId, documentId });
+      : owner === 'staff'
+        ? deleteStaffDocument({ staffId: studentId, documentId })
+        : deleteStudentDocument({ studentId, documentId });
 
   async function upload() {
     if (!file) return;

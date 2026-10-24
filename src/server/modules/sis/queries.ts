@@ -3,18 +3,18 @@ import { Types } from 'mongoose';
 import { AppError } from '@/lib/appError';
 import type { RequestContext } from '@/server/auth/context';
 import { paginate } from '@/server/db/paginate';
+import { Class } from '@/server/models/class';
 import { Enrollment } from '@/server/models/enrollment';
 import { AcademicYear } from '@/server/models/academicYear';
 import { Guardian } from '@/server/models/guardian';
 import { School } from '@/server/models/school';
 import { Section } from '@/server/models/section';
 import { Student } from '@/server/models/student';
-import { AuditLog } from '@/server/models/auditLog';
-import { User } from '@/server/models/user';
 import { AttendanceRecord } from '@/server/models/attendanceRecord';
 import { Invoice } from '@/server/models/invoice';
 import { Payment } from '@/server/models/payment';
 import { Subject } from '@/server/models/subject';
+import { listHistory } from '@/server/modules/audit/history';
 import type {
   HistoryEntry,
   ListStudents,
@@ -94,6 +94,21 @@ export async function countStudents(ctx: RequestContext, status: StudentStatus) 
   return Student.countDocuments({ ...(await scopeFilter(ctx)), status }).limit(COUNT_CAP);
 }
 
+/** The optional subjects a class offers: those marked optional that are among its subjects, or any of them if it has none set. */
+export async function optionalSubjectsOffered(ctx: RequestContext, classId: Types.ObjectId | undefined) {
+  if (!classId) return [];
+  const schoolClass = await Class.findOne({ schoolId: ctx.schoolId, _id: classId }).select('subjectIds').lean();
+  const subjects = await Subject.find({
+    schoolId: ctx.schoolId,
+    isOptional: true,
+    ...(schoolClass?.subjectIds.length && { _id: { $in: schoolClass.subjectIds } }),
+  })
+    .sort({ name: 1 })
+    .select('name')
+    .lean();
+  return subjects.map((subject) => ({ id: String(subject._id), name: subject.name }));
+}
+
 export async function getStudent(ctx: RequestContext, id: string): Promise<StudentProfile | null> {
   if (!Types.ObjectId.isValid(id)) return null;
   const { schoolId } = ctx;
@@ -107,7 +122,7 @@ export async function getStudent(ctx: RequestContext, id: string): Promise<Stude
   if (!student) return null;
 
   const [enrollment, guardians] = await Promise.all([
-    Enrollment.findOne({ schoolId, _id: student.currentEnrollmentId }).select('sectionId rollNo').lean(),
+    Enrollment.findOne({ schoolId, _id: student.currentEnrollmentId }).select('sectionId rollNo classId optionalSubjectIds').lean(),
     Guardian.find({ schoolId, _id: { $in: student.guardianIds } }).select('name relation phone email').lean(),
   ]);
   const section = enrollment
@@ -138,6 +153,10 @@ export async function getStudent(ctx: RequestContext, id: string): Promise<Stude
       pincode: address?.pincode ?? '',
       version: student.updatedAt.toISOString(),
     },
+    optionalSubjects: {
+      options: await optionalSubjectsOffered(ctx, enrollment?.classId),
+      chosen: enrollment?.optionalSubjectIds.map(String) ?? [],
+    },
     guardians: guardians.map((guardian) => ({
       id: String(guardian._id),
       name: guardian.name,
@@ -149,21 +168,8 @@ export async function getStudent(ctx: RequestContext, id: string): Promise<Stude
   };
 }
 
-export async function listStudentHistory(ctx: RequestContext, studentId: string): Promise<HistoryEntry[]> {
-  const entries = await AuditLog.find({ schoolId: ctx.schoolId, 'entity.type': 'student', 'entity.id': studentId })
-    .sort({ at: -1 })
-    .limit(50)
-    .select('at actorId action')
-    .lean();
-  const actors = await User.find({ _id: { $in: entries.map((entry) => entry.actorId) } }).select('name').lean();
-  const nameById = new Map(actors.map((actor) => [String(actor._id), actor.name]));
-  return entries.map((entry) => ({
-    id: String(entry._id),
-    at: entry.at.toISOString(),
-    actor: nameById.get(String(entry.actorId)) ?? '',
-    action: entry.action,
-  }));
-}
+export const listStudentHistory = (ctx: RequestContext, studentId: string): Promise<HistoryEntry[]> =>
+  listHistory(ctx, 'student', studentId);
 
 /** The student's marks for the last 60 days, newest first. Call only after getStudent has confirmed access. */
 export async function getStudentAttendance(ctx: RequestContext, studentId: string): Promise<StudentAttendance> {

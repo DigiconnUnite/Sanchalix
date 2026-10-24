@@ -280,7 +280,7 @@ export async function seedGreenValleyDemo(schoolId: Types.ObjectId, domain: stri
   const classes = await Class.find({ schoolId }).sort({ order: 1 }).select('order').lean();
   const heads: Types.ObjectId[] = [];
   for (const [name, code] of [['Tuition fee', 'TUITION'], ['Examination fee', 'EXAM'], ['Activity fee', 'ACTIVITY']] as const) {
-    heads.push((await createFeeHead(accountant, FeeHeadInput.parse({ name, code, gstRate: '0' }))).id);
+    heads.push((await createFeeHead(accountant, FeeHeadInput.parse({ name, code, gstRate: '0', discountable: code === 'TUITION' }))).id);
   }
   const installments = [
     { label: 'Quarter 1', dueDate: '2026-04-10', percent: 25 },

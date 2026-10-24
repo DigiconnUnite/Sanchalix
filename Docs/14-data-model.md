@@ -98,7 +98,7 @@ Indexes: `{ name: 1 }`.
 | integrations | `{ razorpay?: { keyId, keySecret🔒, webhookSecret🔒 }, stripe?: {...🔒}, emailDomain?, allowedGoogleDomains: string[] }` | optional; the platform defaults apply when unset |
 | status | `'onboarding' \| 'active' \| 'suspended'` | |
 
-`SchoolSettings`: `attendanceMode: 'daily' | 'period' | 'both'`, `absenceAlertTime: 'HH:mm'` (default `09:30`), `attendanceEditWindow: 'same_day'`, `leaveCountsAsAbsent: boolean`, `transportWindows: { start: 'HH:mm', end: 'HH:mm' }[]` (when route notices may bypass quiet hours), `lateFeeRule: { graceDays, amountMinor, perDay }`, `quietHours: { start: 'HH:mm', end: 'HH:mm' }`, `weekStart: 0-6`, `workingDays: number[]`, `receiptPrefix`, `messagingStudentsEnabled: boolean`, `aiInsightsEnabled: boolean` (default false), `llmSummariesEnabled: boolean` (default false), `defaultGradingSchemeId`.
+`SchoolSettings`: `attendanceMode: 'daily' | 'period' | 'both'`, `absenceAlertTime: 'HH:mm'` (default `09:30`; the time parents are texted about an absence), `leaveQuotas: { CL, SL, EL }` (days a year, defaults 12, 10 and 15), `attendanceEditWindow: 'same_day'`, `leaveCountsAsAbsent: boolean`, `transportWindows: { start: 'HH:mm', end: 'HH:mm' }[]` (when route notices may bypass quiet hours), `lateFeeRule: { graceDays, amountMinor, perDay }`, `quietHours: { start: 'HH:mm', end: 'HH:mm' }`, `shiftDueDates: boolean` (default false; a due date on a holiday or closed day moves to the next working day when invoices are issued), `weekStart: 0-6`, `workingDays: number[]`, `receiptPrefix`, `messagingStudentsEnabled: boolean`, `aiInsightsEnabled: boolean` (default false), `llmSummariesEnabled: boolean` (default false), `defaultGradingSchemeId`.
 
 Indexes: `{ code: 1 } unique`, `{ organizationId: 1 }`.
 
@@ -135,8 +135,12 @@ Feature flags ([20-devops-and-deployment.md](20-devops-and-deployment.md#cicd-pi
 Indexes: `{ key: 1, schoolId: 1 } unique`.
 
 ### outboundMessages
-`schoolId`, `channel: 'sms' | 'email'`, `to`, `template`, `subject?`, `body?` (kept only by the development provider), `status: 'sent' | 'failed' | 'skipped'`, `provider`, `error?`, `dedupeKey?`.
+`schoolId`, `channel: 'sms' | 'email'`, `to`, `template`, `subject?`, `body?` (kept only by the development provider), `status: 'sent' | 'failed' | 'skipped' | 'held'`, `provider`, `error?`, `dedupeKey?`, `sendAfter?` (set while `held`).
+A text that is not urgent (anything but a sign-in code or an absence alert) sent during the school's quiet hours is `held` with its `body` kept, even in production, and the scheduled run sends it once `sendAfter` has passed. An absence alert is held until the school's `absenceAlertTime` on the day it is about (`sendAfter`) and carries `recheck: { studentId, date }`; when it comes due the register is read again and the text is `skipped` ("No longer marked absent") if the child is no longer absent.
 Indexes: `{ schoolId: 1, createdAt: -1 }`, `{ schoolId: 1, dedupeKey: 1 } unique` where `dedupeKey` is a string, and a 30-day TTL on `createdAt`.
+
+### rateLimits
+`_id` (`{bucket}:{caller}:{window}`), `count`, `expiresAt`. A platform collection (no `schoolId`): one counter per caller and time window, used by `withinLimit` to cap sign-in, password reset, sign-in code and receipt-check requests. Indexes: a TTL on `expiresAt`.
 
 ### otpChallenges
 `phone`, `codeHash` (HMAC-SHA-256 of phone and code, keyed with `AUTH_SECRET`), `attempts` (max 5), `sentAt`, `expiresAt` (5 min, TTL index), `purpose: 'login' | 'verify_phone'`. `users` also has `passwordReset: { tokenHash, expiresAt }` for the reset link.
@@ -167,7 +171,7 @@ Indexes: `{ schoolId: 1, branchId: 1, academicYearId: 1, order: 1 } unique`.
 Indexes: `{ schoolId: 1, classId: 1, name: 1 } unique`, `{ schoolId: 1, classTeacherId: 1 }`.
 
 ### subjects
-`schoolId`, `name`, `code` (unique per school), `type: 'scholastic' | 'co_scholastic'`, `curriculum: { classId, units: { title, topics: { title, periodsPlanned }[] }[] }[]`.
+`schoolId`, `name`, `code` (unique per school), `type: 'scholastic' | 'co_scholastic'`, `isOptional: boolean` (default false; the subject is taken only by students given it in `enrollments.optionalSubjectIds`), `curriculum: { classId, units: { title, topics: { title, periodsPlanned }[] }[] }[]`.
 
 ### lessonPlans
 `schoolId`, `sectionId`, `subjectId`, `teacherId`, `date`, `topic`, `objectives: string[]`, `activities`, `resources: FileRef[]`, `status: 'draft' | 'submitted' | 'approved' | 'delivered'`, `principalComment`.
@@ -240,7 +244,7 @@ Indexes: `{ schoolId: 1, phone: 1 }`, `{ schoolId: 1, studentIds: 1 }`.
 | type | `'teaching' \| 'non_teaching'` | |
 | joinedOn | `YYYY-MM-DD` | |
 | subjectIds | ObjectId[] | for teachers |
-| qualifications | `{ degree, institution, year }[]` | |
+| qualifications | `{ degree, institution, year? }[]`, at most 8 | Edited on the staff form, shown on the profile |
 | bank🔒 | `{ accountNo, ifsc, name }` | |
 | pan🔒 | string | |
 | salary | `{ components: { code, name, type: 'earning' \| 'deduction', amountMinor, formula? }[], effectiveFrom }` | readable by `accountant`, `principal` and `school_admin` only |
@@ -342,7 +346,7 @@ Indexes: `{ schoolId: 1, homeworkId: 1, studentId: 1 } unique`.
 ## Fees and finance
 
 ### feeHeads
-`schoolId`, `name`, `code` (unique per school), `taxable: boolean`, `gstRate` (0, 5, 12 or 18), `refundable: boolean`.
+`schoolId`, `name`, `code` (unique per school), `taxable: boolean`, `gstRate` (0, 5, 12 or 18), `refundable: boolean`, `discountable: boolean` (default false; discounts reduce only the heads with this on, usually tuition).
 Indexes: `{ schoolId: 1, code: 1 } unique`.
 
 ### feeStructures
@@ -350,7 +354,10 @@ Indexes: `{ schoolId: 1, code: 1 } unique`.
 Indexes: `{ schoolId: 1, academicYearId: 1 }` (the structures list).
 
 ### discounts
-`schoolId`, `name`, `kind: 'sibling' | 'staff_ward' | 'early_payment' | 'custom'`, `type: 'percent' | 'fixed'`, `value`, `feeHeadIds`, `rule` (e.g. `{ siblingOrder: 2 }`), `active`.
+`schoolId`, `name`, `kind: 'sibling' | 'staff_ward' | 'early_payment' | 'custom'`, `type: 'percent' | 'fixed'`, `value` (a percentage, or for `fixed` the amount off for the year in minor units), `active`, `status: 'pending' | 'approved' | 'rejected'`, `approvedBy`, and for `custom` the `studentId`, `academicYearId` and `reason`.
+
+A school has at most one `sibling` and one `staff_ward` document (both `percent`). A `custom` discount belongs to one student for one year and starts `pending`. Which fee heads a discount reduces is decided by `feeHeads.discountable`, not stored on the discount.
+Indexes: `{ schoolId: 1, kind: 1, status: 1 }`, `{ schoolId: 1, studentId: 1, academicYearId: 1 }`.
 
 ### scholarships
 `schoolId`, `studentId`, `academicYearId`, `name`, `type: 'percent' | 'fixed'`, `value`, `feeHeadIds`, `status: 'nominated' | 'applied' | 'approved' | 'rejected'`, `nominatedBy`, `approvedBy`, `documents`.
@@ -361,7 +368,7 @@ Indexes: `{ schoolId: 1, academicYearId: 1 }` (the structures list).
 | schoolId, branchId, academicYearId | | |
 | invoiceNo | string | unique per school, `INV/{YYYY-YY}/{000000}` |
 | studentId | ObjectId | |
-| feeStructureId, installmentId | ObjectId | |
+| feeStructureId, installmentId | ObjectId | both absent on an opening balance (an amount owed from before the school used the system); the unique index on `studentId, installmentId` then allows one per student |
 | installmentLabel | string | copied from the installment at issue time, so lists don't need the structure |
 | lines | `{ feeHeadId, description, amountMinor, taxMinor }[]` | |
 | concessions | `{ source: 'discount' \| 'scholarship', refId, description, amountMinor }[]` | |
@@ -493,6 +500,9 @@ Indexes: `{ schoolId: 1, branchId: 1, month: 1 } unique`, `{ schoolId: 1, staffI
 Append-only. There is no update or delete permission for any role, and the app DB user has only `insert` and `find` on this collection.
 `schoolId`, `actorId`, `actorRole`, `action` (a permission string, e.g. `fees.refund.approve`), `entity: { type, id }`, `before`, `after` (a changed-fields diff, with 🔒 fields redacted), `ip`, `userAgent`, `requestId`, `reason?`, `at`.
 Indexes: `{ schoolId: 1, at: -1 }`, `{ schoolId: 1, 'entity.type': 1, 'entity.id': 1, at: -1 }`, `{ schoolId: 1, actorId: 1, at: -1 }`. Retention is 7 years (tiered to cold storage after 1 year).
+
+### platformAuditLogs
+Append-only record of what platform staff do: sign-ins, creating a school, switching one on or pausing it, giving a school admin a new password. It belongs to no school, so it has no `schoolId` (the school it concerns is `targetSchoolId`). `actorId`, `action`, `entity: { type, id }`, `targetSchoolId?`, `before`, `after`, `reason?`, `ip`, `userAgent`, `at`. Indexes: `{ at: -1 }`, `{ targetSchoolId: 1, at: -1 }`.
 
 ### importJobs
 `schoolId`, `kind: 'students' | 'guardians' | 'staff' | 'fees_opening_balance' | 'marks' | 'books'`, `fileKey`, `status: 'uploaded' | 'validating' | 'validated' | 'importing' | 'done' | 'failed'`, `totalRows`, `validRows`, `errors: { row, field, message }[]` (the first 1,000; the rest go to an error file), `errorFileKey`, `dryRun`, `startedBy`.

@@ -16,3 +16,13 @@ export const daysBefore = (date: string, days: number) =>
 
 /** Day of the week of a calendar date, 0 (Sunday) to 6 (Saturday). */
 export const weekdayOf = (date: string) => new Date(`${date}T00:00:00Z`).getUTCDay();
+
+/** The first day on or after `date` that is a working day and not a holiday. Gives up after a year of closed days. */
+export function nextWorkingDay(date: string, holidays: ReadonlySet<string>, workingDays: readonly number[]) {
+  let day = date;
+  for (let step = 0; step < 366; step += 1) {
+    if (workingDays.includes(weekdayOf(day)) && !holidays.has(day)) return day;
+    day = new Date(Date.parse(`${day}T00:00:00Z`) + 86_400_000).toISOString().slice(0, 10);
+  }
+  return date;
+}

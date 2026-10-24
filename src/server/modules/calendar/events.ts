@@ -4,6 +4,7 @@ import { AppError } from '@/lib/appError';
 import { todayIn } from '@/lib/dates';
 import type { RequestContext } from '@/server/auth/context';
 import { Event, EVENT_TYPES } from '@/server/models/event';
+import { Exam, ExamSchedule } from '@/server/models/exam';
 import { Holiday } from '@/server/models/holiday';
 import { School } from '@/server/models/school';
 
@@ -26,7 +27,7 @@ export type EventInput = z.infer<typeof EventInput>;
 export const EventId = z.string().regex(/^[0-9a-f]{24}$/, `${E}.notFound`);
 
 export type CalendarItem = {
-  /** Null for a holiday, which is managed on the Holidays page. */
+  /** Null for a holiday, which is managed on the Holidays page, and for an exam, which is set up under Exams. */
   id: string | null;
   title: string;
   type: (typeof EVENT_TYPES)[number];
@@ -40,22 +41,45 @@ const shift = (month: string, by: number) => {
   return date.toISOString().slice(0, 7);
 };
 
-/** Events and holidays that touch the month (`YYYY-MM`, this month when omitted or invalid), oldest first. */
+/**
+ * Each exam that has papers on days in the range, from its first paper to its last. A draft exam is not shown, because
+ * its dates may still change.
+ */
+async function examItems(schoolId: RequestContext['schoolId'], from: string, to: string, limit?: number): Promise<CalendarItem[]> {
+  const papers = await ExamSchedule.aggregate<{ _id: unknown; start: string; end: string }>([
+    { $match: { schoolId, deletedAt: null, date: { $gte: from, $lte: to } } },
+    { $group: { _id: '$examId', start: { $min: '$date' }, end: { $max: '$date' } } },
+    { $sort: { start: 1 } },
+    ...(limit ? [{ $limit: limit }] : []),
+  ]);
+  const exams = await Exam.find({ schoolId, _id: { $in: papers.map((paper) => paper._id) }, status: { $ne: 'draft' } })
+    .select('name')
+    .lean();
+  const nameOf = new Map(exams.map((exam) => [String(exam._id), exam.name]));
+  return papers.flatMap((paper) => {
+    const title = nameOf.get(String(paper._id));
+    return title ? [{ id: null, title, type: 'exam' as const, start: paper.start, end: paper.end }] : [];
+  });
+}
+
+/** Events, exams and holidays that touch the month (`YYYY-MM`, this month when omitted or invalid), oldest first. */
 export async function getMonth(ctx: RequestContext, requested: string | undefined) {
   const { schoolId } = ctx;
   const school = await School.findById(schoolId).select('timezone').lean();
   const today = todayIn(school?.timezone ?? 'Asia/Kolkata');
   const month = requested && /^\d{4}-(0[1-9]|1[0-2])$/.test(requested) ? requested : today.slice(0, 7);
   const [first, last] = [`${month}-01`, `${month}-31`];
-  const [events, holidays] = await Promise.all([
+  const [events, holidays, exams] = await Promise.all([
     Event.find({ schoolId, start: { $lte: last }, end: { $gte: first } })
       .select('title type start end')
       .lean(),
     Holiday.find({ schoolId, date: { $gte: first, $lte: last } })
       .select('date name')
       .lean(),
+    examItems(schoolId, first, last),
   ]);
   const items: CalendarItem[] = [
+    ...exams,
     ...events.map((event) => ({
       id: String(event._id),
       title: event.title,
@@ -79,7 +103,7 @@ export async function listUpcoming(ctx: RequestContext, limit = 5): Promise<Cale
   const { schoolId } = ctx;
   const school = await School.findById(schoolId).select('timezone').lean();
   const today = todayIn(school?.timezone ?? 'Asia/Kolkata');
-  const [events, holidays] = await Promise.all([
+  const [events, holidays, exams] = await Promise.all([
     Event.find({ schoolId, end: { $gte: today } })
       .sort({ start: 1 })
       .limit(limit)
@@ -90,8 +114,10 @@ export async function listUpcoming(ctx: RequestContext, limit = 5): Promise<Cale
       .limit(limit)
       .select('date name')
       .lean(),
+    examItems(schoolId, today, '9999-12-31', limit),
   ]);
   return [
+    ...exams,
     ...events.map((event) => ({
       id: String(event._id),
       title: event.title,

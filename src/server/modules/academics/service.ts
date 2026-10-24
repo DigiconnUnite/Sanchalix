@@ -5,6 +5,7 @@ import { Branch } from '@/server/models/branch';
 import { Class } from '@/server/models/class';
 import { Section } from '@/server/models/section';
 import { Staff } from '@/server/models/staff';
+import { Subject } from '@/server/models/subject';
 import { getCurrentYearId } from './queries';
 import type { ClassInput, SectionInput } from './schemas';
 
@@ -64,6 +65,22 @@ export async function createSection(ctx: RequestContext, input: SectionInput) {
 }
 
 /** Sets or clears a section's class teacher, the person who takes its daily attendance. */
+/** Sets which subjects a class studies. The timetable then offers only these for the class's sections. */
+export async function setClassSubjects(ctx: RequestContext, classId: string, subjectIds: string[]) {
+  const { schoolId } = ctx;
+  const unique = [...new Set(subjectIds)];
+  const found = await Subject.countDocuments({ schoolId, _id: { $in: unique } });
+  if (found !== unique.length) throw new AppError('NOT_FOUND', 'academics.errors.subjects');
+  const before = await Class.findOneAndUpdate(
+    { schoolId, _id: classId, ...(ctx.scope === 'branch' && ctx.branchId && { branchId: ctx.branchId }) },
+    { subjectIds: unique, updatedBy: ctx.userId },
+  )
+    .select('name subjectIds')
+    .lean();
+  if (!before) throw new AppError('NOT_FOUND', 'academics.errors.class');
+  return { id: before._id, name: before.name, before: before.subjectIds.length, count: unique.length };
+}
+
 export async function assignClassTeacher(ctx: RequestContext, sectionId: string, staffId: string | null) {
   const { schoolId } = ctx;
   const teacher = staffId

@@ -136,7 +136,11 @@ export type StudentProfile = {
     email: string | null;
     isPrimary: boolean;
   }[];
+  /** The optional subjects the student's class offers, and which of them this student takes. */
+  optionalSubjects: { options: { id: string; name: string }[]; chosen: string[] };
 };
+
+export const OptionalSubjects = z.object({ studentId: Id, subjectIds: z.array(Id).max(20) });
 
 export type HistoryEntry = { id: string; at: string; actor: string; action: string };
 

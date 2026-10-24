@@ -13,8 +13,9 @@ const schema = new Schema(
     academicYearId: { type: ObjectId, ref: 'AcademicYear', required: true },
     invoiceNo: { type: String, required: true },
     studentId: { type: ObjectId, ref: 'Student', required: true },
-    feeStructureId: { type: ObjectId, ref: 'FeeStructure', required: true },
-    installmentId: { type: ObjectId, required: true },
+    // Both are absent on an opening balance, which is owed from before the school's fee structures existed.
+    feeStructureId: { type: ObjectId, ref: 'FeeStructure' },
+    installmentId: { type: ObjectId, default: null },
     installmentLabel: { type: String, required: true },
     lines: [
       {

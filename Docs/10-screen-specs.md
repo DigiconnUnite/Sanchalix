@@ -277,6 +277,30 @@ Built with `Board` (staff, rearrangeable in v1) or `Grid` (student, parent). Eve
 - **Student profile:** Edit and Withdraw student in the header (school admin); tabs Overview, Parents, Attendance, Fees, History. `/students/[id]/edit` reuses the Add student form without the section and guardian parts.
 - **Import students** (`/students/import`): download the template, choose a CSV, Check file, then Import. Row errors are listed with row, column and problem.
 - **Admissions** (`/admissions`, `/admissions/new`, `/admissions/[id]`): a list filtered by stage in the URL, a detail page whose primary button is the next stage, and a dialog that asks for the section and address when admitting.
+- **Attendance report** (`/attendance/report`, in the Academics navigation): From and To date pickers in the URL, three totals (average, sections with attendance, students below the line), a table of students below 75% (lowest first, each linking to the student's Attendance tab) and a By section table whose rows link to the register.
+- **Reports** (`/reports`, in the Administration navigation): links to the other reports, then Admissions and Staff, each as three totals and small count tables. Stage rows link to the admissions list filtered to that stage.
+- **Export:** every Export button is a dropdown with CSV file and Excel workbook.
+- **Receipt:** Open PDF beside Print receipt opens the PDF in a new tab. `/verify/receipt/...` is the public page the QR code leads to.
+- **Portal home:** a Receipts table (receipt no., date, amount) under the fees table, each number opening its PDF in a new tab. Shown only when there is at least one receipt.
+- **Discounts:** an approved student discount has Withdraw, which asks for confirmation because it changes invoices; a withdrawn one shows a stopped "Withdrawn" status.
+- **Exams:** the New exam dialog has a Term select when the year has terms, and the list has a Term column.
+- **Import staff** (`/staff/import`) and **Import opening balances** (`/fees/invoices/import`): the same screen as Import students (template download, check, then import, with a table of rows to fix), reached from Import staff on the Staff list and Import opening balances on Fee structures.
+- **Settings, Terms tab** (`/settings?tab=terms`): an `AttributeEditor` of the current year's terms (name, starts on, ends on) with its own Save.
+- **Settings, Notifications tab** (`/settings?tab=notifications`): Quiet hours start and end with its own Save.
+- **Settings, Attendance tab** (`/settings?tab=attendance`): Send absence alerts at (a time), with its own Save. **Leave tab** (`?tab=leave`): days a year for casual, sick and earned leave.
+- **Staff form, Qualifications:** an `AttributeEditor` of degree, institution and year (up to 8); the profile lists them in a table.
+- **Timetable:** Tell everyone beside the section picker notifies the section's teachers, students and parents, and the alert says how many were told.
+- **Staff profile and fee reports:** the staff profile has a History table (when, who, what) for roles that can read the audit log. Fee reports adds a Billing this year block: billed, concessions and late fees as totals, then billed by fee head, concessions by discount and still owed by class.
+- **Staff check-in:** Check-in code on Staff attendance opens `/staff/attendance/qr`, a large QR code for today with Print. A staff member who scans it lands on `/checkin` with one Check in button and, afterwards, the time recorded.
+- **Dashboard, every role:** Coming up (the next events and holidays) and, for staff, My leave (balances with a link to apply) sit beside the latest announcements, so a librarian or transport manager, who have no module screens yet, still have a home page worth opening.
+- **User menu:** a person with roles in more than one school sees Switch to {school} beside Switch to {role}.
+- **Profile, for a parent:** a Text messages block with a toggle for fee reminders; absence alerts and sign-in codes are shown switched on and can't be changed.
+- **Subjects by class:** a second table on the Subjects page, one row per class with its subjects ("All subjects" when none are set) and Edit, which opens a `Multiselect` in a modal.
+- **Optional subjects:** Add subject has an Optional subject checkbox and the table a Taken by column (Whole class or Chosen students). A student's profile Overview has an Optional subjects block, a `Multiselect` with Save, shown when the class offers any.
+- **Announcement scheduling:** the New announcement form has two optional dates, Publish on and Show until. The list shows "Scheduled for {date}" with a pending `StatusIndicator` for one that is waiting, and "Shown until" or "Ended" under the published time for one with a last day.
+- **Users and Profile:** Users has Remove role beside Add role for anyone with more than one role. The Profile sessions table has Sign out on every device but the current one.
+- **Discounts and late fees** (`/fees/discounts`): three parts. Automatic discounts (sibling %, staff ward %) and Late fee (amount, grace days) are each a `Container` with its own Save, read-only for anyone but the accountant. Student discounts is a table (student, discount, value, reason, status) with Add student discount (the primary action, a modal that takes the admission number) and, for the principal, Approve and Reject on pending rows. Fee heads has a Discounts apply toggle per head.
+- **Blog** (`/blog`, `/blog/[slug]`, public): a grid of post cards (a picture on top, then topic, title, summary, date and reading time; the pictures are stand-ins borrowed from the page banners until each post has its own) and a post page with the article, three more posts and the sign-in call to action. Posts are listed in `src/features/marketing/posts.ts` and their words are in the `marketing.blog` catalogue; there is no editor yet. Every marketing page shares one header and footer (`PublicPage`), with Blog in both.
 - **Page banner:** every page in the side navigation opens with a dark gradient band, edge to edge and flush under the breadcrumb row with rounded bottom corners, holding the page title and a one-line description ([ADR-022](23-decision-log.md#adr-022-a-banner-on-the-main-pages)); the page's own heading below it is an `h2`.
 - **Staff profile** (`/staff/[id]`): opened from the name in the staff list. Details, a Teaching this year table (subject, sections, periods a week) and leave balances; Edit in the header for roles with `hr.staff.update`.
 - **Admission documents:** the detail page has the same Documents table and upload form as the student profile. While a required document is unverified an info alert lists what is missing and the admit button is disabled with the reason "Verify all required documents first (2 remaining)".
@@ -296,9 +320,22 @@ Built with `Board` (staff, rearrangeable in v1) or `Grid` (student, parent). Eve
 - **Dashboard, Needs your attention:** also lists pending staff leave, offered admission seats, exam papers past their date with marks not locked, and draft report cards, each only for a role that can act on it.
 - **Student profile, Portal access tab:** the student and each guardian with their account email or "No account", and Create account.
 - **Home for students and parents:** a summary (attendance, fees due, homework due), today's classes, homework, fees to pay, coming up. Parents with several children get a child selector in the header.
-- **Calendar** (`/calendar/events?month=`): a month list of events and holidays with Previous and Next; Add event in a dialog.
+- **Calendar** (`/calendar/events?month=&view=`): a Month grid (the default, Monday first, each day listing its events and holidays; an editor opens an event by its title) or a List, chosen with a `SegmentedControl` that is kept in the URL, with Previous and Next; Add event in a dialog.
 - **Promotion** (`/promotion`): first a form to plan the next year; then a section picker and a table with a decision per student; Close year in the header, enabled when nobody is left in the current year.
 - **Profile** (`/profile`): account details, density, change password.
+
+## Added on 2026-10-21
+
+- **Platform console (super admin).** Its own navigation: Platform overview, Schools, Platform audit log. *Overview* shows tiles for active, being set up and paused schools, active students, staff and people with a sign-in. *Schools* is a table (school, code, board, city, status, students, added) with cursor pagination and one primary action, Add school. *Add a school* is a form in two containers (the school, then its first admin) and ends on the one-time temporary password with a link to the school. *A school* shows its overview, its admins (with New temporary password) and one status action: Switch on while being set up, Pause school (with a required reason) while active, Switch back on while paused. *Platform audit log* lists what platform staff did, newest first, with Older entries.
+- **Settings, Your data tab:** Download everything (ZIP) with a note of what is left out.
+- **Settings, School tab:** Move due dates off holidays beside the working days.
+- **Staff profile:** a Documents table with upload (ID proof, qualification certificates, letters), verify and delete, like a student's. The Staff attendance page has a Monthly register button; the register is a month grid with letters, counts and an export.
+- **Announcement form:** an Attachments upload (up to 3 files) and, beside In the app, Email and Text message checkboxes. The announcement page shows the files as links.
+- **Profile:** an Announcements by email and text container with two toggles.
+- **Marks sheet:** Fill from a file (a modal with a downloadable class list, a file upload and a line-by-line check) and a History table.
+- **Reports:** an Exam results table with an exam selector.
+- **Transfer certificate:** Download PDF beside Print.
+- **Calendar:** exams appear beside events and holidays.
 
 ## Form validation rules (shared)
 

@@ -10,16 +10,16 @@ import { GATEWAYS, PaymentOrder, WebhookEvent } from '@/server/models/paymentOrd
 import { Student } from '@/server/models/student';
 import { ownStudentIds } from '@/server/modules/portal/own';
 import { collectPayment } from './paymentService';
+import { createRazorpayOrder, fetchOrderPayments, razorpayKeys } from './razorpay';
 
 const E = 'fees.online.errors';
 const Id = z.string().regex(/^[0-9a-f]{24}$/, `${E}.invoices`);
 const ORDER_TTL = 30 * 60_000;
 const OPEN = ['issued', 'partially_paid', 'overdue'] as const;
 
-// ponytail: the only gateway is "dev", a stand-in that takes no money: the parent presses Pay on our own page and
-// the same event handler runs that a real gateway's webhook would trigger. With Razorpay keys, create the order
-// through their API here and let /api/webhooks/razorpay deliver the events; nothing after that changes.
-const PROVIDER: (typeof GATEWAYS)[number] = 'dev';
+// With Razorpay keys in the environment, orders are created at Razorpay and /api/webhooks/razorpay delivers the
+// events. Without them the gateway is "dev", a stand-in that takes no money: the parent presses Pay on our own page
+// and the same event handler runs that a real gateway's webhook would trigger.
 
 export const CheckoutInput = z.object({ studentId: Id, invoiceIds: z.array(Id).min(1, `${E}.invoices`).max(24) });
 export type CheckoutInput = z.infer<typeof CheckoutInput>;
@@ -38,6 +38,8 @@ export type GatewayEvent = {
 export type OrderView = {
   orderId: string;
   provider: string;
+  /** Razorpay's public key id, which the browser needs to open its checkout. Null for the stand-in gateway. */
+  keyId: string | null;
   studentName: string;
   amountMinor: number;
   status: 'created' | 'paid' | 'expired' | 'failed';
@@ -72,10 +74,17 @@ export async function createCheckout(ctx: RequestContext, { studentId, invoiceId
     .lean();
   if (pending) return { orderId: pending.orderId, amountMinor: pending.amountMinor, reused: true };
 
+  const keys = razorpayKeys();
   const order = await PaymentOrder.create({
     schoolId,
-    provider: PROVIDER,
-    orderId: `order_dev_${randomBytes(12).toString('base64url')}`,
+    provider: keys ? 'razorpay' : 'dev',
+    orderId: keys
+      ? await createRazorpayOrder(keys, {
+          amountMinor,
+          receipt: invoiceSetHash.slice(0, 40),
+          notes: { schoolId: String(schoolId), studentId },
+        })
+      : `order_dev_${randomBytes(12).toString('base64url')}`,
     studentId,
     invoiceIds: ids,
     invoiceSetHash,
@@ -103,6 +112,7 @@ export async function getOrder(ctx: RequestContext, orderId: string): Promise<Or
   return {
     orderId: order.orderId,
     provider: order.provider,
+    keyId: order.provider === 'razorpay' ? (razorpayKeys()?.keyId ?? null) : null,
     studentName: student ? `${student.firstName} ${student.lastName ?? ''}`.trim() : '',
     amountMinor: order.amountMinor,
     status: expired ? 'expired' : order.status,
@@ -174,6 +184,40 @@ export async function handleGatewayEvent(event: GatewayEvent) {
   } catch (error) {
     return fail(error instanceof AppError ? error.messageKey : 'Could not record the payment');
   }
+}
+
+/**
+ * Catches payments whose webhook never arrived. For each Razorpay order still open after a few minutes, Razorpay is
+ * asked what it took; a captured payment is applied through the same handler a webhook uses, so it can't be counted
+ * twice. Part of the scheduled run, and safe to repeat.
+ */
+export async function reconcileOrders(schoolId: Types.ObjectId) {
+  const keys = razorpayKeys();
+  if (!keys) return 0;
+  const orders = await PaymentOrder.find({
+    schoolId,
+    provider: 'razorpay',
+    status: 'created',
+    createdAt: { $lt: new Date(Date.now() - 3 * 60_000), $gt: new Date(Date.now() - 24 * 3_600_000) },
+  })
+    .select('orderId amountMinor')
+    .lean();
+  let applied = 0;
+  for (const order of orders) {
+    const taken = (await fetchOrderPayments(keys, order.orderId)).find((payment) => payment.status === 'captured');
+    if (!taken) continue;
+    const result = await handleGatewayEvent({
+      provider: 'razorpay',
+      eventId: `recon_${taken.id}`,
+      type: 'payment.captured',
+      schoolId,
+      orderId: order.orderId,
+      gatewayPaymentId: taken.id,
+      amountMinor: taken.amountMinor,
+    });
+    if (result.status === 'paid') applied += 1;
+  }
+  return applied;
 }
 
 /** The stand-in gateway's Pay and Fail buttons. Refused for any real provider. */

@@ -12,9 +12,43 @@ import {
   LeaveId,
   LeaveInput,
 } from './leave';
+import { getTranslations } from 'next-intl/server';
+import { ImportStudents as ImportFile } from '@/server/modules/sis/schemas';
+import { z } from 'zod';
+import { removeDocument, verifyDocument } from '@/server/modules/sis/documents';
+import { CheckInInput, checkInStaff } from './checkIn';
+import { importStaff as importService } from './importService';
 import { StaffInput, StaffUpdate } from './schemas';
 import { SaveStaffAttendance, saveStaffAttendance } from './staffAttendance';
 import { createStaff as create, updateStaff as update } from './service';
+
+export async function importStaff(input: unknown) {
+  return withAction('hr.staff.import', async () => {
+    const ctx = await requirePermission('hr.staff.create');
+    const { csv, dryRun } = ImportFile.parse(input);
+    const [report, t] = await Promise.all([importService(ctx, csv, dryRun), getTranslations()]);
+    if (report.imported > 0) {
+      await audit(ctx, 'hr.staff.import', { type: 'school', id: ctx.schoolId }, { after: { staff: report.imported } });
+    }
+    return {
+      total: report.total,
+      imported: report.imported,
+      errorCount: report.errors.length,
+      errors: report.errors.slice(0, 100).map(({ row, field, messageKey }) => ({ row, field, message: t(messageKey) })),
+    };
+  });
+}
+
+export async function checkIn(input: unknown) {
+  return withAction('hr.attendance.checkIn', async () => {
+    const ctx = await requirePermission('hr.checkin.create');
+    const arrival = await checkInStaff(ctx, CheckInInput.parse(input));
+    if (!arrival.already && ctx.staffId) {
+      await audit(ctx, 'hr.attendance.checkIn', { type: 'staff', id: ctx.staffId }, { after: { date: arrival.date } });
+    }
+    return { at: arrival.at.toISOString(), already: arrival.already };
+  });
+}
 
 export async function submitStaffAttendance(input: unknown) {
   return withAction('hr.attendance.update', async () => {
@@ -86,5 +120,34 @@ export async function createStaff(input: unknown) {
       after: { employeeNo: staff.employeeNo, designation: data.designation, type: data.type },
     });
     return { name: staff.name, employeeNo: staff.employeeNo };
+  });
+}
+
+const StaffDocumentRef = z.object({
+  staffId: z.string().regex(/^[0-9a-f]{24}$/),
+  documentId: z.string().regex(/^[0-9a-f]{24}$/),
+});
+
+export async function verifyStaffDocument(input: unknown) {
+  return withAction('hr.document.verify', async () => {
+    const ctx = await requirePermission('hr.staff.update');
+    const { staffId, documentId } = StaffDocumentRef.parse(input);
+    const document = await verifyDocument(ctx, staffId, documentId, 'staff');
+    await audit(ctx, 'hr.document.verify', { type: 'staff', id: document.ownerId }, {
+      after: { documentId: String(document.id), type: document.type },
+    });
+    return { verified: true };
+  });
+}
+
+export async function deleteStaffDocument(input: unknown) {
+  return withAction('hr.document.delete', async () => {
+    const ctx = await requirePermission('hr.staff.update');
+    const { staffId, documentId } = StaffDocumentRef.parse(input);
+    const document = await removeDocument(ctx, staffId, documentId, 'staff');
+    await audit(ctx, 'hr.document.delete', { type: 'staff', id: document.ownerId }, {
+      before: { documentId: String(document.id), type: document.type, fileName: document.fileName },
+    });
+    return { deleted: true };
   });
 }

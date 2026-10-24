@@ -1,6 +1,6 @@
 import { createHmac } from 'node:crypto';
 import mongoose, { Types } from 'mongoose';
-import { afterAll, beforeAll, expect, it } from 'vitest';
+import { afterAll, beforeAll, expect, it, vi } from 'vitest';
 import type { RequestContext } from '@/server/auth/context';
 import { connectDb } from '@/server/db/connect';
 import { AcademicYear } from '@/server/models/academicYear';
@@ -9,7 +9,8 @@ import { Invoice } from '@/server/models/invoice';
 import { Payment } from '@/server/models/payment';
 import { PaymentOrder, WebhookEvent } from '@/server/models/paymentOrder';
 import { School } from '@/server/models/school';
-import { createCheckout, getOrder, handleGatewayEvent, payWithDevGateway, verifyRazorpaySignature } from './online';
+import { createCheckout, getOrder, handleGatewayEvent, payWithDevGateway, reconcileOrders, verifyRazorpaySignature } from './online';
+import { createRazorpayOrder } from './razorpay';
 import { getCollectionReport } from './reports';
 
 const ADDRESS = { line1: '12 School Road', city: 'Bhopal', state: 'Madhya Pradesh', pincode: '462001', country: 'IN' };
@@ -157,4 +158,77 @@ it('reports what was collected by method and day, for this school only', async (
   expect(await getCollectionReport(parent, '2026-12-31', '2026-01-01')).toMatchObject({ from: '2026-01-01', to: '2026-01-01' });
   const elsewhere = await getCollectionReport({ ...parent, schoolId: new Types.ObjectId() }, undefined, undefined);
   expect(elsewhere).toMatchObject({ totalMinor: 0, outstandingMinor: 0 });
+});
+
+it('opens the order at Razorpay when keys are set, and creates nothing if Razorpay refuses', async () => {
+  process.env.RAZORPAY_KEY_ID = 'rzp_test_key';
+  process.env.RAZORPAY_KEY_SECRET = 'rzp_test_secret';
+  try {
+    const calls: { url: string; init: RequestInit }[] = [];
+    const reply = (status: number, body: unknown) =>
+      vi.stubGlobal('fetch', async (url: string, init: RequestInit) => {
+        calls.push({ url, init });
+        return new Response(JSON.stringify(body), { status });
+      });
+    const count = () => PaymentOrder.countDocuments({ schoolId });
+    const before = await count();
+
+    reply(500, { error: { description: 'down' } });
+    await expect(checkout([invoiceIds[2] as Types.ObjectId])).rejects.toMatchObject({ code: 'PAYMENT_FAILED' });
+    expect(await count()).toBe(before);
+
+    reply(200, { id: 'order_RzpTest123' });
+    const order = await checkout([invoiceIds[2] as Types.ObjectId]);
+    expect(order).toMatchObject({ orderId: 'order_RzpTest123', amountMinor: 40000 });
+    const sent = calls.at(-1);
+    expect(sent?.url).toBe('https://api.razorpay.com/v1/orders');
+    expect((sent?.init.headers as Record<string, string>).Authorization).toBe(
+      `Basic ${Buffer.from('rzp_test_key:rzp_test_secret').toString('base64')}`,
+    );
+    expect(JSON.parse(String(sent?.init.body))).toMatchObject({ amount: 40000, currency: 'INR', notes: { schoolId: String(schoolId) } });
+    expect(await getOrder(parent, 'order_RzpTest123')).toMatchObject({ provider: 'razorpay', keyId: 'rzp_test_key', status: 'created' });
+    await expect(payWithDevGateway(parent, 'order_RzpTest123', 'captured')).rejects.toMatchObject({ code: 'NOT_FOUND' });
+
+    reply(200, { id: 'not-an-order' });
+    await expect(createRazorpayOrder({ keyId: 'a', keySecret: 'b' }, { amountMinor: 100, receipt: 'r', notes: {} })).rejects.toMatchObject({
+      code: 'PAYMENT_FAILED',
+    });
+  } finally {
+    vi.unstubAllGlobals();
+    delete process.env.RAZORPAY_KEY_ID;
+    delete process.env.RAZORPAY_KEY_SECRET;
+  }
+});
+
+it('applies a payment whose webhook never arrived, once, and ignores one Razorpay did not capture', async () => {
+  process.env.RAZORPAY_KEY_ID = 'rzp_test_key';
+  process.env.RAZORPAY_KEY_SECRET = 'rzp_test_secret';
+  try {
+    const order = await PaymentOrder.findOne({ schoolId, orderId: 'order_RzpTest123' }).orFail().lean();
+    const asked: string[] = [];
+    let status = 'created';
+    vi.stubGlobal('fetch', async (url: string) => {
+      asked.push(url);
+      return new Response(JSON.stringify({ items: [{ id: 'pay_missed_1', status, amount: order.amountMinor }] }), { status: 200 });
+    });
+
+    expect(await reconcileOrders(schoolId)).toBe(0);
+    // createdAt is immutable through Mongoose, so the order is aged in the raw collection.
+    await PaymentOrder.collection.updateOne({ _id: order._id }, { $set: { createdAt: new Date(Date.now() - 10 * 60_000) } });
+    expect(await reconcileOrders(schoolId)).toBe(0);
+    expect(asked[0]).toBe('https://api.razorpay.com/v1/orders/order_RzpTest123/payments');
+    expect((await getOrder(parent, order.orderId))?.status).toBe('created');
+
+    status = 'captured';
+    const paymentsBefore = await Payment.countDocuments({ schoolId, studentId });
+    expect(await reconcileOrders(schoolId)).toBe(1);
+    expect(await Payment.countDocuments({ schoolId, studentId })).toBe(paymentsBefore + 1);
+    expect(await getOrder(parent, order.orderId)).toMatchObject({ status: 'paid' });
+    expect(await reconcileOrders(schoolId)).toBe(0);
+    expect(await reconcileOrders(new Types.ObjectId())).toBe(0);
+  } finally {
+    vi.unstubAllGlobals();
+    delete process.env.RAZORPAY_KEY_ID;
+    delete process.env.RAZORPAY_KEY_SECRET;
+  }
 });
